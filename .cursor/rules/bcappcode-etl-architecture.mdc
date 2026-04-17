@@ -1,0 +1,55 @@
+---
+description: BCAppCode ETL architecture context — BHG SAMMS-to-Azure data pipeline
+alwaysApply: true
+---
+
+# BCAppCode — BHG ETL Pipeline Architecture
+
+## What This Codebase Is
+A C# ETL system that extracts data from 80+ clinic SAMMS SQL Server databases and loads it into a central Azure SQL database (`BHG_DR`).
+
+## Key Projects
+- **BHGTaskRunner** — Main ETL orchestrator. Run as `BHGTaskRunner.exe <1-11>` to trigger a specific schedule.
+- **BHG-DR-LIB** — Shared library: all Save*, Bulk*, SelectConstructor, SQLSvrManager classes.
+- **bhg.TestCode** — Developer test harness for manual/one-off runs.
+- **PHC** — Separate ETL runner for PHC clinics.
+- **Scheduler** — Schedules and queues tasks in the database.
+
+## The 11 ETL Schedules (args to BHGTaskRunner.exe)
+| Arg | TaskName | Data |
+|-----|----------|------|
+| 1 | SAMMSGlobal | Global reference/clinic data |
+| 2 | Regional ETL P1 | Core patient data Phase 1 (4 time zones) |
+| 3 | (catch-all) | Misc tasks not in P1/P2/Global |
+| 4 | Regional ETL P2 | Core patient data Phase 2 |
+| 5 | Samms-LAB | Lab results |
+| 6 | Samms-Forms | Assessment forms |
+| 7 | SAMMS-ETL-Notes | Clinical notes |
+| 8 | SAMMS-ETL-INV | Insurance/inventory |
+| 9 | SAMMS-ETL-DartSvc | Counseling sessions (DartsSrv) |
+| 10 | SAMMS-ETL-Dose | Medication/dose records |
+| 11 | SAMMS-ETL-Orders | Prescription orders |
+
+## DartsSrv ETL (Schedule 9) — Two Save Paths
+1. **BulkDartsSvc.cs** — Primary daily path. `SqlBulkCopy` into `stg.tbl_dartssrv`, then runs stored procedures `stg.DartsSrvMerge`, `stg.DartsSrvMerge22`…`stg.DartsSrvMerge28` to MERGE into `pats.tbl_DartsSrv_20XX` tables.
+2. **SaveDartsSrvs.cs** — EF Core upsert path. Used for historical/year-specific backfills and via SelectConstructor. Has one method per year (`SaveDartSrv2014`–`SaveDartSrv2023`), one per Azure year-table.
+
+## Key Patterns
+- **RowChkSum**: Every row has a CHECKSUM() computed at source. Only rows where checksum changed are written to Azure — avoids unnecessary updates.
+- **Year-partitioned tables**: DartsSrv, Orders, etc. are split by year in Azure (e.g., `pats.tbl_DartsSrv_2022`) for query performance.
+- **ActionKey / ActionStepKey**: Values in `dms.tbl_MapSrc2Dsn` that tell SelectConstructor which columns to SELECT. ActionKey=9 = DartsSrv.
+- **Dynamic lookback**: DartsSrv WHERE clause uses -15 days normally, -90 days on month-end Fridays, -200 days on special dates. Checks 5 date columns.
+- **stg. schema**: All data lands in staging tables first, then stored procedures MERGE into final `pats.` tables.
+
+## Core Classes (BHG-DR-LIB)
+- `SelectConstructor` — Builds SELECT statements from `dms.tbl_MapSrc2Dsn` metadata; routes to correct Save* method.
+- `SQLSvrManager` — ADO.NET wrapper for executing raw SQL against source (SAMMS) and destination (Azure).
+- `BulkDartsSvc` — `SqlBulkCopy` + stored procedure MERGE for high-volume tables (DartsSrv, Dose, Claims, etc.).
+- `SaveData` / `SaveDartsSrvs` — EF Core upsert classes for row-by-row insert/update logic.
+- `BHG_DRContext` — EF Core DbContext mapping to Azure BHG_DR tables.
+
+## Control Tables (Azure BHG_DR)
+- `tsk.tbl_Tasks` / `vw_TaskListMap` — Task queue; Status=17 means ready to run.
+- `ctrl.tbl_LocationCons` — One row per clinic: SiteCode, ConStr (SAMMS connection string).
+- `dms.tbl_MapSrc2Dsn` — Column mapping metadata per ActionKey.
+- `tsk.tbl_RowTrax` — Row count audit trail (source vs destination counts per site per task).

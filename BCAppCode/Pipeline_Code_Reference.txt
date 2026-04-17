@@ -1,0 +1,215 @@
+================================================================================
+  BHG ETL — PIPELINE → TABLES → CODE (quick reference)
+================================================================================
+  Generated from: Scheduler/Program.cs, BHGTaskRunner/Program.cs, BHG-DR-LIB
+  Use this with: dms.vw_MapAction (what runs per SiteCode), tsk.tbl_Schedule
+
+  PHC clinics: BHGTaskRunner filters SiteCode != "PHC". PHC uses the separate
+  PHC project (PHC/Program.cs), not the table→method map below for BHG runs.
+
+================================================================================
+SECTION 1 — BHGTaskRunner.exe argument → parent TaskName (queue filter)
+================================================================================
+
+  Arg   TaskName(s) filtered
+  ---   ------------------------------------------------------------------
+  1     SAMMSGlobal
+  2     Central ETL P1, Eastern ETL P1, Mountain ETL P1, Pacific ETL P1
+  3     Catch-all: everything ready EXCEPT P1/P2 regional parents and SAMMSGlobal
+  4     Central ETL P2, Eastern ETL P2, Mountain ETL P2, Pacific ETL P2
+  5     Samms-LAB
+  6     Samms-Forms
+  7     SAMMS-ETL-Notes
+  8     SAMMS-ETL-INV  (Scheduler string: SAMMS-ETL-Inv)
+  9     SAMMS-ETL-DartSvc
+  10    SAMMS-ETL-Dose
+  11    SAMMS-ETL-Orders
+
+  Source: BHGTaskRunner/Program.cs (switch on args[0]).
+
+================================================================================
+SECTION 2 — Scheduler: fixed pipeline membership (explicit IN lists)
+================================================================================
+  File: Scheduler/Program.cs — CASE on DsnSchema + '.' + DsnTbl (+ SiteCode/LAB).
+
+  Samms-LAB
+    SiteCode = 'LAB' AND destination in:
+      pats.tbl_ClientDemo1, pats.tbl_ClientDemo2
+
+  Samms-Forms
+      pats.tbl_dbo_FormAnswerSignatures
+      pats.tbl_dbo_FormQuestionAnswers
+
+  SAMMS-ETL-Notes
+      pats.tbl_3parnote
+      pats.tbl_3pclaimnote
+
+  SAMMS-ETL-Inv
+      pats.tbl_Bottle, pats.tbl_LiquidLog, ctrl.Tbl_InvType,
+      pats.tbl_orientationchecklistnew, pats.tbl_labresult, pats.tbl_labresultdetail,
+      pats.Tbl_Appointments, pats.Tbl_AdmissionAssessment, pats.Tbl_AdmissionAssessmentSummary,
+      pats.Tbl_ReAssessment, pats.Tbl_AdmissionAssessmentDimensionOneDisorder,
+      pats.Tbl_AdmissionAssessmentDimensionFiveSubstanceUse, pats.Tbl_AdmissionAssessmentDimensionTwo,
+      pats.Tbl_ReAssessmentOccupational, pats.Tbl_ReAssessmentFamily, pats.Tbl_ReAssessmentLegal,
+      pats.Tbl_ReAssessmentMentalHealth, pats.Tbl_ReAssessmentPhysicalHealth,
+      pats.Tbl_ReAssessmentSubstanceUse, pats.Tbl_ReAssessmentSocial, pats.Tbl_ReAssessmentTreatment,
+      pats.Tbl_AdmissionAssessmentDimensionThree, pats.tbl_AdmissionAssessmentDimensionSix,
+      pats.tbl_AdmissionAssessmentDimensionfour
+
+  SAMMS-ETL-DartSvc
+      pats.tbl_DartsSrv
+
+  SAMMS-ETL-Dose
+      pats.tbl_Dose, pats.tbl_Dose_Excuse
+
+  SAMMS-ETL-Orders
+      pats.tbl_Orders
+
+  PHC ETL
+      ma.SiteCode = 'PHC' (entire site routed to PHC parent name in Scheduler)
+
+  Regional Eastern/Central/Mountain/Pacific P1 and P2
+      Assigned by ma.TimeZone ('EST','CST','MST','PST') and whether DsnTbl is in
+      the Scheduler "P2 inclusion" list vs the earlier dedicated pipelines.
+      P2-style tables include (per timezone, lists differ slightly): claims family,
+      dose_excuse, uaresultdetail, GlobalPayor, PayerClient, feesched/FeeSched,
+      CheckIn, EandM forms, Bills, payerclthistory, treatmentlevel, Orders, etc.
+      Everything else for that timezone that is not Dart/Dose/Orders/Forms/INV/Notes/LAB
+      and not in the P2 list → that timezone's **P1** parent.
+      Exact lists: Scheduler/Program.cs lines ~38–57.
+
+  SAMMSGlobal
+      ELSE branch of the same CASE — mappings that do not match any rule above.
+
+  Important: A table's **parent TaskName** can still be overridden or tasks skipped by
+  later UPDATEs in Scheduler (RowState = 26) for LAB/PHC/V5 schema, etc.
+
+================================================================================
+SECTION 3 — Destination table (child TaskName) → handler (BHGTaskRunner)
+================================================================================
+  Dispatch: BHGTaskRunner/Program.cs — switch on st.TaskName.ToLower().
+  sd = BHG_DR_LIB.SaveData; bldr = BulkDartsSvc.
+
+  ctrl.tbl_3psetup                    → sd.Save3pSetup
+  ctrl.tbl_claimstatus                → sd.SaveClaimStatus
+  ctrl.tbl_clinic                     → sd.SaveClinic
+  ctrl.tbl_consents                   → sd.SaveGlobalConsents / SaveGlobalConsentsPhc (site)
+  ctrl.tbl_drodownlistitems           → sd.SavedropDownListItems
+  ctrl.tbl_globaldevices              → sd.SaveGlobalDevices
+  ctrl.tbl_invtype                    → sd.SaveInvTypes
+  ctrl.tbl_user                       → sd.SaveGlobalUser
+  ctrl.tbl_usersites                  → sd.SaveGlobalUserSite
+
+  ayx.tbl_preadmission_v6             → sd.SavePreAdmissionV6 (and variants in block)
+
+  pats.tbl_3parnote                   → sd.Save3pArnote
+  pats.tbl_3pclaimnote                → sd.Save3pClaimNote
+  pats.tbl_3pelig                     → sd.Save3pElig
+
+  pats.tbl_admissionassessment        → sd.SaveAdmissionAssessment
+  pats.tbl_admissionassessmentsummary   → sd.SaveAdmissionAssessmentSummary
+  pats.tbl_admissionassessmentdimensionfour → sd.SaveAdmissionAssessmentDimensionfour
+  pats.tbl_admissionassessmentdimensiononedisorder → sd.SaveAdmissionAssessmentDimensionOneDisorder
+  pats.tbl_admissionassessmentdimensionfivesubstanceuse → sd.SaveAdmissionAssessmentDimensionFiveSubstanceUse
+  pats.tbl_admissionassessmentdimensiontwo → sd.SaveAdmissionAssessmentDimensionTwo
+  pats.tbl_admissionassessmentdimensionthree → sd.SaveAdmissionAssessmentDimensionThree
+  pats.tbl_admissionassessmentdimensionsix → sd.SaveAdmissionAssessmentDimensionSix
+  pats.tbl_reassessment               → sd.SaveReAssessment
+  pats.tbl_reassessmentoccupational   → sd.SaveReAssessmentOccupational
+  pats.tbl_reassessmentfamily         → sd.SaveReAssessmentFamily
+  pats.tbl_reassessmentlegal          → sd.SaveReAssessmentLegal
+  pats.tbl_reassessmentmentalhealth   → sd.SaveReAssessmentMentalHealth
+  pats.tbl_reassessmentsubstanceuse   → sd.SaveReAssessmentSubstanceUse
+  pats.tbl_reassessmentphysicalhealth → sd.SaveReAssessmentPhysicalHealth
+  pats.tbl_reassessmentsocial         → sd.SaveReAssessmentSocial
+  pats.tbl_reassessmenttreatment      → sd.SaveReAssessmentTreatment
+  pats.tbl_appointments               → sd.SaveAppointments
+  pats.tbl_appointmentattend          → sd.SaveAppointmentAttend
+  pats.tbl_orientationchecklistnew    → sd.SaveOrientationCheckList
+
+  pats.tbl_bamform                    → sd.SaveBamForm
+  pats.tbl_bamscore                   → sd.SaveBamScore
+  pats.tbl_tbldiag10                  → sd.SaveTblDiags
+  pats.tbl_bottle                     → sd.SaveBottles
+  pats.tbl_bills                      → sd.SaveBills (with lookback logic in case)
+  pats.tbl_briefaddictionmonitor      → sd.SaveBAM
+  pats.tbl_checkin                    → sd.SaveCheckIn
+  pats.tbl_claims                     → sd.SaveClaims (VBRA/VMIN/VWBY/VBRP) OR bldr.BulkDartsSrvLoader → stg.* (others)
+  pats.tbl_claimlineitem              → bldr.BulkDartsSrvLoader → stg.*
+  pats.tbl_claimlineitemactivity      → bldr.BulkDartsSrvLoader → stg.*
+
+  stg.clientdemo                      → bldr.BulkDartsSrvLoader → stg.clientdemo
+  pats.tbl_clientdemo1                → sd.SaveClientDemo1var
+  pats.tbl_clientdemo2                → sd.SaveClientDemo2
+  pats.tbl_clinicalopiatewithdrawalscale → sd.SaveGlobalClinicalOpiateWithdrawalScale
+  pats.tbl_cows_v6                    → sd.SaveCows_v6
+  pats.tbl_codes                      → sd.SaveCodes
+  pats.tbl_customquestions            → sd.SaveCustomQuestions
+  pats.tbl_customanswers              → sd.SaveCustomAnswers
+
+  pats.tbl_dartssrv                   → bldr.BulkDartsSrvLoader → stg.tbl_dartssrv (+ merge SPs)
+  pats.tbl_dose                       → sd.SaveDoses OR bldr.BulkDartsSrvLoader (branches in case)
+  pats.tbl_dose_excuse                → sd.SaveDoseExcuse (and/or related paths in case)
+
+  pats.tbl_eandmformmdm               → sd.SaveEMFormMDM
+  pats.tbl_eandmformpregnancy         → sd.SaveEMFormPregnancy
+  pats.tbl_enrollment                 → sd.SaveEnrollment
+  pats.tbl_feesched                   → sd.SaveFeeSchedules
+  pats.tbl_fmp                        → sd.SaveFmp
+  pats.tbl_formssammsclient           → bldr.BulkDartsSrvLoader → stg.tbl_formssammsclient
+  pats.tbl_globalpayor                → sd.SaveGlobalPayer
+  pats.tbl_orders                     → sd.SaveOrders2016 … SaveOrders2028 (by OrderDate year)
+  pats.tbl_payerclient                → sd.RemovePayerClients / sd.SavePayerClient (Reload flag)
+  pats.tbl_pbi3payauth                → sd.SaveAuths
+  pats.tbl_preadmissionreferralsource → sd.SavePreAdminReferrals (conditional)
+  pats.tbl_services                   → sd.SaveServices
+  pats.tbl_uasched                    → sd.SaveUASched (if source table exists)
+  pats.tbl_labresultdetail            → bldr.BulkDartsSrvLoader → stg.*
+  pats.tbl_labresult                  → sd.SaveLABResults (skip if SiteCode LAB)
+  pats.tbl_uaresultdetail             → bldr.BulkDartsSrvLoader → stg.*
+  pats.tbl_uaresults                  → sd.SaveUAResults
+
+  pats.tbl_dbo_formquestionanswers    → sd.SaveFormQuestionAnswers (large inner switch on form types)
+  pats.tbl_dbo_formanswersignatures   → sd.SaveAnswerSignatures
+
+  pats.tbl_vw3pbill                   → sd.SaveAuthBills
+  pats.tbl_vw3pbillsub                → bldr.BulkDartsSrvLoader → stg.*
+  pats.tbl_payerclthistory            → sd.SavePayerCltHistory
+  pats.tbl_treatmentlevel             → sd.SaveTreatmentLevel
+  pats.tbl_admissionassessmentsubstanceusehistory → sd.SaveAdmissionAssessmentSubstanceuseHistory
+  pats.tbl_assessmentsubstanceusehistory → sd.SaveAssessmentSubstanceuseHistory
+  pats.tbl_comprehensiveassessmentform → sd.SaveComprehensiveAssessmentForm
+  pats.tbl_pa                         → sd.SavePA
+  pats.tbl_mncomprehensiveassessment  → sd.SaveMNCA
+  pats.tbl_mncomprehensiveassessmentlevelofcare → sd.SaveMNCALOC
+  pats.tbl_vacomprehensiveassessment  → sd.SaveVACA
+  pats.tbl_vacomprehensiveassessmentsummary / pats.pats.tbl_vacomprehensiveassessmentsummary → sd.SaveVACASummary
+  pats.tbl_newadmissionassessment / pats.pats.tbl_newadmissionassessment → sd.SaveNewAdmissionAssessment
+  pats.tbl_newadmissionassessmentasamdimension6 → sd.SaveNewAdmissionAssessmentASAMDimension6
+  pats.tbl_newperiodicreassessment    → sd.SaveNewPeriodicReassessment
+  pats.tbl_newperiodicreassessmentcounselorreview → sd.Savenewperiodicreassessmentcounselorreview
+  pats.tbl_financialhardshipapplication → sd.SaveFinancialHardshipApplication
+  pats.tbl_pacounselorreview          → sd.SavePACounselorReview
+  pats.tbl_padimension1 … padimension6 → sd.SavePADimension1 … SavePADimension6
+
+  Notes:
+  - BulkDartsSrvLoader also used for other stg.* targets when TaskName maps to pats.* (substring logic).
+  - Implementations live primarily under BHG-DR-LIB (SaveData + Save*.cs, BulkDartsSvc.cs).
+  - SelectConstructor.cs builds SELECT lists from dms.tbl_MapSrc2Dsn / WorkToDo metadata.
+
+================================================================================
+SECTION 4 — SQL: list parent pipeline per mapping (optional)
+================================================================================
+  Run against BHG_DR; use the same CASE as Scheduler/Program.cs if you need
+  ServiceName on every row of dms.vw_MapAction (see prior chat: long CASE), or:
+
+    SELECT DISTINCT ma.SiteCode, ma.DsnSchema, ma.DsnTbl, ma.ActionKey, ma.StepKey
+    FROM dms.vw_MapAction ma
+    WHERE ma.Enabled = 1 AND ma.IsActive = 1
+    ORDER BY ma.DsnTbl, ma.SiteCode;
+
+  Join to tsk.tbl_Tasks2 child rows after Scheduler runs to see ParentTaskId → parent TaskName.
+
+================================================================================
+END
+================================================================================

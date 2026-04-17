@@ -1,0 +1,42 @@
+PROJECT OVERVIEW — BHG-DR-LIB
+
+What is this?
+- This folder is a C#/.NET library project (`BHG-DR-LIB.csproj`) targeting `netcoreapp3.1`.
+- It is primarily a data-integration / ETL-style helper library for a SQL Server database named `BHG_DR`.
+- It uses:
+  - Entity Framework Core (SQL Server provider) for ORM access to many tables/views under `Models/`.
+  - Microsoft.Data.SqlClient for direct SQL execution and bulk load operations.
+
+High-level responsibilities
+- Bulk staging loads + merge stored procs:
+  - `BulkDartsSvc.cs` bulk-copies an incoming `DataTable` into a destination table (often `stg.*`) and then runs a stored procedure (e.g. `stg.ClaimsMerge`, `stg.DartsSrvMerge*`, `stg.DoseMerge`, etc.) to merge staged data into final tables.
+- Row-by-row “upsert” style saves via EF Core:
+  - Many `Save*.cs` files (ex: `SaveGlobal.cs`, `SaveClaims.cs`, `SaveOrders.cs`, etc.) take a `DataTable` and a site code, then insert/update rows in corresponding EF Core entities, usually using a `RowChkSum` pattern to detect changes.
+- Database model:
+  - `Models/BHG_DRContext.cs` is the EF Core DbContext with DbSet mappings for many tables and views.
+  - The `efpt.config.json` suggests models were generated using an EF tooling workflow (output originally aimed at `Models2/`, but `Models2/**` is excluded from compilation in the csproj).
+
+Project layout (key items)
+- `BHG-DR-LIB.csproj`: .NET Core 3.1 project, EF Core + SqlClient dependencies.
+- `Models/`: EF Core entities + `BHG_DRContext`.
+- `BulkDartsSvc.cs`: bulk copy + merge-proc execution for specific staging tables.
+- `SQLSvrManager.cs`: helper for creating connections, filling DataTables, and executing SQL commands / stored procedures.
+- `Save*.cs`: a set of partial `SaveData` methods that map DataTable columns to EF entities and call `db.SaveChanges()`.
+
+How this library is typically used (inferred)
+- A caller extracts/constructs a `DataTable` (from files, API, another DB, etc.).
+- The caller invokes one of the `Save*` methods or `BulkDartsSvc.BulkDartsSrvLoader(...)`.
+- The library writes data into SQL Server either:
+  - directly via EF Core entity updates, OR
+  - into staging tables via SqlBulkCopy and then merges via stored procedures.
+
+IMPORTANT SECURITY FINDING (please fix)
+- `SQLSvrManager.cs` contains a hardcoded SQL Server connection string including username/password.
+  - This is a credential leak risk and should be removed from source control immediately.
+  - Recommended remediation:
+    - Move connection strings to secure configuration (environment variables, user secrets, Azure Key Vault, appsettings in a consuming app, etc.).
+    - Rotate the exposed password/credentials in the database/AAD immediately.
+
+Notes / constraints
+- Target framework is `netcoreapp3.1` (end-of-life). If this is still actively used, consider upgrading to a supported .NET version (e.g., .NET 8) in a controlled migration.
+

@@ -1,0 +1,809 @@
+        public virtual DbSet<TblVw3pbill> TblVw3pbill { get; set; }
+        public virtual DbSet<TblPreAdmissionV6> TblPreAdmissionV6 { get; set; }
+        public virtual DbSet<TblRowTrax> TblRowTrax { get; set; }
+
+            modelBuilder.Entity<TblVw3pbill>(entity =>
+            {
+                entity.HasKey(e => new { e.SiteCode, e.DsId })
+                    .HasName("PK_tbl_vw3pBill");
+
+                entity.ToTable("tbl_vw3pbill", "pats");
+
+                entity.Property(e => e.SiteCode)
+                    .HasMaxLength(25)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.DsId).HasColumnName("dsID");
+
+                entity.Property(e => e.BillUnits).HasColumnName("billUnits");
+
+                entity.Property(e => e.Billdatecriteria)
+                    .HasColumnName("billdatecriteria")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Charge).HasColumnName("charge");
+
+                entity.Property(e => e.Clientname)
+                    .HasColumnName("clientname")
+                    .HasMaxLength(152)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltAdd1)
+                    .HasColumnName("cltADD1")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltCity)
+                    .HasColumnName("cltCity")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltDob)
+                    .HasColumnName("cltDOB")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.CltGender)
+                    .HasColumnName("cltGender")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltM4id)
+                    .HasColumnName("cltM4ID")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltMarry)
+                    .HasColumnName("cltMARRY")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltPhone)
+                    .HasColumnName("cltPhone")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CltState)
+                    .HasColumnName("cltState")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Cltzip)
+                    .HasColumnName("cltzip")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Cptcode)
+                    .HasColumnName("CPTCODE")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Descript)
+                    .IsRequired()
+                    .HasColumnName("descript")
+                    .HasMaxLength(17)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.DsClt).HasColumnName("dsClt");
+
+                entity.Property(e => e.DsDtEnd)
+                    .HasColumnName("dsDtEnd")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DsDtStart)
+                    .HasColumnName("dsDtStart")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DsPos)
+                    .HasColumnName("dsPOS")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.DsTxtSrv)
+                    .HasColumnName("dsTxtSrv")
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.DsTxtType)
+                    .HasColumnName("dsTxtType")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Dsarea)
+                    .HasColumnName("dsarea")
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Dsbilled)
+                    .HasColumnName("DSbilled")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DsdblUnits).HasColumnName("dsdblUnits");
+
+                entity.Property(e => e.Dsdiag)
+                    .HasColumnName("dsdiag")
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.DstxtStaff)
+                    .HasColumnName("dstxtStaff")
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.LastModAt).HasColumnType("datetime");
+
+                entity.Property(e => e.Mg).HasColumnName("MG");
+
+                entity.Property(e => e.Modifier)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Ndc)
+                    .HasColumnName("NDC")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Npi)
+                    .HasColumnName("npi")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PayDefaultsubmit)
+                    .HasColumnName("payDEFAULTSUBMIT")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Payclass)
+                    .HasColumnName("payclass")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PyGroup)
+                    .HasColumnName("pyGROUP")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PyPayerid)
+                    .HasColumnName("pyPAYERID")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PySubsid)
+                    .HasColumnName("pySUBSID")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ScrubError)
+                    .HasMaxLength(14)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.SiteId).HasColumnName("SiteID");
+
+                entity.Property(e => e.TpaAuthCode)
+                    .HasColumnName("tpaAuthCode")
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<TblPreAdmissionV6>(entity =>
+            {
+                entity.HasKey(e => new { e.SiteCode, e.PreAdmissionid, e.Clientid })
+                    .HasName("PK_PreAdmissions_V6");
+
+                entity.ToTable("tbl_PreAdmission_V6", "ayx");
+
+                entity.Property(e => e.SiteCode)
+                    .HasMaxLength(25)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.AccomodationNeeded).HasMaxLength(256);
+
+                entity.Property(e => e.AreYouCurrentlyPregnant)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.BringIdproof)
+                    .HasColumnName("BringIDProof")
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.BringInsuranceCard)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ClientAddress)
+                    .HasMaxLength(2500)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ClinicInfo)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Comments).HasMaxLength(500);
+
+                entity.Property(e => e.CreatedOn)
+                    .HasColumnName("CreatedON")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Createdby).HasMaxLength(40);
+
+                entity.Property(e => e.CurrntlyRecevingTreatmentForCondition)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.DateofRelease).HasColumnType("datetime");
+
+                entity.Property(e => e.EtllastModAt)
+                    .HasColumnName("ETLLastModAt")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.ImmediateAssessment).HasMaxLength(256);
+
+                entity.Property(e => e.ImmediateAssessment911).HasMaxLength(256);
+
+                entity.Property(e => e.InsuranceType).HasMaxLength(256);
+
+                entity.Property(e => e.IntakeProgram).HasMaxLength(300);
+
+                entity.Property(e => e.IntakeProgramDate).HasColumnType("datetime");
+
+                entity.Property(e => e.IsAnyLegalPrescriptionForPain)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsAnyOngoingMedicalCondition)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsAnyPrescriptionForPain)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsCurrentlyInOpiateProgram)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsHavingLegalPrescription)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsHavingPlanForHowToCommitSuicide)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsHomicidalThoughtWithin72Hours)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsInsurance)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsOverTheCounterMedications)
+                    .HasColumnName("isOverTheCounterMedications")
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsPatientAdmitted)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsPatientAtPainManagementClinic)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsRecentlyReleasedFromPenal)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsSpecialAccommodationRequired)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsSuicidalThoughtWithin72Hours)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.LastUpdateOn).HasColumnType("datetime");
+
+                entity.Property(e => e.LastUpdatedBy).HasMaxLength(40);
+
+                entity.Property(e => e.MedicalConditionsProviderName1).HasMaxLength(256);
+
+                entity.Property(e => e.MedicalConditionsProviderName2).HasMaxLength(256);
+
+                entity.Property(e => e.MedicalConditionsProviderPhone1).HasMaxLength(50);
+
+                entity.Property(e => e.MedicalConditionsProviderPhone2).HasMaxLength(50);
+
+                entity.Property(e => e.OfficeUseWhy).HasMaxLength(50);
+
+                entity.Property(e => e.OngoingMedicalConditionsWha).HasMaxLength(256);
+
+                entity.Property(e => e.PatientSignatureDate).HasColumnType("datetime");
+
+                entity.Property(e => e.PlanOfSuicide)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PlanOnSpendingTimeAtClinic)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PreAddAddress)
+                    .HasColumnName("PreAdd_Address")
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.PreAdmissionDate).HasColumnType("datetime");
+
+                entity.Property(e => e.PrimaryReferralSourceNote).HasMaxLength(2500);
+
+                entity.Property(e => e.Program).HasMaxLength(40);
+
+                entity.Property(e => e.ReasonSeekingTreatment).HasMaxLength(2000);
+
+                entity.Property(e => e.ReferralSourcedesc)
+                    .HasMaxLength(800)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.RegistrationMode)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Sammsprogram)
+                    .HasColumnName("SAMMSProgram")
+                    .HasMaxLength(800)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Version).HasMaxLength(256);
+            });
+
+
+                            case "pats.tbl_dbo_formquestionanswers":
+                                //Check if Forms table exists
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'Form'", st.ConStr);
+                                // if yes then
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    DateTime wrkdt = st.WorkDate.Value.AddDays(-10).Date;
+                                    //switch (st.SiteCode)
+                                    //{
+                                    //    //case "D07":
+                                    //    //case "V20":
+                                    //      //  wrkdt = st.WorkDate.Value.Date; 
+                                    //       // break;
+                                    //    default:
+                                    //        wrkdt = DateTime.Parse("1/1/2000");
+                                    //        break;
+                                    //}
+                                    strCmd = "select SiteCode, FormName, convert(varchar(100),FormId) FormId, PreAdmissionId, ClientId, QuestionId " +
+                                        ", QuestionOrderId = isnull(x.QuestionOrderId, Row_Number() over(Partition by x.FormName, x.FormId, x.ClientId, x.QuestionId order by x.QuestionId, x.AnswerSeq)) " +
+                                        ", QuestionText, OptionId, AnswerValue, CreatedBy, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (select SiteCode = '" + st.SiteCode.ToString() +
+                                        "', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy, f.PreAdmissionId, f.IsDeleted /*, f.IsChildForm*/ " +
+                                        ", QuestionId = isnull(q.Id, 0), QuestionOrderId = q.QuestionOrderId, q.QuestionText, a.OptionId, AnswerValue = a.Value, AnswerSeq = a.Id " +
+                                        " from dbo.Form f left join FormTemplate ft on (f.FormTemplateId = ft.Id) left join Question q on (ft.Id = q.FormTemplateId) " +
+                                        " left join Answer a on (f.Id = a.FormId and q.id = a.QuestionId) where a.Value is not null and (f.CreatedOn >= '" + wrkdt.ToShortDateString() +
+                                        "' or isnull(f.UpdatedOn, f.CreatedOn) >= '" + wrkdt.ToShortDateString() + "') " +
+                                        " union select SiteCode = '" + st.SiteCode.ToString() + "', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy, f.PreAdmissionId, f.IsDeleted  /*, f.IsChildForm */ " +
+                                        " , QuestionId = isnull(q.Id, 0), QuestionOrderId = q.QuestionOrderId, q.QuestionText, a.OptionId, AnswerValue = a.Value, AnswerSeq = a.Id " +
+                                        " from dbo.Form f left join FormTemplate ft on (f.FormTemplateId = ft.Id) left join Question q on (ft.Id = q.FormTemplateId) " +
+                                        " left join Answer a on (f.Id = a.FormId and q.id = a.QuestionId) where q.Id is null and (f.CreatedOn >= '" + wrkdt.ToShortDateString() +
+                                        "' or isnull(f.UpdatedOn, f.CreatedOn) >= '" + wrkdt.ToShortDateString() + "')) x";
+
+                                    //" --Suicide Severity Rating Scale --(For ETL’ing to pats.tbl_dbo_FormQuestionAnswers) "
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'SuicideSeverityRatingScale'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by w.FormName, w.FormId, w.ClientId, w.QuestionId order by w.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Suicide Severity Rating Scale' as [FormName] " +
+                                        ", '1-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date,CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date,ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        " from [dbo].[SuicideSeverityRatingScale]) w ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedOn, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --Health Questionnaire " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'HealthQuestionnaire'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by y.FormName, y.FormId, y.ClientId, y.QuestionId order by y.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Health Questionnaire' as [FormName] " +
+                                        ", '2-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]  " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, Createddate) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, Modifieddate) as [UpdatedOn], Isdeleted " +
+                                        " from [dbo].[HealthQuestionnaire]) y ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --Infectious Disease And Behavioral Screen " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'InfectiousDiseaseAndBehavioralScreen'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by z.FormName, z.FormId, z.ClientId, z.QuestionId order by z.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Infectious Disease And Behavioral Screen' as [FormName] " +
+                                        ", '3-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "  from [dbo].[InfectiousDiseaseAndBehavioralScreen]) z ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --'Consent to Treatment with an Approved Narcotic' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'ConsentToTreatmentWithAnApprovedNarcotic'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by q.FormName, q.FormId, q.ClientId, q.QuestionId order by q.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Consent to Treatment with an Approved Narcotic'  as [FormName] " +
+                                        ", '4-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "  from [dbo].[ConsentToTreatmentWithAnApprovedNarcotic]) q";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --'Financial Hardship Application'  " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'FinancialHardshipApplication'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, cltId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by s.FormName, s.FormId, s.cltId, s.QuestionId order by s.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Financial Hardship Application'   as [FormName] " +
+                                        ", '5-' + convert(varchar, cltId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, cltId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "  from [dbo].[FinancialHardshipApplication]) s";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --'Comprehensive Assessment Form'  " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'ComprehensiveAssessmentForm'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by t.FormName, t.FormId, t.ClientId, t.QuestionId order by t.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Comprehensive Assessment Form' as [FormName] " +
+                                        ", '6-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "  from [dbo].[ComprehensiveAssessmentForm]) t";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --'Admission Assessment' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'AdmissionAssessment'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                        ", QuestionOrderID = Row_Number() over(Partition by v.FormName, v.FormId, v.ClientId, v.QuestionId order by v.QuestionId) " +
+                                        ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Admission Assessment' as [FormName] " +
+                                        ", '7-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , PreAdmissionId, ClientId, 0 as QuestionID, 1 as QuestionOrderID, null as QuestionText, null as [OptionID], null as AnswerValue " +
+                                        "      , Createdby, convert(date, CreatedOn) as [CreatedOn], ModifiedBy as [UpdatedBy], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "  from [dbo].[AdmissionAssessment]) v";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --'Treatment Plan' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'tblTP17REVIEW'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID " +
+                                            ", QuestionOrderID = Row_Number() over(Partition by tp.FormName, tp.FormId, tp.ClientId, tp.QuestionId order by tp.QuestionId) " +
+                                            ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from( " +
+                                            "Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                            ", '8-1-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                            ", null PreAdmissionId, ABS(tprCLTID) ClientId, 1 as QuestionID, 1 as QuestionOrderID, 'Treatment Plan Type' as QuestionText, null as [OptionID] " +
+                                            ", TprTYPE as AnswerValue, tprCreatedby Createdby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] " +
+                                            ", Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW " +
+                                            " union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                            ", '8-2-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                            ", null PreAdmissionId, ABS(tprCLTID) ClientId, 2 as QuestionID, 1 as QuestionOrderID, 'Treatment Phase Type' as QuestionText, null as [OptionID] " +
+                                            ", tpTreatmentPhase as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] " +
+                                            ", Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW " +
+                                            " union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                            ", '8-3-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                            ", null PreAdmissionId, ABS(tprCLTID) ClientId, 3 as QuestionID, 1 as QuestionOrderID, 'Next Due' as QuestionText, null as [OptionID] " +
+                                            ", convert(varchar, tprNEXT) as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] " +
+                                            ", Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW ";
+                                    }
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select * from sys.all_columns c where c.object_id = (select object_id from sys.tables where name = 'tblTP17REVIEW') and name = 'tprReviewFrequency'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                        ", '8-4-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                        ", null PreAdmissionId, ABS(tprCLTID) ClientId, 4 as QuestionID, 1 as QuestionOrderID, 'Review Frequency' as QuestionText, null as [OptionID] " +
+                                        ", rtrim(substring(tprReviewFrequency, 6, LEN(tprReviewFrequency) - 5)) as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn] " +
+                                        ", null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW  ) tp ";
+
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(Modifieddate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    else { strCmd += ") tp "; }
+
+                                    // Level Justification
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'tblORDERREQ'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += Environment.NewLine + " union Select SiteCode, [FormName], FormID = FormId + '-' + convert(varchar,Row_Number() " + Environment.NewLine +
+                                            " over (Partition by tp2.FormName, tp2.FormId, tp2.ClientId, tp2.QuestionId order by tp2.AnswerValue)) " + Environment.NewLine +
+                                            ", PreadmissionId, ClientId, QuestionID, QuestionOrderID = Row_Number() over(Partition by tp2.FormName, tp2.FormId, tp2.ClientId, tp2.QuestionId order by tp2.AnswerValue) " + Environment.NewLine +
+                                            ", QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (" + Environment.NewLine +
+                                            " select SiteCode = '" + st.SiteCode.ToString() + "', FormName = 'Level Justification' " + Environment.NewLine +
+                                            ", FormID = '9-1-' + convert(varchar, ABS(cltID)) + '-' + convert(varchar, ReqNum) + '-' /* + convert(varchar, tprTPID) */ " + Environment.NewLine +
+                                            ", PreadmissionId = ReqNum, ClientId = cltID, QuestionID = 1, QuestionText = 'Effective Date', OptionID = 0, AnswerValue = convert(varchar,EffectiveDate, 101) " + Environment.NewLine +
+                                            ", Createdby = Staff, CreatedOn = Convert(date, DateAdded), UpdatedBy = StatusUser, UpdatedOn = convert(date, statusDate) " + Environment.NewLine +
+                                            ", IsDeleted = Case when cltID < 0 then 1 else 0 end from [dbo].[tblORDERREQ] " + Environment.NewLine +
+                                            " where status = 'Approved' and(Notes not like 'Test %' and Notes <> 'TEST' and  DrNote <> 'HEllo test' and DrNote <> 'TEST') " + Environment.NewLine +
+                                            " union select SiteCode = '" + st.SiteCode.ToString() + "', FormName = 'Level Justification' " + Environment.NewLine +
+                                            ", FormID = '9-2-' + convert(varchar, ABS(cltID)) + '-' + convert(varchar, ReqNum) + '-' /* + convert(varchar, tprTPID) */ " + Environment.NewLine +
+                                            ", PreadmissionId = ReqNum, ClientId = cltID, QuestionID = 2, QuestionText = 'Expiration Date', OptionID = 0, AnswerValue = convert(varchar,expirationdate, 101) " + Environment.NewLine +
+                                            ", Createdby = Staff, CreatedOn = Convert(date, DateAdded), UpdatedBy = StatusUser, UpdatedOn = convert(date, statusDate) " + Environment.NewLine +
+                                            ", IsDeleted = Case when cltID< 0 then 1 else 0 end from [dbo].[tblORDERREQ] " + Environment.NewLine +
+                                            " where status = 'Approved' and(Notes not like 'Test %' and Notes <> 'TEST' and  DrNote <> 'HEllo test' and DrNote <> 'TEST')) tp2";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveFormQuestionAnswers(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(-10), false, null);
+                                    // add Execute Store Procedure for BAM here
+                                    var tblr6 = sm.ExecStrPro("pats.BAMMerge", "@sitecode", st.SiteCode, sm.ConnectionString);
+                                }
+                                else { rCodes.ExceptMsg = "No Form table."; rCodes.IsResult = true; }
+                                if ((st.RowTrax.HasValue) && (st.SiteCode != "PHC"))
+                                {
+                                    if (st.RowTrax.Value)
+                                    {
+                                    }
+                                }
+                                break;
+                            case "pats.tbl_dbo_formanswersignatures":
+                                //check if table exists and if yes then process
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'answersignature'", st.ConStr);
+                                // if yes then
+                                                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    DateTime wrkdt = st.WorkDate.Value.AddDays(-10).Date;
+                                    //strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    strCmd = "select distinct SiteCode, FormName, convert(varchar(100),FormId) FormId, ClientId, CreatedOn, UpdatedOn, Isdeleted \r\n" +
+                                        ", CompletedBySignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'CompletedBySignatureSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", CounselorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and \r\n" +
+                                        " (DateField = 'CounselorSignatureSignatureDate' or DateField = 'CounselorSignatureDate') order by [DateTime] desc) \r\n" +
+                                        ", DoctorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'DoctorSignatureSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", MedicalProviderSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'MedicalProviderSignatureSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", PatientSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'PatientSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", ProviderSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'ProviderSignatureSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", RequestorSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'RequestorSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", StaffSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'StaffSignatureDate' order by [DateTime] desc) \r\n" +
+                                        ", SupervisorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'SupervisorSignatureSignatureDate' order by [DateTime] desc) \r\n" +
+                                        " from (select SiteCode = '" + st.SiteCode.ToString() + "', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.UpdatedOn, IsDeleted  from dbo.Form f left join FormTemplate ft \r\n" +
+                                        " on (f.FormTemplateId = ft.Id) /*where (f.CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(f.UpdatedOn, f.CreatedOn) >= '" + wrkdt.ToShortDateString() +
+                                        "')*/ union select SiteCode = '" + st.SiteCode.ToString() +
+                                        "', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.UpdatedOn, Isdeleted from dbo.Form f left join FormTemplate ft on(f.FormTemplateId = ft.Id) \r\n" +
+                                        " /*where (f.CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(f.UpdatedOn, f.CreatedOn) >= '" + wrkdt.ToShortDateString() + "') or Isdeleted = 1*/) x \r\n";
+                                    //" --Suicide Severity Rating Scale --(For ETL’ing to pats.tbl_dbo_FormQuestionAnswers) "
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'SuicideSeverityRatingScale'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Suicide Severity Rating Scale' as [FormName]" +
+                                        "     , '1-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "     , ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "     , CompletedBySignatureSignatureDate = null " +
+                                        "     , CounselorSignatureSignatureDate = null " + 
+                                        //case when convert(date, CounselorsignatureDate) is null then '1900-01-01' else convert(date, CounselorsignatureDate) end  " +
+                                        "     , DoctorSignatureSignatureDate = null " +
+                                        "     , MedicalProviderSignatureSignatureDate = convert(date, MedicalProviderSignatureDate) " +
+                                        "     , PatientSignatureDate = null" +
+                                        "     , ProviderSignatureSignatureDate = null" +
+                                        "     , RequestorSignatureDate = null" +
+                                        "     , [StaffSignatureDate] = case when convert(date, StaffSignatureDate) is null then '1900-01-01' else convert(date, StaffSignatureDate) end " +
+                                        "     , SupervisorSignatureSignatureDate = case when convert(date, SupervisorSignatureDate) is null then '1900-01-01' else convert(date, SupervisorSignatureDate) end " +
+                                        "  from [dbo].[SuicideSeverityRatingScale] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedOn, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " 
+                                    }
+                                    //"  --Health Questionnaire " 
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'HealthQuestionnaire'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Health Questionnaire' as [FormName]" +
+                                        "      , '2-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , ClientId, convert(date, Createddate), convert(date, Modifieddate), Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null " +
+                                        "      , DoctorSignatureSignatureDate = case when convert(date, DoctorSignatureDate) is null then '1900-01-01' else convert(date, DoctorSignatureDate) end " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = null " +
+                                        "      , ProviderSignatureSignatureDate = case when convert(date, NurseSignatureDate) is null then '1900-01-01' else convert(date, NurseSignatureDate) end " +
+                                        "      , RequestorSignatureDate = null " +
+                                        "      , StaffSignatureDate = null " +
+                                        "      , SupervisorSignatureSignatureDate = null " +
+                                        "  from [dbo].[HealthQuestionnaire] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --Infectious Disease And Behavioral Screen " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'InfectiousDiseaseAndBehavioralScreen'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Infectious Disease And Behavioral Screen' as [FormName]" +
+                                        "      , '3-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null" +
+                                        "      , DoctorSignatureSignatureDate = null " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = null " +
+                                        "      , ProviderSignatureSignatureDate = case when convert(date, MedicalStaffSignatureDate) is null then '1900-01-01' else convert(date, MedicalStaffSignatureDate) end " +
+                                        "      , RequestorSignatureDate = null" +
+                                        "      , StaffSignatureDate = null " +
+                                        "      , SupervisorSignatureSignatureDate = null " +
+                                        " from [dbo].[InfectiousDiseaseAndBehavioralScreen] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  --Consent to Treatment with an Approved Narcotic " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'ConsentToTreatmentWithAnApprovedNarcotic'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Consent to Treatment with an Approved Narcotic' as [FormName]" +
+                                        "      , '4-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null" +
+                                        "      , DoctorSignatureSignatureDate = case when convert(date,DoctorSignatureDate) is null then '1900-01-01' else convert(date,DoctorSignatureDate) end " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = case when convert(date,PatientSignatureDate) is null then '1900-01-01' else convert(date,PatientSignatureDate) end  " +
+                                        "      , ProviderSignatureSignatureDate = null " +
+                                        "      , RequestorSignatureDate = null" +
+                                        "      , StaffSignatureDate = case when convert(date,StaffSignatureDate) is null then '1900-01-01' else convert(date,StaffSignatureDate) end " +
+                                        "      , SupervisorSignatureSignatureDate = null " +
+                                        " from [dbo].[ConsentToTreatmentWithAnApprovedNarcotic] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  -- 'Financial Hardship Application' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'FinancialHardshipApplication'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Financial Hardship Application' as [FormName]" +
+                                        "      , '5-' + convert(varchar, CltId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , CltId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null" +
+                                        "      , DoctorSignatureSignatureDate = null " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = case when convert(date,FHAPatientSignatureDate) is null then '1900-01-01' else convert(date,FHAPatientSignatureDate) end " +
+                                        "      , ProviderSignatureSignatureDate = null " +
+                                        "      , RequestorSignatureDate = null" +
+                                        "      , StaffSignatureDate = null " +
+                                        "      , SupervisorSignatureSignatureDate = null " +
+                                        " from [dbo].[FinancialHardshipApplication] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  -- 'Comprehensive Assessment Form' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'ComprehensiveAssessmentForm'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Comprehensive Assessment Form' as [FormName]" +
+                                        "      , '6-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID] " +
+                                        "      , ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null" +
+                                        "      , DoctorSignatureSignatureDate = null " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = case when convert(date,CAPatientSignatureDate) is null then '1900-01-01' else convert(date,CAPatientSignatureDate) end " +
+                                        "      , ProviderSignatureSignatureDate = case when convert(date,CAProviderSignatureDate) is null then '1900-01-01' else convert(date,CAProviderSignatureDate) end " +
+                                        "      , RequestorSignatureDate = null" +
+                                        "      , StaffSignatureDate = case when convert(date,CAStaffSignatureDate) is null then '1900-01-01' else convert(date,CAStaffSignatureDate) end " +
+                                        "      , SupervisorSignatureSignatureDate = case when convert(date,CASupervisorSignatureDate) is null then '1900-01-01' else convert(date,CASupervisorSignatureDate) end " +
+                                        " from [dbo].[ComprehensiveAssessmentForm] ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  -- 'Admission Assessment' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'AdmissionAssessment'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode = '" + st.SiteCode.ToString() + "', 'Admission Assessment' as [FormName]" +
+                                        "      , '7-' + convert(varchar, aa.ClientId) + '-' + convert(varchar, aa.PreAdmissionId) + '-' + convert(varchar, aa.id) as [FormID] " +
+                                        "      , aa.ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted " +
+                                        "      , CompletedBySignatureSignatureDate = null" +
+                                        "      , CounselorSignatureSignatureDate = null" +
+                                        "      , DoctorSignatureSignatureDate = null " +
+                                        "      , MedicalProviderSignatureSignatureDate = null " +
+                                        "      , PatientSignatureDate = case when convert(date,AdmissionAssessmentPatientSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentPatientSignatureDate) end " +
+                                        "      , ProviderSignatureSignatureDate = case when convert(date,AdmissionAssessmentProviderSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentProviderSignatureDate) end " +
+                                        "      , RequestorSignatureDate = null" +
+                                        "      , StaffSignatureDate = case when convert(date,AdmissionAssessmentStaffSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentStaffSignatureDate) end " +
+                                        "      , SupervisorSignatureSignatureDate = case when convert(date,AdmissionAssessmentSupervisorSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentSupervisorSignatureDate) end " +
+                                        " from [dbo].[AdmissionAssessment] aa inner join [dbo].[AdmissionAssessmentSummary] aas on aa.Id = aas.AdmissionAssessmentId and aa.PreAdmissionId = aas.PreAdmissionId ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    //"  -- 'Treatment Plan' " +
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'tblTP17REVIEW'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union " +
+                                        " select distinct SiteCode, FormName, FormID, ClientId, CreatedOn, UpdatedOn, IsDeleted " +
+                                        ", CompletedBySignatureSignatureDate, CounselorSignatureSignatureDate, DoctorSignatureSignatureDate, MedicalProviderSignatureSignatureDate " +
+                                        ", PatientSignatureDate, ProviderSignatureSignatureDate, RequestorSignatureDate, StaffSignatureDate, SupervisorSignatureSignatureDate from( " +
+                                        " Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                        ", '8-1-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                        ", null PreAdmissionId, tprCLTID ClientId, 1 as QuestionID, 1 as QuestionOrderID, 'Treatment Plan Type' as QuestionText, null as [OptionID], TprTYPE as AnswerValue " +
+                                        ", tprCreatedby Createdby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end " +
+                                        ", CompletedBySignatureSignatureDate = null, CounselorSignatureSignatureDate = null, DoctorSignatureSignatureDate = null, MedicalProviderSignatureSignatureDate = null " +
+                                        ", PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date, tprCLIRNTSIGDate) end " +
+                                        ", ProviderSignatureSignatureDate = case when convert(date, tprDRSIGDate) is null then '1900-01-01' else convert(date, tprDRSIGDate) end " +
+                                        ", RequestorSignatureDate = null " +
+                                        ", StaffSignatureDate = case when(convert(date, tprCOUNSSIGDate) is null and convert(date, tprSUPERSIGDate) is null) then '1900-01-01' else convert(date, tprCOUNSSIGDate) end " +
+                                        ", SupervisorSignatureSignatureDate = convert(date, tprSUPERSIGDate) from [dbo].tblTP17REVIEW ) tp"; 
+                                        //" union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                        //", '8-2-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                        //", null PreAdmissionId, ABS(tprCLTID) ClientId, 2 as QuestionID, 1 as QuestionOrderID, 'Treatment Phase Type' as QuestionText, null as [OptionID], tpTreatmentPhase as AnswerValue " +
+                                        //", tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end " +
+                                        //", CompletedBySignatureSignatureDate = null, CounselorSignatureSignatureDate = null, DoctorSignatureSignatureDate = null, MedicalProviderSignatureSignatureDate = null " +
+                                        //", PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date, tprCLIRNTSIGDate) end " +
+                                        //", ProviderSignatureSignatureDate = case when convert(date, tprDRSIGDate) is null then '1900-01-01' else convert(date, tprDRSIGDate) end " +
+                                        //", RequestorSignatureDate = null " +
+                                        //", StaffSignatureDate = case when(convert(date, tprCOUNSSIGDate) is null and convert(date, tprSUPERSIGDate) is null) then '1900-01-01' else convert(date, tprCOUNSSIGDate) end " +
+                                        //", SupervisorSignatureSignatureDate = convert(date, tprSUPERSIGDate) from[dbo].tblTP17REVIEW " +
+                                        //" union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Treatment Plan' as [FormName] " +
+                                        //", '8-3-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] " +
+                                        //", null PreAdmissionId, ABS(tprCLTID) ClientId, 3 as QuestionID, 1 as QuestionOrderID, 'Next Due' as QuestionText, null as [OptionID], convert(varchar, tprNEXT) as AnswerValue " +
+                                        //", tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end " +
+                                        //", CompletedBySignatureSignatureDate = null, CounselorSignatureSignatureDate = null, DoctorSignatureSignatureDate = null, MedicalProviderSignatureSignatureDate = null " +
+                                        //", PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date, tprCLIRNTSIGDate) end " +
+                                        //", ProviderSignatureSignatureDate = case when convert(date, tprDRSIGDate) is null then '1900-01-01' else convert(date, tprDRSIGDate) end " +
+                                        //", RequestorSignatureDate = null " +
+                                        //", StaffSignatureDate = case when(convert(date, tprCOUNSSIGDate) is null and convert(date, tprSUPERSIGDate) is null) then '1900-01-01' else convert(date, tprCOUNSSIGDate) end " +
+                                        //", SupervisorSignatureSignatureDate = convert(date, tprSUPERSIGDate) from[dbo].tblTP17REVIEW ";
+                                    }
+                                    SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'tblORDERREQ'", st.ConStr);
+                                    if (SrcDt.Rows.Count == 1)
+                                    {
+                                        strCmd += " union Select SiteCode = '" + st.SiteCode.ToString() + "', 'Level Justification' as [FormName] " +
+                                            ", [FormID] = '9-1-' + convert(varchar, ABS(cltID)) + '-' + convert(varchar, ReqNum) + '-1' /*+ convert(varchar, tprTPID)*/ " +
+                                            ", ClientId = cltID /*, Createdby = Staff*/, [CreatedOn] = convert(date, DateAdded) " +
+                                            "/*, [UpdatedBy] = StatusUser*/, [UpdatedOn] = convert(date, statusDate) " + 
+                                            ", Isdeleted = Case when cltID < 0 then 1 else 0 end " + 
+                                            ", CompletedBySignatureSignatureDate = null " + 
+                                            ", CounselorSignatureSignatureDate = null " +
+                                            ", DoctorSignatureSignatureDate = null " +
+                                            ", MedicalProviderSignatureSignatureDate = null " + 
+                                            ", PatientSignatureDate = null " + 
+                                            ", ProviderSignatureSignatureDate = case when (ISNull(convert(date, DrSigDt), convert(date, SigNurseDt)) is null and Status = 'Approved') then '1900-01-01' else ISNull(convert(date, DrSigDt), convert(date, SigNurseDt)) end " + 
+                                            ", RequestorSignatureDate = null " +
+                                            ", StaffSignatureDate = null " + 
+                                            ", SupervisorSignatureSignatureDate = case when convert(date, sigCoordinatorDt) is null and Status = 'Approved' then '1900-01-01' else convert(date, sigCoordinatorDt) end " +
+                                            " from [dbo].[tblORDERREQ] where status = 'Approved' and (Notes not like 'Test %' and Notes <> 'TEST' and DrNote <>'HEllo test' and DrNote <> 'TEST') ";
+                                        //--where CreatedOn >= '" + wrkdt.ToShortDateString() + "' or isnull(ModifiedDate, CreatedOn) >= '" + wrkdt.ToShortDateString() + "' " +
+                                    }
+                                    
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveAnswerSignatures(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(-10), null);
+                                }
+                                else { rCodes.ExceptMsg = "No AnswerSignature table."; rCodes.IsResult = true; }
+                                if ((st.RowTrax.HasValue) && (st.SiteCode != "PHC"))
+                                {
+                                    if (st.RowTrax.Value)
+                                    {
+                                    }
+                                }
+                                break;
+                            case "pats.tbl_vw3pbill":
+                                strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                rCodes = sd.SaveAuthBills(SrcDt, st.SiteCode, st.WorkDate.Value.Date, false, null);
+                                if ((st.RowTrax.HasValue))
+                                {
+                                    if (st.RowTrax.Value)
+                                    {
+                                        sd.SaveRowTrax(st.SiteCode, st.WorkDate.Value.Date, st.TaskName, SrcDt.Rows.Count,
+                                            int.Parse(sm.GetTableData("Aztbl", "Select tblcnt = count(1) from " + st.TaskName + " where SiteCode = '" 
+                                            + st.SiteCode + "' ", sm.ConnectionString).Rows[0][0].ToString()), null);
+                                    }
+                                }
+                                break;
+                        }
+                    }

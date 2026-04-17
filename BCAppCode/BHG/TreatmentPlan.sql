@@ -1,0 +1,203 @@
+﻿select distinct DateField from AnswerSignature where DateField like '%Signature%' 
+
+select distinct SiteCode, FormName, convert(varchar(100),FormId) FormId, ClientId, CreatedOn, UpdatedOn, Isdeleted 
+, CompletedBySignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'CompletedBySignatureSignatureDate' order by [DateTime] desc) 
+, CounselorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and 
+  (DateField = 'CounselorSignatureSignatureDate' or DateField = 'CounselorSignatureDate') order by [DateTime] desc) 
+, DoctorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'DoctorSignatureSignatureDate' order by [DateTime] desc) 
+, MedicalProviderSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'MedicalProviderSignatureSignatureDate' order by [DateTime] desc) 
+, PatientSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'PatientSignatureDate' order by [DateTime] desc) 
+, ProviderSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'ProviderSignatureSignatureDate' order by [DateTime] desc) 
+, RequestorSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'RequestorSignatureDate' order by [DateTime] desc) 
+, StaffSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'StaffSignatureDate' order by [DateTime] desc) 
+, SupervisorSignatureSignatureDate = (select top 1 case when Sign is null then '1/1/1900' else [DateTime] end from AnswerSignature where FormId = x.FormId and DateField = 'SupervisorSignatureSignatureDate' order by [DateTime] desc)  
+from (select SiteCode = 'B27', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.UpdatedOn, IsDeleted  from dbo.Form f left join FormTemplate ft  on (f.FormTemplateId = ft.Id) 
+where (f.CreatedOn >= '4/10/2023' or isnull(f.UpdatedOn, f.CreatedOn) >= '4/10/2023') 
+union select SiteCode = 'B27', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.UpdatedOn, Isdeleted from dbo.Form f left join FormTemplate ft on(f.FormTemplateId = ft.Id)  
+where (f.CreatedOn >= '4/10/2023' or isnull(f.UpdatedOn, f.CreatedOn) >= '4/10/2023') or Isdeleted = 1) x  
+union select distinct SiteCode = 'B27', 'Suicide Severity Rating Scale' as [FormName]     
+, '1-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]      
+, ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted      
+, CompletedBySignatureSignatureDate = null      , CounselorSignatureSignatureDate = null      , DoctorSignatureSignatureDate = null      
+, MedicalProviderSignatureSignatureDate = convert(date, MedicalProviderSignatureDate)      
+, PatientSignatureDate = null     , ProviderSignatureSignatureDate = null     , RequestorSignatureDate = null     
+, [StaffSignatureDate] = case when convert(date, StaffSignatureDate) is null then '1900-01-01' else convert(date, StaffSignatureDate) end      
+, SupervisorSignatureSignatureDate = case when convert(date, SupervisorSignatureDate) is null then '1900-01-01' else convert(date, SupervisorSignatureDate) end   
+from [dbo].[SuicideSeverityRatingScale]  union  select distinct SiteCode = 'B27', 'Health Questionnaire' as [FormName]      
+, '2-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]       
+, ClientId, convert(date, Createddate), convert(date, Modifieddate), Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null       
+, DoctorSignatureSignatureDate = case when convert(date, DoctorSignatureDate) is null then '1900-01-01' else convert(date, DoctorSignatureDate) end       
+, MedicalProviderSignatureSignatureDate = null       , PatientSignatureDate = null       
+, ProviderSignatureSignatureDate = case when convert(date, NurseSignatureDate) is null then '1900-01-01' else convert(date, NurseSignatureDate) end       
+, RequestorSignatureDate = null       , StaffSignatureDate = null       , SupervisorSignatureSignatureDate = null   from [dbo].[HealthQuestionnaire]  
+union  select distinct SiteCode = 'B27', 'Infectious Disease And Behavioral Screen' as [FormName]      
+, '3-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]       
+, ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null      , DoctorSignatureSignatureDate = null       , MedicalProviderSignatureSignatureDate = null       , PatientSignatureDate = null       
+, ProviderSignatureSignatureDate = case when convert(date, MedicalStaffSignatureDate) is null then '1900-01-01' else convert(date, MedicalStaffSignatureDate) end       
+, RequestorSignatureDate = null      , StaffSignatureDate = null       
+, SupervisorSignatureSignatureDate = null  from [dbo].[InfectiousDiseaseAndBehavioralScreen]  
+union  select distinct SiteCode = 'B27', 'Consent to Treatment with an Approved Narcotic' as [FormName]      
+, '4-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]       
+, ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null      
+, DoctorSignatureSignatureDate = case when convert(date,DoctorSignatureDate) is null then '1900-01-01' else convert(date,DoctorSignatureDate) end       
+, MedicalProviderSignatureSignatureDate = null       
+, PatientSignatureDate = case when convert(date,PatientSignatureDate) is null then '1900-01-01' else convert(date,PatientSignatureDate) end        
+, ProviderSignatureSignatureDate = null       , RequestorSignatureDate = null      
+, StaffSignatureDate = case when convert(date,StaffSignatureDate) is null then '1900-01-01' else convert(date,StaffSignatureDate) end       
+, SupervisorSignatureSignatureDate = null  from [dbo].[ConsentToTreatmentWithAnApprovedNarcotic]  
+union  select distinct SiteCode = 'B27', 'Financial Hardship Application' as [FormName]      
+, '5-' + convert(varchar, CltId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]       
+, CltId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null      , DoctorSignatureSignatureDate = null       , MedicalProviderSignatureSignatureDate = null       
+, PatientSignatureDate = case when convert(date,FHAPatientSignatureDate) is null then '1900-01-01' else convert(date,FHAPatientSignatureDate) end       
+, ProviderSignatureSignatureDate = null       , RequestorSignatureDate = null      , StaffSignatureDate = null       , SupervisorSignatureSignatureDate = null  
+from [dbo].[FinancialHardshipApplication]  union  select distinct SiteCode = 'B27', 'Comprehensive Assessment Form' as [FormName]      
+, '6-' + convert(varchar, ClientId) + '-' + convert(varchar, PreAdmissionId) + '-' + convert(varchar, id) as [FormID]       
+, ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null      , DoctorSignatureSignatureDate = null       , MedicalProviderSignatureSignatureDate = null       
+, PatientSignatureDate = case when convert(date,CAPatientSignatureDate) is null then '1900-01-01' else convert(date,CAPatientSignatureDate) end       
+, ProviderSignatureSignatureDate = case when convert(date,CAProviderSignatureDate) is null then '1900-01-01' else convert(date,CAProviderSignatureDate) end       
+, RequestorSignatureDate = null      , StaffSignatureDate = case when convert(date,CAStaffSignatureDate) is null then '1900-01-01' else convert(date,CAStaffSignatureDate) end       
+, SupervisorSignatureSignatureDate = case when convert(date,CASupervisorSignatureDate) is null then '1900-01-01' else convert(date,CASupervisorSignatureDate) end  
+from [dbo].[ComprehensiveAssessmentForm]  union  select distinct SiteCode = 'B27', 'Admission Assessment' as [FormName]      
+, '7-' + convert(varchar, aa.ClientId) + '-' + convert(varchar, aa.PreAdmissionId) + '-' + convert(varchar, aa.id) as [FormID]       
+, aa.ClientId, convert(date, CreatedOn) as [CreatedOn], convert(date, ModifiedOn) as [UpdatedOn], Isdeleted       , CompletedBySignatureSignatureDate = null      
+, CounselorSignatureSignatureDate = null      , DoctorSignatureSignatureDate = null       , MedicalProviderSignatureSignatureDate = null       
+, PatientSignatureDate = case when convert(date,AdmissionAssessmentPatientSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentPatientSignatureDate) end       
+, ProviderSignatureSignatureDate = case when convert(date,AdmissionAssessmentProviderSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentProviderSignatureDate) end       
+, RequestorSignatureDate = null      
+, StaffSignatureDate = case when convert(date,AdmissionAssessmentStaffSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentStaffSignatureDate) end       
+, SupervisorSignatureSignatureDate = case when convert(date,AdmissionAssessmentSupervisorSignatureDate) is null then '1900-01-01' else convert(date,AdmissionAssessmentSupervisorSignatureDate) end  
+from [dbo].[AdmissionAssessment] aa inner join [dbo].[AdmissionAssessmentSummary] aas on aa.Id = aas.AdmissionAssessmentId and aa.PreAdmissionId = aas.PreAdmissionId  
+union  select distinct SiteCode, FormName, FormID, ClientId, CreatedOn, UpdatedOn, IsDeleted , CompletedBySignatureSignatureDate, CounselorSignatureSignatureDate, DoctorSignatureSignatureDate
+, MedicalProviderSignatureSignatureDate , PatientSignatureDate, ProviderSignatureSignatureDate, RequestorSignatureDate, StaffSignatureDate, SupervisorSignatureSignatureDate 
+from (Select SiteCode = 'B27', 'Treatment Plan' as [FormName] , '8-1-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+, null PreAdmissionId, tprCLTID ClientId, 1 as QuestionID, 1 as QuestionOrderID, 'Treatment Plan Type' as QuestionText, null as [OptionID], TprTYPE as AnswerValue 
+, tprCreatedby Createdby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end 
+, CompletedBySignatureSignatureDate = null, CounselorSignatureSignatureDate = null, DoctorSignatureSignatureDate = null, MedicalProviderSignatureSignatureDate = null 
+, PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date, tprCLIRNTSIGDate) end 
+, ProviderSignatureSignatureDate = case when convert(date, tprDRSIGDate) is null then '1900-01-01' else convert(date, tprDRSIGDate) end , RequestorSignatureDate = null 
+, StaffSignatureDate = case when(convert(date, tprCOUNSSIGDate) is null and convert(date, tprSUPERSIGDate) is null) then '1900-01-01' else convert(date, tprCOUNSSIGDate) end 
+, SupervisorSignatureSignatureDate = convert(date, tprSUPERSIGDate) from [dbo].tblTP17REVIEW ) tp union Select SiteCode = 'B27', 'Level Justification' as [FormName] 
+, [FormID] = '9-1-' + convert(varchar, ABS(cltID)) + '-' + convert(varchar, ReqNum) + '-1' /*+ convert(varchar, tprTPID)*/ , ClientId = cltID /*, Createdby = Staff*/
+, [CreatedOn] = convert(date, DateAdded) /*, [UpdatedBy] = StatusUser*/, [UpdatedOn] = convert(date, statusDate) , Isdeleted = Case when cltID < 0 then 1 else 0 end 
+, CompletedBySignatureSignatureDate = null , CounselorSignatureSignatureDate = null , DoctorSignatureSignatureDate = null , MedicalProviderSignatureSignatureDate = null 
+, PatientSignatureDate = null , ProviderSignatureSignatureDate = case when (ISNull(convert(date, DrSigDt), convert(date, SigNurseDt)) is null and Status = 'Approved') then '1900-01-01' else ISNull(convert(date, DrSigDt), convert(date, SigNurseDt)) end 
+, RequestorSignatureDate = null , StaffSignatureDate = null 
+, SupervisorSignatureSignatureDate = case when convert(date, sigCoordinatorDt) is null and Status = 'Approved' then '1900-01-01' else convert(date, sigCoordinatorDt) end  
+from [dbo].[tblORDERREQ] where status = 'Approved' and (Notes not like 'Test %' and Notes <> 'TEST' and DrNote <>'HEllo test' and DrNote <> 'TEST') 
+
+
+
+
+
+
+
+
+
+
+
+    select SiteCode, FormName, convert(varchar(100),FormId) FormId, PreAdmissionId, ClientId, QuestionId , QuestionOrderId = isnull(x.QuestionOrderId, Row_Number() over(Partition by x.FormName, x.FormId, x.ClientId, x.QuestionId order by x.QuestionId)) , QuestionText, OptionId, AnswerValue, CreatedBy, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from (select SiteCode = 'Lab', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy, f.PreAdmissionId, f.IsDeleted /*, f.IsChildForm*/ , QuestionId = isnull(q.Id, 0), QuestionOrderId = q.QuestionOrderId, q.QuestionText, a.OptionId, AnswerValue = a.Value  from dbo.Form f left join FormTemplate ft on (f.FormTemplateId = ft.Id) left join Question q on (ft.Id = q.FormTemplateId)  left join Answer a on (f.Id = a.FormId and q.id = a.QuestionId) where a.Value is not null and (f.CreatedOn >= '12/14/2022' or isnull(f.UpdatedOn, f.CreatedOn) >= '12/14/2022')  union select SiteCode = 'Lab', ft.FormName, f.id as FormId, f.ClientId, f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy, f.PreAdmissionId, f.IsDeleted  /*, f.IsChildForm */  , QuestionId = isnull(q.Id, 0), QuestionOrderId = q.QuestionOrderId, q.QuestionText, a.OptionId, AnswerValue = a.Value  from dbo.Form f left join FormTemplate ft on (f.FormTemplateId = ft.Id) left join Question q on (ft.Id = q.FormTemplateId)  left join Answer a on (f.Id = a.FormId and q.id = a.QuestionId) where q.Id is null and (f.CreatedOn >= '12/14/2022' or isnull(f.UpdatedOn, f.CreatedOn) >= '12/14/2022')) x union select SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID , QuestionOrderID = Row_Number() over(Partition by tp.FormName, tp.FormId, tp.ClientId, tp.QuestionId order by tp.QuestionId) , QuestionText, OptionID, AnswerValue, Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted from( Select SiteCode = 'Lab', 'Treatment Plan' as [FormName] , '8-1-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] , null PreAdmissionId, ABS(tprCLTID) ClientId, 1 as QuestionID, 1 as QuestionOrderID, 'Treatment Plan Type' as QuestionText, null as [OptionID] , TprTYPE as AnswerValue, tprCreatedby Createdby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] , Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW  union Select SiteCode = 'Lab', 'Treatment Plan' as [FormName] , '8-2-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] , null PreAdmissionId, ABS(tprCLTID) ClientId, 2 as QuestionID, 1 as QuestionOrderID, 'Treatment Phase Type' as QuestionText, null as [OptionID] , tpTreatmentPhase as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] , Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW  union Select SiteCode = 'Lab', 'Treatment Plan' as [FormName] , '8-3-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] , null PreAdmissionId, ABS(tprCLTID) ClientId, 3 as QuestionID, 1 as QuestionOrderID, 'Next Due' as QuestionText, null as [OptionID] , convert(varchar, tprNEXT) as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn] 
+, Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW  
+
+union Select SiteCode = 'Lab', 'Treatment Plan' as [FormName] 
+, '8-4-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+, null PreAdmissionId, ABS(tprCLTID) ClientId, 4 as QuestionID, 1 as QuestionOrderID, 'Review Frequency' as QuestionText, null as [OptionID] 
+, rtrim(substring(tprReviewFrequency, 6, LEN(tprReviewFrequency) - 5)) as AnswerValue, tprCreatedby, convert(date, tprDT) as [CreatedOn] 
+, null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID< 0 then 1 else 0 end from[dbo].tblTP17REVIEW  ) tp 
+
+
+
+
+select * from sys.tables t where name = 'tblTP17REVIEW'
+select * from sys.all_columns c where c.object_id = (select object_id from sys.tables where name = 'tblTP17REVIEW') and name = 'tprReviewFrequency'
+
+
+
+
+
+
+
+
+
+Select --(For ETL’ing to pats.tbl_dbo_FormQuestionAnswers)
+
+'Treatment Plan' as [FormName],
+--Logic that was discussed to created unique ID--  as [FormID], Form Addition ID, and tprcltid and tprid 
+ABS(tprCLTID) as ClientId, 
+convert(date, tprDt) as [CreatedOn],
+tprCreatedBy as Createdby,
+convert(date, NULL) as [UpdatedOn],
+NULL as [UpdatedBy],
+NULL as PreAdmissionId,
+Case when tprCLTID< 0 then 1 else 0 end as Isdeleted,
+'1' as QuestionID, 
+'1' as QuestionOrderID,
+'Treatment Plan Type' as QuestionText,
+'0' as [OptionID],
+TprTYPE as AnswerValue
+
+from tblTP17REVIEW
+order by 1, 2
+
+select SiteCode, FormName, FormID, /*PreadmissionId,*/ ClientId /*, QuestionID */
+     /*, QuestionOrderID = Row_Number() over(Partition by tp.FormName, tp.FormId, tp.ClientId, tp.QuestionId order by tp.QuestionId) 
+     , QuestionText, OptionID, AnswerValue*/, Createdby, CreatedOn, UpdatedBy, UpdatedOn /*, IsDeleted*/
+     , CompletedBySignatureSignatureDate, CounselorSignatureSignatureDate, DoctorSignatureSignatureDate, MedicalProviderSignatureSignatureDate
+     , PatientSignatureDate, ProviderSignatureSignatureDate, RequestorSignatureDate, StaffSignatureDate, SupervisorSignatureSignatureDate from (
+     Select SiteCode = 'SiteCode', 'Treatment Plan' as [FormName]
+     , '8-1-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+     , DataFormId PreAdmissionId, ABS(tprCLTID) ClientId, 1 as QuestionID, 1 as QuestionOrderID, 'Treatment Plan Type' as QuestionText, null as [OptionID], TprTYPE as AnswerValue 
+     , tprCreatedby Createdby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID < 0 then 1 else 0 end
+     , CompletedBySignatureSignatureDate = null
+     , CounselorSignatureSignatureDate = null
+     , DoctorSignatureSignatureDate = null
+     , MedicalProviderSignatureSignatureDate = null
+     , PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date,tprCLIRNTSIGDate) end 
+     , ProviderSignatureSignatureDate = case when convert(date,tprDRSIGDate) is null then '1900-01-01' else convert(date,tprDRSIGDate) end
+     , RequestorSignatureDate = null
+     , StaffSignatureDate = case when (convert(date,tprCOUNSSIGDate) is null and convert(date,tprSUPERSIGDate) is null) then '1900-01-01' else convert(date,tprCOUNSSIGDate) end 
+     , SupervisorSignatureSignatureDate = convert(date,tprSUPERSIGDate) from [dbo].tblTP17REVIEW 
+     union Select SiteCode = 'SiteCode', 'Treatment Plan' as [FormName]
+     , '8-2-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+     , DataFormId PreAdmissionId, ABS(tprCLTID) ClientId, 2 as QuestionID, 1 as QuestionOrderID, 'Treatment Phase Type' as QuestionText, null as [OptionID], tpTreatmentPhase as AnswerValue 
+     , tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID < 0 then 1 else 0 end
+     , CompletedBySignatureSignatureDate = null
+     , CounselorSignatureSignatureDate = null
+     , DoctorSignatureSignatureDate = null
+     , MedicalProviderSignatureSignatureDate = null
+     , PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date,tprCLIRNTSIGDate) end 
+     , ProviderSignatureSignatureDate = case when convert(date,tprDRSIGDate) is null then '1900-01-01' else convert(date,tprDRSIGDate) end
+     , RequestorSignatureDate = null
+     , StaffSignatureDate = case when (convert(date,tprCOUNSSIGDate) is null and convert(date,tprSUPERSIGDate) is null) then '1900-01-01' else convert(date,tprCOUNSSIGDate) end 
+     , SupervisorSignatureSignatureDate = convert(date,tprSUPERSIGDate) from [dbo].tblTP17REVIEW  
+     union Select SiteCode = 'SiteCode', 'Treatment Plan' as [FormName]
+     , '8-3-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+     , DataFormId PreAdmissionId, ABS(tprCLTID) ClientId, 3 as QuestionID, 1 as QuestionOrderID, 'Next Due'  as QuestionText, null as [OptionID], convert(varchar,tprNEXT) as AnswerValue 
+     , tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID < 0 then 1 else 0 end
+     , CompletedBySignatureSignatureDate = null
+     , CounselorSignatureSignatureDate = null
+     , DoctorSignatureSignatureDate = null
+     , MedicalProviderSignatureSignatureDate = null
+     , PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date,tprCLIRNTSIGDate) end 
+     , ProviderSignatureSignatureDate = case when convert(date,tprDRSIGDate) is null then '1900-01-01' else convert(date,tprDRSIGDate) end
+     , RequestorSignatureDate = null
+     , StaffSignatureDate = case when (convert(date,tprCOUNSSIGDate) is null and convert(date,tprSUPERSIGDate) is null) then '1900-01-01' else convert(date,tprCOUNSSIGDate) end 
+     , SupervisorSignatureSignatureDate = convert(date,tprSUPERSIGDate) from [dbo].tblTP17REVIEW  
+     union Select SiteCode = 'SiteCode', 'Treatment Plan' as [FormName]
+     , '8-4-' + convert(varchar, ABS(tprCLTID)) + '-' + convert(varchar, tpRID) + '-' + convert(varchar, tprTPID) as [FormID] 
+     , DataFormId PreAdmissionId, ABS(tprCLTID) ClientId, 4 as QuestionID, 1 as QuestionOrderID, 'Review Frequency'  as QuestionText, null as [OptionID]
+     , rtrim(substring(tprReviewFrequency, 6, LEN(tprReviewFrequency)-5)) as AnswerValue 
+     , tprCreatedby, convert(date, tprDT) as [CreatedOn], null as [UpdatedBy], null as [UpdatedOn], Isdeleted = Case when tprCLTID < 0 then 1 else 0 end
+     , CompletedBySignatureSignatureDate = null
+     , CounselorSignatureSignatureDate = null
+     , DoctorSignatureSignatureDate = null
+     , MedicalProviderSignatureSignatureDate = null
+     , PatientSignatureDate = case when convert(date, tprCLIRNTSIGDate) is null then '1900-01-01' else convert(date,tprCLIRNTSIGDate) end 
+     , ProviderSignatureSignatureDate = case when convert(date,tprDRSIGDate) is null then '1900-01-01' else convert(date,tprDRSIGDate) end
+     , RequestorSignatureDate = null
+     , StaffSignatureDate = case when (convert(date,tprCOUNSSIGDate) is null and convert(date,tprSUPERSIGDate) is null) then '1900-01-01' else convert(date,tprCOUNSSIGDate) end 
+     , SupervisorSignatureSignatureDate = convert(date,tprSUPERSIGDate) from [dbo].tblTP17REVIEW  ) tp

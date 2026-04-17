@@ -1,0 +1,1 @@
+﻿select convert(date, dtDate) dtDate, Count(1) from pats.tbl_DOSE where siteCode = 'V10A' and dtDate >= '10/1/2022' group by convert(date, dtDate) order by 1

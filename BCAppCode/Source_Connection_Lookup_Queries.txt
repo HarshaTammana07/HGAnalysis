@@ -1,0 +1,562 @@
+================================================================================
+  BHG ETL -- SOURCE DATABASE & CONNECTION STRING LOOKUP QUERIES
+================================================================================
+  How the source DB is resolved at runtime:
+  
+  tsk.tbl_Tasks2
+      -> ctrl.tbl_LocationCons    (JOIN on SiteCode + ActionKey, newest EffectiveDate)
+          -> ctrl.tbl_Connections (JOIN on ConnectionID = ConID)
+              -> ConStr           (the actual SQL Server connection string)
+              -> DbName           (the SAMMS database name for this clinic/action)
+
+  BHGTaskRunner reads tsk.vwTaskList which is a pre-joined view that surfaces
+  ConStr, DbName, WhereCondition, FromTblVw, SchemaVersion per task row.
+================================================================================
+
+
+--------------------------------------------------------------------------------
+-- QUERY 1: Full connection chain -- show every clinic + actionkey combination
+--           with its resolved server connection string and database name
+--------------------------------------------------------------------------------
+
+SELECT
+    lc.SiteCode,
+    lc.ActionKey,
+    lc.EffectiveDate,
+    lc.SchemaVersion,
+    lc.DbName                   AS SourceDatabase,
+    lc.ConnectionId,
+    cn.ConName                  AS ServerAlias,
+    cn.ConType,
+    cn.ConStr                   AS BaseConnectionString,
+    cn.UserName                 AS SqlLoginUser
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+ORDER BY
+    lc.SiteCode,
+    lc.ActionKey,
+    lc.EffectiveDate DESC;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 2: Current (most recent) connection per SiteCode + ActionKey only
+--           (same logic the view uses -- pick the latest EffectiveDate)
+--------------------------------------------------------------------------------
+
+SELECT
+    lc.SiteCode,
+    lc.ActionKey,
+    lc.EffectiveDate,
+    lc.SchemaVersion,
+    lc.DbName                   AS SourceDatabase,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+WHERE lc.EffectiveDate = (
+    SELECT MAX(lc2.EffectiveDate)
+    FROM ctrl.tbl_LocationCons lc2
+    WHERE lc2.SiteCode    = lc.SiteCode
+      AND lc2.ActionKey   = lc.ActionKey
+)
+ORDER BY
+    lc.SiteCode,
+    lc.ActionKey;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 3: Show what the live task queue (Status=17, ready to run) maps to
+--           in terms of source server + database
+--           This mirrors exactly what BHGTaskRunner reads before each run
+--------------------------------------------------------------------------------
+
+SELECT
+    t.TaskId,
+    t.TaskName,
+    t.SiteCode,
+    t.ActionKey,
+    t.ActionStepKey,
+    t.Status,
+    t.RunAt,
+    t.WorkDate,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    lc.EffectiveDate            AS ConEffectiveDate,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString
+FROM tsk.tbl_Tasks2             t
+JOIN ctrl.tbl_LocationCons  lc
+    ON  lc.SiteCode   = t.SiteCode
+    AND lc.ActionKey  = t.ActionKey
+    AND lc.EffectiveDate = (
+            SELECT MAX(lc2.EffectiveDate)
+            FROM ctrl.tbl_LocationCons lc2
+            WHERE lc2.SiteCode  = t.SiteCode
+              AND lc2.ActionKey = t.ActionKey
+        )
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+WHERE t.Status = 17                   -- 17 = ready to run
+  AND t.RunAt  < GETDATE()
+ORDER BY
+    t.TaskName,
+    t.SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 4: Full view recreation -- what tsk.vwTaskList exposes
+--           (Tasks + LocationCons + Connections + MapSrc2Dsn)
+--           Includes WhereCondition and FromTblVw from dms.tbl_MapSrc2Dsn
+--------------------------------------------------------------------------------
+
+SELECT
+    t.TaskId,
+    t.TaskName,
+    t.SiteCode,
+    t.ActionKey,
+    t.ActionStepKey,
+    t.Status,
+    t.RunAt,
+    t.WorkDate,
+    t.ParentTaskId,
+    t.DependentTaskId,
+    t.RowState,
+    t.Duration,
+    t.OnCompletion,
+    t.OnError,
+    t.ErrorMessage,
+    t.RowCount,
+    t.RowsIns,
+    t.RowsUpd,
+    t.Reload,
+    -- Source resolution
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    lc.EffectiveDate            AS ConEffectiveDate,
+    lc.ConnectionId,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    -- Mapping metadata (from dms.tbl_MapSrc2Dsn)
+    m.FromTblVw,                      -- source table or view name in SAMMS
+    m.WhereCondition,                 -- WHERE clause template (uses @SiteCode placeholder)
+    m.SortOrder,
+    m.IsNewSchema,
+    m.SrcSchema,
+    m.RowTrax,
+    m.PQ
+FROM tsk.tbl_Tasks2             t
+JOIN ctrl.tbl_LocationCons  lc
+    ON  lc.SiteCode   = t.SiteCode
+    AND lc.ActionKey  = t.ActionKey
+    AND lc.EffectiveDate = (
+            SELECT MAX(lc2.EffectiveDate)
+            FROM ctrl.tbl_LocationCons lc2
+            WHERE lc2.SiteCode  = t.SiteCode
+              AND lc2.ActionKey = t.ActionKey
+        )
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+LEFT JOIN dms.tbl_MapSrc2Dsn m
+    ON  m.ActionKey     = t.ActionKey
+    AND m.ActionStepKey = t.ActionStepKey
+ORDER BY
+    t.TaskName,
+    t.SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 5: Show all ActionKey values and which TaskName / source table they map to
+--           Useful to confirm which schedule drives which ETL
+--------------------------------------------------------------------------------
+
+SELECT DISTINCT
+    m.ActionKey,
+    m.ActionStepKey,
+    m.FromTblVw                 AS SourceTableOrView,
+    m.WhereCondition,
+    m.IsNewSchema,
+    m.SchemaVersion,
+    m.SrcSchema
+FROM dms.tbl_MapSrc2Dsn m
+ORDER BY
+    m.ActionKey,
+    m.ActionStepKey;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 6: For a SPECIFIC TaskName (e.g., 'SAMMS-ETL-Orders'),
+--           show all clinics + their source database + server
+--           Change the TaskName value to inspect any other ETL schedule
+--------------------------------------------------------------------------------
+
+DECLARE @TaskName NVARCHAR(130) = 'SAMMS-ETL-Orders';   -- change as needed
+-- Other valid values:
+--   'SAMMSGlobal'
+--   'Samms-LAB'
+--   'Samms-Forms'
+--   'SAMMS-ETL-Notes'
+--   'SAMMS-ETL-INV'
+--   'SAMMS-ETL-DartSvc'
+--   'SAMMS-ETL-Dose'
+--   'SAMMS-ETL-Orders'
+
+SELECT
+    t.SiteCode,
+    t.ActionKey,
+    t.ActionStepKey,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    m.FromTblVw                 AS SourceTable,
+    m.WhereCondition
+FROM tsk.tbl_Tasks2             t
+JOIN ctrl.tbl_LocationCons  lc
+    ON  lc.SiteCode   = t.SiteCode
+    AND lc.ActionKey  = t.ActionKey
+    AND lc.EffectiveDate = (
+            SELECT MAX(lc2.EffectiveDate)
+            FROM ctrl.tbl_LocationCons lc2
+            WHERE lc2.SiteCode  = t.SiteCode
+              AND lc2.ActionKey = t.ActionKey
+        )
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+LEFT JOIN dms.tbl_MapSrc2Dsn m
+    ON  m.ActionKey     = t.ActionKey
+    AND m.ActionStepKey = t.ActionStepKey
+WHERE t.TaskName = @TaskName
+ORDER BY
+    t.SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 7: For a SPECIFIC SiteCode, show all ETL tasks and their source DBs
+--           Change @SiteCode to inspect any clinic
+--------------------------------------------------------------------------------
+
+DECLARE @SiteCode NVARCHAR(25) = 'B01';   -- change to your clinic SiteCode
+
+SELECT
+    t.TaskName,
+    t.ActionKey,
+    t.ActionStepKey,
+    t.Status,
+    t.RunAt,
+    t.WorkDate,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    m.FromTblVw                 AS SourceTable
+FROM tsk.tbl_Tasks2             t
+JOIN ctrl.tbl_LocationCons  lc
+    ON  lc.SiteCode   = t.SiteCode
+    AND lc.ActionKey  = t.ActionKey
+    AND lc.EffectiveDate = (
+            SELECT MAX(lc2.EffectiveDate)
+            FROM ctrl.tbl_LocationCons lc2
+            WHERE lc2.SiteCode  = t.SiteCode
+              AND lc2.ActionKey = t.ActionKey
+        )
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+LEFT JOIN dms.tbl_MapSrc2Dsn m
+    ON  m.ActionKey     = t.ActionKey
+    AND m.ActionStepKey = t.ActionStepKey
+WHERE t.SiteCode = @SiteCode
+ORDER BY
+    t.ActionKey,
+    t.ActionStepKey;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 8: Just look at what is in ctrl.tbl_Connections (all server entries)
+--           These are the unique SQL Server instances the ETL connects to
+--           Password column is present but typically masked/encrypted in practice
+--------------------------------------------------------------------------------
+
+SELECT
+    ConID,
+    ConType,
+    ConName,
+    ConStr,
+    UserName,
+    LastModBy,
+    LastModAt
+FROM ctrl.tbl_Connections
+ORDER BY ConType, ConName;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 9: Look directly at the live task queue view as BHGTaskRunner sees it
+--           This is exactly what Program.cs reads at startup
+--------------------------------------------------------------------------------
+
+SELECT *
+FROM tsk.vwTaskList
+WHERE Status = 17
+  AND SiteCode != 'PHC'
+  AND RunAt < GETDATE()
+ORDER BY TaskName, SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY 10: Audit -- find any SiteCode that has no LocationCons entry
+--            for a given ActionKey (would cause ETL to fail with no ConStr)
+--------------------------------------------------------------------------------
+
+DECLARE @ActionKey INT = 11;   -- 11 = SAMMS-ETL-Orders; change as needed
+
+SELECT DISTINCT t.SiteCode
+FROM tsk.tbl_Tasks2 t
+WHERE t.ActionKey = @ActionKey
+  AND t.SiteCode NOT IN (
+        SELECT lc.SiteCode
+        FROM ctrl.tbl_LocationCons lc
+        WHERE lc.ActionKey = @ActionKey
+  )
+ORDER BY t.SiteCode;
+
+
+================================================================================
+  TABLE REFERENCE SUMMARY
+================================================================================
+
+  tsk.tbl_Tasks2
+      TaskId          -- PK, auto-identity
+      TaskName        -- 'SAMMS-ETL-Orders', 'SAMMS-ETL-Dose', etc.
+      ActionKey       -- Links to ctrl.tbl_LocationCons + dms.tbl_MapSrc2Dsn
+      ActionStepKey   -- Sub-step within an ActionKey (links to dms.tbl_MapSrc2Dsn)
+      SiteCode        -- Clinic identifier (e.g. 'B01', 'VBRA')
+      Status          -- 17 = ready to run
+      RunAt           -- Scheduled run time
+      WorkDate        -- Date used as lookback anchor in WHERE clauses
+      ParentTaskId    -- Parent task groups child clinic tasks
+      Reload          -- If true, hard-delete destination data before re-import
+
+  ctrl.tbl_LocationCons
+      SiteCode        -- PK part 1: clinic identifier
+      EffectiveDate   -- PK part 2: when this connection mapping took effect
+      ActionKey       -- PK part 3: which ETL schedule this mapping applies to
+      ConnectionID    -- FK -> ctrl.tbl_Connections.ConID
+      DbName          -- SAMMS database name for this clinic (e.g. 'SAMMS_B01')
+      SchemaVersion   -- Schema version indicator for this clinic's SAMMS DB
+
+  ctrl.tbl_Connections
+      ConID           -- PK
+      ConType         -- Connection type code
+      ConName         -- Friendly name for this server / connection
+      ConStr          -- SQL Server connection string (server, auth, timeout, etc.)
+      UserName        -- SQL login username
+      Password        -- SQL login password (may be encrypted)
+      LastModBy / LastModAt
+
+  dms.tbl_MapSrc2Dsn
+      ActionKey       -- PK part 1: maps to the ETL schedule
+      ActionStepKey   -- PK part 2: sub-step / source table within the schedule
+      FromTblVw       -- Source table or view name in the SAMMS database
+      WhereCondition  -- WHERE clause template; @SiteCode is replaced at runtime
+      SortOrder       -- ORDER BY clause for the source query
+      IsNewSchema     -- Flag for newer SAMMS schema layout
+      SrcSchema       -- Schema name in source (e.g. 'dbo')
+      SchemaVersion   -- Expected schema version
+      RowTrax         -- Whether to log row counts to tsk.tbl_RowTrax
+      PQ              -- Parallel query hint
+
+  tsk.vwTaskList      (VIEW -- read-only, not a base table)
+      Joins tsk.tbl_Tasks2 + ctrl.tbl_LocationCons + ctrl.tbl_Connections
+            + dms.tbl_MapSrc2Dsn
+      Surfaces: ConStr, DbName, FromTblVw, WhereCondition, SchemaVersion,
+                IsNewSchema, SrcSchema, RowTrax, PQ, Reload, WorkDate
+
+================================================================================
+  ACTION KEY REFERENCE
+================================================================================
+
+  ActionKey   TaskName                 Description
+  ---------   --------                 -----------
+  1           SAMMSGlobal              Global reference / clinic data
+  2           Regional ETL P1          Core patient data Phase 1 (4 time zones)
+  3           (catch-all)              Misc tasks not in P1/P2/Global
+  4           Regional ETL P2          Core patient data Phase 2
+  5           Samms-LAB                Lab results
+  6           Samms-Forms              Assessment forms
+  7           SAMMS-ETL-Notes          Clinical notes
+  8           SAMMS-ETL-INV            Insurance / inventory
+  9           SAMMS-ETL-DartSvc        Counseling sessions (DartsSrv)
+  10          SAMMS-ETL-Dose           Medication / dose records
+  11          SAMMS-ETL-Orders         Prescription orders
+================================================================================
+
+
+================================================================================
+  ORDERS-ONLY QUERIES  (ActionKey = 11 / TaskName = 'SAMMS-ETL-Orders')
+================================================================================
+
+--------------------------------------------------------------------------------
+-- QUERY O-1: Every clinic enrolled in the Orders ETL
+--             with its source database name and server connection string
+--             (uses ctrl.tbl_LocationCons directly -- no task queue needed)
+--------------------------------------------------------------------------------
+
+SELECT
+    lc.SiteCode,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    lc.EffectiveDate            AS ConEffectiveDate,
+    lc.ConnectionId,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+WHERE lc.ActionKey = 11                 -- 11 = SAMMS-ETL-Orders
+  AND lc.EffectiveDate = (
+        SELECT MAX(lc2.EffectiveDate)
+        FROM ctrl.tbl_LocationCons lc2
+        WHERE lc2.SiteCode  = lc.SiteCode
+          AND lc2.ActionKey = 11
+      )
+ORDER BY lc.SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY O-2: Orders tasks currently in the queue (Status=17, ready to run)
+--             with their resolved source database and connection string
+--             This is what BHGTaskRunner reads right before running Orders
+--------------------------------------------------------------------------------
+
+SELECT
+    t.TaskId,
+    t.SiteCode,
+    t.ActionKey,
+    t.ActionStepKey,
+    t.Status,
+    t.RunAt,
+    t.WorkDate,
+    t.Reload,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    m.FromTblVw                 AS SourceTable,
+    m.WhereCondition
+FROM tsk.tbl_Tasks2             t
+JOIN ctrl.tbl_LocationCons  lc
+    ON  lc.SiteCode   = t.SiteCode
+    AND lc.ActionKey  = t.ActionKey
+    AND lc.EffectiveDate = (
+            SELECT MAX(lc2.EffectiveDate)
+            FROM ctrl.tbl_LocationCons lc2
+            WHERE lc2.SiteCode  = t.SiteCode
+              AND lc2.ActionKey = t.ActionKey
+        )
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+LEFT JOIN dms.tbl_MapSrc2Dsn m
+    ON  m.ActionKey     = t.ActionKey
+    AND m.ActionStepKey = t.ActionStepKey
+WHERE t.TaskName = 'SAMMS-ETL-Orders'
+  AND t.Status   = 17
+  AND t.RunAt    < GETDATE()
+ORDER BY t.SiteCode;
+
+
+--------------------------------------------------------------------------------
+-- QUERY O-3: Orders source lookup for ONE specific clinic
+--             Change 'B01' to any SiteCode you want to inspect
+--------------------------------------------------------------------------------
+
+SELECT
+    lc.SiteCode,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    lc.EffectiveDate,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    m.FromTblVw                 AS SourceTable,
+    m.WhereCondition
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+LEFT JOIN dms.tbl_MapSrc2Dsn m  ON m.ActionKey = 11
+WHERE lc.SiteCode   = 'B01'             -- change to the clinic SiteCode you want
+  AND lc.ActionKey  = 11
+  AND lc.EffectiveDate = (
+        SELECT MAX(lc2.EffectiveDate)
+        FROM ctrl.tbl_LocationCons lc2
+        WHERE lc2.SiteCode  = 'B01'
+          AND lc2.ActionKey = 11
+      )
+ORDER BY m.ActionStepKey;
+
+
+--------------------------------------------------------------------------------
+-- QUERY O-4: Quick check -- all distinct servers used for Orders
+--             Useful to see how many unique SQL Server instances
+--             the Orders ETL touches across all clinics
+--------------------------------------------------------------------------------
+
+SELECT
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString,
+    cn.ConType,
+    COUNT(DISTINCT lc.SiteCode) AS ClinicCount,
+    STRING_AGG(lc.SiteCode, ', ')
+        WITHIN GROUP (ORDER BY lc.SiteCode)
+                                AS Clinics
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+WHERE lc.ActionKey = 11
+  AND lc.EffectiveDate = (
+        SELECT MAX(lc2.EffectiveDate)
+        FROM ctrl.tbl_LocationCons lc2
+        WHERE lc2.SiteCode  = lc.SiteCode
+          AND lc2.ActionKey = 11
+      )
+GROUP BY cn.ConName, cn.ConStr, cn.ConType
+ORDER BY ClinicCount DESC;
+
+
+--------------------------------------------------------------------------------
+-- QUERY O-5: History -- all connection changes ever made for Orders
+--             Shows when a clinic was switched to a new server or database
+--------------------------------------------------------------------------------
+
+SELECT
+    lc.SiteCode,
+    lc.EffectiveDate,
+    lc.DbName                   AS SourceDatabase,
+    lc.SchemaVersion,
+    cn.ConName                  AS ServerAlias,
+    cn.ConStr                   AS BaseConnectionString
+FROM ctrl.tbl_LocationCons  lc
+JOIN ctrl.tbl_Connections   cn  ON cn.ConID = lc.ConnectionID
+WHERE lc.ActionKey = 11
+ORDER BY
+    lc.SiteCode,
+    lc.EffectiveDate DESC;
+
+================================================================================
+
+
+
+
+
+10 queries included:
+
+#	What it answers
+1	All clinic + ActionKey combos with full server + DB
+2	Current (most recent) connection per clinic per ActionKey
+3	Live task queue (Status=17) with source server + DB
+4	Full view recreation (Tasks + LocationCons + Connections + MapSrc2Dsn)
+5	All ActionKey mappings and source tables from dms.tbl_MapSrc2Dsn
+6	All clinics for a specific TaskName (e.g. SAMMS-ETL-Orders)
+7	All tasks for a specific SiteCode (e.g. B01)
+8	All entries in ctrl.tbl_Connections (server inventory)
+9	Read tsk.vwTaskList as BHGTaskRunner does at startup
+10	Audit: find clinics missing a tbl_LocationCons entry for a given ActionKey
+
+
+Five Orders-specific queries are now appended to the file under a clearly labeled ORDERS-ONLY QUERIES section. All have ActionKey = 11 hardcoded — no variables to change:
+
+Query	What it gives you
+O-1	Every clinic in the Orders ETL with its source DB + server, using current EffectiveDate
+O-2	Orders tasks currently ready to run (Status=17) — exactly what BHGTaskRunner picks up, with source DB + ConStr
+O-3	Single clinic lookup — change 'B01' to any SiteCode to see that clinic's Orders source DB and connection
+O-4	How many unique SQL Server instances Orders touches, with a clinic list per server
+O-5	Full history of connection changes for Orders — shows when any clinic was ever moved to a different server or database

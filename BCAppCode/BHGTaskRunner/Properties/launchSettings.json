@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BHGTaskRunner": {
+      "commandName": "Project",
+      "commandLineArgs": "2"
+    }
+  }
+}
