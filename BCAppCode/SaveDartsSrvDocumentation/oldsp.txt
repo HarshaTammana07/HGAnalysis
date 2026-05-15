@@ -1,0 +1,217 @@
+/****** Object:  StoredProcedure [stg].[DartsSrvMerge25]    Script Date: 4/17/2026 2:06:32 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ 
+ 
+CREATE procedure [stg].[DartsSrvMerge25] as
+ 
+DECLARE @SummaryOfChanges TABLE(Change VARCHAR(20));
+ 
+update stg.tbl_DartsSrv set SiteID = 105 where SiteCode = 'PHC' and SiteID != 105
+ 
+Merge into pats.tbl_DartsSrv_2025 as t
+Using (SELECT [dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3]
+      , [dsDIM4], [dsDIM5], [dsDIM6], [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType]
+      , [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff], [dstxtNote], [dsRTBNOTE]
+      , [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff], [dsInvalidatedOn]
+      , [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+      , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT]
+      , [dsSIGCLTDATE], [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2]
+      , [dsTxDim3], [dsTxDim4], [dsTxDim5], [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote]
+      , [dsGroupEnd], [dsGroupIdentity], [dsGroupStart], [dsDIAG10], [SiteID], [dsDBnotes]
+      , [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG], GetDate() [LastModAt], [ServiceType], [dsTelehealthSession], [HoldId]
+  FROM [stg].[tbl_DartsSrv] where convert(date,[dsDtStart]) > '12/31/2024' and convert(date,[dsDtStart]) < '1/1/2026') s
+    on (t.SiteCode = s.SiteCode and t.dsID = s.dsID)
+ 
+When Matched Then update set t.[dsClt] = s.[dsClt], t.[RowChkSum] = s.[RowChkSum]
+      , t.[dsDIM1] = s.[dsDIM1], t.[dsDIM2] = s.[dsDIM2], t.[dsDIM3] = s.[dsDIM3]
+      , t.[dsDIM4] = s.[dsDIM4], t.[dsDIM5] = s.[dsDIM5], t.[dsDIM6] = s.[dsDIM6]
+      , t.[dsTxtSrv] = s.[dsTxtSrv], t.[dsDtStart] = s.[dsDtStart], t.[dsDtEnd] = s.[dsDtEnd]
+      , t.[dsTxtType] = s.[dsTxtType], t.[dsdblUnits] = s.[dsdblUnits], t.[dsNoteID] = s.[dsNoteID]
+      , t.[dsDtAdded] = s.[dsDtAdded], t.[dstxtStaff] = s.[dstxtStaff], t.[dstxtNote] = s.[dstxtNote]
+      , t.[dsRTBNOTE] = s.[dsRTBNOTE], t.[DSbilled] = s.[DSbilled], t.[dsGROUPNUM] = s.[dsGROUPNUM]
+      , t.[dsPROGRAM] = s.[dsPROGRAM], t.[dsUpdate] = s.[dsUpdate], t.[dsUPDATEStaff] = s.[dsUPDATEStaff]
+      , t.[dsInvalidatedOn] = s.[dsInvalidatedOn], t.[dsError] = s.[dsError]
+      , t.[dsTxtHIV] = s.[dsTxtHIV], t.[dsDartsGroup] = s.[dsDartsGroup], t.[repOldSrv] = s.[repOldSrv]
+      , t.[dsSignature] = s.[dsSignature], t.[dsSigDate] = s.[dsSigDate], t.[dssigdateCOSIGN] = s.[dssigdateCOSIGN]
+      , t.[dssignatureCOSIGN] = s.[dssignatureCOSIGN], t.[dsSigUser] = s.[dsSigUser], t.[dsSigUserCosign] = s.[dsSigUserCosign]
+      , t.[dsSIGCLT] = s.[dsSIGCLT], t.[dsSIGCLTDATE] = s.[dsSIGCLTDATE], t.[dsSIGCLTUSER] = s.[dsSIGCLTUSER]
+      , t.[dsAPTID] = s.[dsAPTID], t.[dsuncharted] = s.[dsuncharted], t.[dsTxDim1] = s.[dsTxDim1], t.[dsTxDim2] = s.[dsTxDim2]
+      , t.[dsTxDim3] = s.[dsTxDim3], t.[dsTxDim4] = s.[dsTxDim4], t.[dsTxDim5] = s.[dsTxDim5], t.[dsTxDim6] = s.[dsTxDim6]
+      , t.[dsDIAG] = s.[dsDIAG], t.[dsArea] = s.[dsArea], t.[dsGroupDefaultNote] = s.[dsGroupDefaultNote]
+      , t.[dsGroupEnd] = s.[dsGroupEnd], t.[dsGroupIdentity] = s.[dsGroupIdentity], t.[dsGroupStart] = s.[dsGroupStart]
+      , t.[dsDIAG10] = s.[dsDIAG10], t.[SiteID] = s.[SiteID], t.[dsDBnotes] = s.[dsDBnotes], t.[dsSigCltImg] = s.[dsSigCltImg]
+      , t.[dsSignatureCoSignImg] = s.[dsSignatureCoSignImg], t.[dsSignatureIMG] = s.[dsSignatureIMG], t.[MG] = s.[MG]
+      , t.[LastModAt] = s.[LastModAt], RowState = case when s.dsClt >= 0 then 1 else 0 end
+    , t.[ServiceType] = s.[ServiceType], t.[dsTelehealthSession] = s.[dsTelehealthSession]
+    , t.[HoldId] = s.[HoldId]
+ 
+when not Matched by TARGET then
+  Insert ([dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3], [dsDIM4], [dsDIM5], [dsDIM6]
+        , [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType], [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff]
+        , [dstxtNote], [dsRTBNOTE], [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff]--, [upsize_ts]
+        , [dsInvalidatedOn], [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+        , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT], [dsSIGCLTDATE]
+        , [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2], [dsTxDim3], [dsTxDim4], [dsTxDim5]
+        , [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote], [dsGroupEnd], [dsGroupIdentity], [dsGroupStart]
+        , [dsDIAG10], [SiteID], [dsDBnotes], [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG]
+    , [ServiceType], [LastModAt], RowState, [dsTelehealthSession], [HoldId])
+    values (s.[dsID], s.[dsClt], s.[SiteCode], s.[RowChkSum], s.[dsDIM1], s.[dsDIM2], s.[dsDIM3], s.[dsDIM4]
+          , s.[dsDIM5], s.[dsDIM6], s.[dsTxtSrv], s.[dsDtStart], s.[dsDtEnd], s.[dsTxtType], s.[dsdblUnits]
+          , s.[dsNoteID], s.[dsDtAdded], s.[dstxtStaff], s.[dstxtNote], s.[dsRTBNOTE], s.[DSbilled], s.[dsGROUPNUM]
+          , s.[dsPROGRAM], s.[dsUpdate], s.[dsUPDATEStaff], s.[dsInvalidatedOn], s.[dsError]
+          , s.[dsTxtHIV], s.[dsDartsGroup], s.[repOldSrv], s.[dsSignature], s.[dsSigDate], s.[dssigdateCOSIGN]
+          , s.[dssignatureCOSIGN], s.[dsSigUser], s.[dsSigUserCosign], s.[dsSIGCLT], s.[dsSIGCLTDATE], s.[dsSIGCLTUSER]
+          , s.[dsAPTID], s.[dsuncharted], s.[dsTxDim1], s.[dsTxDim2], s.[dsTxDim3], s.[dsTxDim4], s.[dsTxDim5]
+          , s.[dsTxDim6], s.[dsDIAG], s.[dsArea], s.[dsGroupDefaultNote], s.[dsGroupEnd], s.[dsGroupIdentity]
+          , s.[dsGroupStart], s.[dsDIAG10], s.[SiteID], s.[dsDBnotes], s.[dsSigCltImg], s.[dsSignatureCoSignImg]
+          , s.[dsSignatureIMG], s.[MG], s.[ServiceType], s.[LastModAt], case when s.dsClt >= 0 then 1 else 0 end
+      , s.[dsTelehealthSession], s.[HoldId])
+ 
+/*When not Matched by SOURCE then
+  update set t.RowState = 0*/
+ 
+output $action into @SummaryOfChanges;
+select * from @SummaryOfChanges;
+GO
+
+
+
+
+/****** Object:  StoredProcedure [stg].[DartsSrvMerge]    Script Date: 4/17/2026 2:06:32 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ 
+CREATE procedure [stg].[DartsSrvMerge] as
+ 
+DECLARE @SummaryOfChanges TABLE(Change VARCHAR(20));
+ 
+update stg.tbl_DartsSrv set SiteID = 105 where SiteCode = 'PHC' and SiteID != 105
+ 
+Merge into pats.tbl_DartsSrv_2021 as t
+Using (SELECT [dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3]
+      , [dsDIM4], [dsDIM5], [dsDIM6], [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType]
+      , [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff], [dstxtNote], [dsRTBNOTE]
+      , [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff], [dsInvalidatedOn]
+      , [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+      , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT]
+      , [dsSIGCLTDATE], [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2]
+      , [dsTxDim3], [dsTxDim4], [dsTxDim5], [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote]
+      , [dsGroupEnd], [dsGroupIdentity], [dsGroupStart], [dsDIAG10], [SiteID], [dsDBnotes]
+      , [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG], GetDate() [LastModAt]
+  FROM [stg].[tbl_DartsSrv] where convert(date,[dsDtStart]) <= '12/31/2021') s
+    on (t.SiteCode = s.SiteCode and t.dsID = s.dsID)
+ 
+When Matched Then update set t.[dsClt] = s.[dsClt], t.[RowChkSum] = s.[RowChkSum]
+      , t.[dsDIM1] = s.[dsDIM1], t.[dsDIM2] = s.[dsDIM2], t.[dsDIM3] = s.[dsDIM3]
+      , t.[dsDIM4] = s.[dsDIM4], t.[dsDIM5] = s.[dsDIM5], t.[dsDIM6] = s.[dsDIM6]
+      , t.[dsTxtSrv] = s.[dsTxtSrv], t.[dsDtStart] = s.[dsDtStart], t.[dsDtEnd] = s.[dsDtEnd]
+      , t.[dsTxtType] = s.[dsTxtType], t.[dsdblUnits] = s.[dsdblUnits], t.[dsNoteID] = s.[dsNoteID]
+      , t.[dsDtAdded] = s.[dsDtAdded], t.[dstxtStaff] = s.[dstxtStaff], t.[dstxtNote] = s.[dstxtNote]
+      , t.[dsRTBNOTE] = s.[dsRTBNOTE], t.[DSbilled] = s.[DSbilled], t.[dsGROUPNUM] = s.[dsGROUPNUM]
+      , t.[dsPROGRAM] = s.[dsPROGRAM], t.[dsUpdate] = s.[dsUpdate], t.[dsUPDATEStaff] = s.[dsUPDATEStaff]
+      , t.[dsInvalidatedOn] = s.[dsInvalidatedOn], t.[dsError] = s.[dsError]
+      , t.[dsTxtHIV] = s.[dsTxtHIV], t.[dsDartsGroup] = s.[dsDartsGroup], t.[repOldSrv] = s.[repOldSrv]
+      , t.[dsSignature] = s.[dsSignature], t.[dsSigDate] = s.[dsSigDate], t.[dssigdateCOSIGN] = s.[dssigdateCOSIGN]
+      , t.[dssignatureCOSIGN] = s.[dssignatureCOSIGN], t.[dsSigUser] = s.[dsSigUser], t.[dsSigUserCosign] = s.[dsSigUserCosign]
+      , t.[dsSIGCLT] = s.[dsSIGCLT], t.[dsSIGCLTDATE] = s.[dsSIGCLTDATE], t.[dsSIGCLTUSER] = s.[dsSIGCLTUSER]
+      , t.[dsAPTID] = s.[dsAPTID], t.[dsuncharted] = s.[dsuncharted], t.[dsTxDim1] = s.[dsTxDim1], t.[dsTxDim2] = s.[dsTxDim2]
+      , t.[dsTxDim3] = s.[dsTxDim3], t.[dsTxDim4] = s.[dsTxDim4], t.[dsTxDim5] = s.[dsTxDim5], t.[dsTxDim6] = s.[dsTxDim6]
+      , t.[dsDIAG] = s.[dsDIAG], t.[dsArea] = s.[dsArea], t.[dsGroupDefaultNote] = s.[dsGroupDefaultNote]
+      , t.[dsGroupEnd] = s.[dsGroupEnd], t.[dsGroupIdentity] = s.[dsGroupIdentity], t.[dsGroupStart] = s.[dsGroupStart]
+      , t.[dsDIAG10] = s.[dsDIAG10], t.[SiteID] = s.[SiteID], t.[dsDBnotes] = s.[dsDBnotes], t.[dsSigCltImg] = s.[dsSigCltImg]
+      , t.[dsSignatureCoSignImg] = s.[dsSignatureCoSignImg], t.[dsSignatureIMG] = s.[dsSignatureIMG], t.[MG] = s.[MG]
+      , t.[LastModAt] = s.[LastModAt], RowState = case when s.dsClt >= 0 then 1 else 0 end
+ 
+when not Matched by TARGET then
+  Insert ([dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3], [dsDIM4], [dsDIM5], [dsDIM6]
+        , [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType], [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff]
+        , [dstxtNote], [dsRTBNOTE], [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff]--, [upsize_ts]
+        , [dsInvalidatedOn], [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+        , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT], [dsSIGCLTDATE]
+        , [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2], [dsTxDim3], [dsTxDim4], [dsTxDim5]
+        , [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote], [dsGroupEnd], [dsGroupIdentity], [dsGroupStart]
+        , [dsDIAG10], [SiteID], [dsDBnotes], [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG], [LastModAt], RowState)
+    values (s.[dsID], s.[dsClt], s.[SiteCode], s.[RowChkSum], s.[dsDIM1], s.[dsDIM2], s.[dsDIM3], s.[dsDIM4]
+          , s.[dsDIM5], s.[dsDIM6], s.[dsTxtSrv], s.[dsDtStart], s.[dsDtEnd], s.[dsTxtType], s.[dsdblUnits]
+          , s.[dsNoteID], s.[dsDtAdded], s.[dstxtStaff], s.[dstxtNote], s.[dsRTBNOTE], s.[DSbilled], s.[dsGROUPNUM]
+          , s.[dsPROGRAM], s.[dsUpdate], s.[dsUPDATEStaff], s.[dsInvalidatedOn], s.[dsError]
+          , s.[dsTxtHIV], s.[dsDartsGroup], s.[repOldSrv], s.[dsSignature], s.[dsSigDate], s.[dssigdateCOSIGN]
+          , s.[dssignatureCOSIGN], s.[dsSigUser], s.[dsSigUserCosign], s.[dsSIGCLT], s.[dsSIGCLTDATE], s.[dsSIGCLTUSER]
+          , s.[dsAPTID], s.[dsuncharted], s.[dsTxDim1], s.[dsTxDim2], s.[dsTxDim3], s.[dsTxDim4], s.[dsTxDim5]
+          , s.[dsTxDim6], s.[dsDIAG], s.[dsArea], s.[dsGroupDefaultNote], s.[dsGroupEnd], s.[dsGroupIdentity]
+          , s.[dsGroupStart], s.[dsDIAG10], s.[SiteID], s.[dsDBnotes], s.[dsSigCltImg], s.[dsSignatureCoSignImg]
+          , s.[dsSignatureIMG], s.[MG], s.[LastModAt], case when s.dsClt >= 0 then 1 else 0 end)
+ 
+/*When not Matched by SOURCE then
+  update set t.RowState = 0*/
+ 
+output $action into @SummaryOfChanges;
+select * from @SummaryOfChanges;
+ 
+Merge into pats.tbl_DartsSrv_2022 as t
+Using (SELECT [dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3]
+      , [dsDIM4], [dsDIM5], [dsDIM6], [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType]
+      , [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff], [dstxtNote], [dsRTBNOTE]
+      , [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff], [dsInvalidatedOn]
+      , [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+      , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT]
+      , [dsSIGCLTDATE], [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2]
+      , [dsTxDim3], [dsTxDim4], [dsTxDim5], [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote]
+      , [dsGroupEnd], [dsGroupIdentity], [dsGroupStart], [dsDIAG10], [SiteID], [dsDBnotes]
+      , [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG], GetDate() [LastModAt]
+  FROM [stg].[tbl_DartsSrv] where convert(date,[dsDtStart]) > '12/31/2021') s
+    on (t.SiteCode = s.SiteCode and t.dsID = s.dsID)
+ 
+When Matched Then update set t.[dsClt] = s.[dsClt], t.[RowChkSum] = s.[RowChkSum]
+      , t.[dsDIM1] = s.[dsDIM1], t.[dsDIM2] = s.[dsDIM2], t.[dsDIM3] = s.[dsDIM3]
+      , t.[dsDIM4] = s.[dsDIM4], t.[dsDIM5] = s.[dsDIM5], t.[dsDIM6] = s.[dsDIM6]
+      , t.[dsTxtSrv] = s.[dsTxtSrv], t.[dsDtStart] = s.[dsDtStart], t.[dsDtEnd] = s.[dsDtEnd]
+      , t.[dsTxtType] = s.[dsTxtType], t.[dsdblUnits] = s.[dsdblUnits], t.[dsNoteID] = s.[dsNoteID]
+      , t.[dsDtAdded] = s.[dsDtAdded], t.[dstxtStaff] = s.[dstxtStaff], t.[dstxtNote] = s.[dstxtNote]
+      , t.[dsRTBNOTE] = s.[dsRTBNOTE], t.[DSbilled] = s.[DSbilled], t.[dsGROUPNUM] = s.[dsGROUPNUM]
+      , t.[dsPROGRAM] = s.[dsPROGRAM], t.[dsUpdate] = s.[dsUpdate], t.[dsUPDATEStaff] = s.[dsUPDATEStaff]
+      , t.[dsInvalidatedOn] = s.[dsInvalidatedOn], t.[dsError] = s.[dsError]
+      , t.[dsTxtHIV] = s.[dsTxtHIV], t.[dsDartsGroup] = s.[dsDartsGroup], t.[repOldSrv] = s.[repOldSrv]
+      , t.[dsSignature] = s.[dsSignature], t.[dsSigDate] = s.[dsSigDate], t.[dssigdateCOSIGN] = s.[dssigdateCOSIGN]
+      , t.[dssignatureCOSIGN] = s.[dssignatureCOSIGN], t.[dsSigUser] = s.[dsSigUser], t.[dsSigUserCosign] = s.[dsSigUserCosign]
+      , t.[dsSIGCLT] = s.[dsSIGCLT], t.[dsSIGCLTDATE] = s.[dsSIGCLTDATE], t.[dsSIGCLTUSER] = s.[dsSIGCLTUSER]
+      , t.[dsAPTID] = s.[dsAPTID], t.[dsuncharted] = s.[dsuncharted], t.[dsTxDim1] = s.[dsTxDim1], t.[dsTxDim2] = s.[dsTxDim2]
+      , t.[dsTxDim3] = s.[dsTxDim3], t.[dsTxDim4] = s.[dsTxDim4], t.[dsTxDim5] = s.[dsTxDim5], t.[dsTxDim6] = s.[dsTxDim6]
+      , t.[dsDIAG] = s.[dsDIAG], t.[dsArea] = s.[dsArea], t.[dsGroupDefaultNote] = s.[dsGroupDefaultNote]
+      , t.[dsGroupEnd] = s.[dsGroupEnd], t.[dsGroupIdentity] = s.[dsGroupIdentity], t.[dsGroupStart] = s.[dsGroupStart]
+      , t.[dsDIAG10] = s.[dsDIAG10], t.[SiteID] = s.[SiteID], t.[dsDBnotes] = s.[dsDBnotes], t.[dsSigCltImg] = s.[dsSigCltImg]
+      , t.[dsSignatureCoSignImg] = s.[dsSignatureCoSignImg], t.[dsSignatureIMG] = s.[dsSignatureIMG], t.[MG] = s.[MG]
+      , t.[LastModAt] = s.[LastModAt], RowState = 1
+ 
+when not Matched by TARGET then
+  Insert ([dsID], [dsClt], [SiteCode], [RowChkSum], [dsDIM1], [dsDIM2], [dsDIM3], [dsDIM4], [dsDIM5], [dsDIM6]
+        , [dsTxtSrv], [dsDtStart], [dsDtEnd], [dsTxtType], [dsdblUnits], [dsNoteID], [dsDtAdded], [dstxtStaff]
+        , [dstxtNote], [dsRTBNOTE], [DSbilled], [dsGROUPNUM], [dsPROGRAM], [dsUpdate], [dsUPDATEStaff]--, [upsize_ts]
+        , [dsInvalidatedOn], [dsError], [dsTxtHIV], [dsDartsGroup], [repOldSrv], [dsSignature], [dsSigDate]
+        , [dssigdateCOSIGN], [dssignatureCOSIGN], [dsSigUser], [dsSigUserCosign], [dsSIGCLT], [dsSIGCLTDATE]
+        , [dsSIGCLTUSER], [dsAPTID], [dsuncharted], [dsTxDim1], [dsTxDim2], [dsTxDim3], [dsTxDim4], [dsTxDim5]
+        , [dsTxDim6], [dsDIAG], [dsArea], [dsGroupDefaultNote], [dsGroupEnd], [dsGroupIdentity], [dsGroupStart]
+        , [dsDIAG10], [SiteID], [dsDBnotes], [dsSigCltImg], [dsSignatureCoSignImg], [dsSignatureIMG], [MG], [LastModAt], RowState)
+    values (s.[dsID], s.[dsClt], s.[SiteCode], s.[RowChkSum], s.[dsDIM1], s.[dsDIM2], s.[dsDIM3], s.[dsDIM4]
+          , s.[dsDIM5], s.[dsDIM6], s.[dsTxtSrv], s.[dsDtStart], s.[dsDtEnd], s.[dsTxtType], s.[dsdblUnits]
+          , s.[dsNoteID], s.[dsDtAdded], s.[dstxtStaff], s.[dstxtNote], s.[dsRTBNOTE], s.[DSbilled], s.[dsGROUPNUM]
+          , s.[dsPROGRAM], s.[dsUpdate], s.[dsUPDATEStaff], s.[dsInvalidatedOn], s.[dsError]
+          , s.[dsTxtHIV], s.[dsDartsGroup], s.[repOldSrv], s.[dsSignature], s.[dsSigDate], s.[dssigdateCOSIGN]
+          , s.[dssignatureCOSIGN], s.[dsSigUser], s.[dsSigUserCosign], s.[dsSIGCLT], s.[dsSIGCLTDATE], s.[dsSIGCLTUSER]
+          , s.[dsAPTID], s.[dsuncharted], s.[dsTxDim1], s.[dsTxDim2], s.[dsTxDim3], s.[dsTxDim4], s.[dsTxDim5]
+          , s.[dsTxDim6], s.[dsDIAG], s.[dsArea], s.[dsGroupDefaultNote], s.[dsGroupEnd], s.[dsGroupIdentity]
+          , s.[dsGroupStart], s.[dsDIAG10], s.[SiteID], s.[dsDBnotes], s.[dsSigCltImg], s.[dsSignatureCoSignImg]
+          , s.[dsSignatureIMG], s.[MG], s.[LastModAt], 1)
+ 
+/*When not Matched by SOURCE then
+  update set t.RowState = 0*/
+ 
+output $action into @SummaryOfChanges;
+select * from @SummaryOfChanges;
+ 
+GO

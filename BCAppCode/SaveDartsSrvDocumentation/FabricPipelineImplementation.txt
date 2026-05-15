@@ -1,0 +1,288 @@
+
+1) This is For each loop and inside Activities
+2) p_ingest_run_id   String  test-run-
+3)p_lookback_days  Int  15
+4)p_sites  Array  [{"site_code":"ColoradoSpringsV5","source_database":"SAMMS-ColoradoSpringsV5","source_schema":"dbo","source_table":"tblDartsSrv"}]
+
+These 2,3,4 points are the paramenters that i am defining in the whole pipeline..
+
+{
+    "name": "fe_each_samms_database_copy1",
+    "type": "ForEach",
+    "dependsOn": [],
+    "typeProperties": {
+        "items": {
+            "value": "@pipeline().parameters.p_sites",
+            "type": "Expression"
+        },
+        "isSequential": true,
+        "activities": [
+            {
+                "name": "lkp_check_optional_columns_exist",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                            "value": "@concat(\n'SELECT\n    COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,\n    COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,\n    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists\nFROM [', item().source_database, '].sys.columns c\nINNER JOIN [', item().source_database, '].sys.tables t\n    ON c.object_id = t.object_id\nINNER JOIN [', item().source_database, '].sys.schemas s\n    ON t.schema_id = s.schema_id\nWHERE s.name = ''', item().source_schema, '''\n  AND t.name = ''', item().source_table, '''\n  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'');'\n)",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "datasetSettings": {
+                        "annotations": [],
+                        "type": "SqlServerTable",
+                        "schema": [],
+                        "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Copy data2",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "lkp_check_optional_columns_exist",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                            "value": "@concat(\n'SELECT\n    ''', item().site_code, ''' AS _site_code,\n    ''', item().source_database, ''' AS _source_database,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS _ingest_run_id,\n    GETDATE() AS _extracted_at,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE())) AS _source_query_start_date,\n    CONVERT(date, GETDATE()) AS _source_query_end_date,\n\n    dsID,\n    dsClt,\n    dsDIM1,\n    dsDIM2,\n    dsDIM3,\n    dsDIM4,\n    dsDIM5,\n    dsDIM6,\n    dsTxtSrv,\n    dsDtStart,\n    dsDtEnd,\n    dsTxtType,\n    dsdblUnits,\n    dsNoteID,\n    dsDtAdded,\n    dstxtStaff,\n    dstxtNote,\n    dsRTBNOTE,\n    DSbilled,\n    dsGROUPNUM,\n    dsPROGRAM,\n    dsUpdate,\n    dsUPDATEStaff,\n    dsInvalidatedOn,\n    dsError,\n    dsTxtHIV,\n    dsDartsGroup,\n    repOldSrv,\n    dsSignature,\n    dsSigDate,\n    dssigdateCOSIGN,\n    dssignatureCOSIGN,\n    dsSigUser,\n    dsSigUserCosign,\n    dsSIGCLT,\n    dsSIGCLTDATE,\n    dsSIGCLTUSER,\n    dsAPTID,\n    dsuncharted,\n    dsTxDim1,\n    dsTxDim2,\n    dsTxDim3,\n    dsTxDim4,\n    dsTxDim5,\n    dsTxDim6,\n    dsDIAG,\n    dsArea,\n    dsGroupDefaultNote,\n    dsGroupEnd,\n    dsGroupIdentity,\n    dsGroupStart,\n    dsDIAG10,\n    SiteID,\n    dsDBnotes,\n    dsSigCltImg,\n    dsSignatureCoSignImg,\n    dsSignatureIMG,\n    MG,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100)) AS ServiceType'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit) AS dsTelehealthSession'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int) AS HoldId'\n),\n',\n\n    RowChkSum = CHECKSUM(\n        dsID,\n        dsClt,\n        dsDIM1,\n        dsDIM2,\n        dsDIM3,\n        dsDIM4,\n        dsDIM5,\n        dsDIM6,\n        dsTxtSrv,\n        dsDtStart,\n        dsDtEnd,\n        dsTxtType,\n        dsdblUnits,\n        dsNoteID,\n        dsDtAdded,\n        dstxtStaff,\n        DSbilled,\n        dsGROUPNUM,\n        dsPROGRAM,\n        dsUpdate,\n        dsUPDATEStaff,\n        dsInvalidatedOn,\n        dsError,\n        dsTxtHIV,\n        dsDartsGroup,\n        repOldSrv,\n        dsSigDate,\n        dssigdateCOSIGN,\n        dsSigUser,\n        dsSigUserCosign,\n        dsSIGCLTDATE,\n        dsAPTID,\n        dsuncharted,\n        dsTxDim1,\n        dsTxDim2,\n        dsTxDim3,\n        dsTxDim4,\n        dsTxDim5,\n        dsTxDim6,\n        dsDIAG,\n        dsArea,\n        dsGroupDefaultNote,\n        dsGroupEnd,\n        dsGroupIdentity,\n        dsGroupStart,\n        dsDIAG10,\n        SiteID,\n        dsDBnotes,\n        MG\n    )\n\nFROM [', item().source_database, '].', item().source_schema, '.', item().source_table, '\nWHERE dsClt IS NOT NULL\n  AND (\n       CONVERT(date, dsdtstart) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsDtAdded) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsUpdate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsBilled) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsSigDate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR dsClt <= 0\n  )\nORDER BY 1, 2'\n)",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "type": "SqlServerTable",
+                            "schema": [],
+                            "externalReferences": {
+                                "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_bronze",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "Dart",
+                                "table": "br_tblDartSrv"
+                            }
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
+
+
+
+2Nd step I am attaching a notebook..
+
+{
+    "name": "nb_darts_bronze_to_silver",
+    "type": "TridentNotebook",
+    "dependsOn": [
+        {
+            "activity": "fe_each_samms_database_copy1",
+            "dependencyConditions": [
+                "Succeeded"
+            ]
+        }
+    ],
+    "policy": {
+        "timeout": "0.12:00:00",
+        "retry": 0,
+        "retryIntervalInSeconds": 30,
+        "secureOutput": false,
+        "secureInput": false
+    },
+    "typeProperties": {
+        "notebookId": "89769158-4ba9-4e86-9b6d-ff22852dddd5",
+        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+        "parameters": {
+            "p_ingest_run_id": {
+                "value": {
+                    "value": "@pipeline().parameters.p_ingest_run_id",
+                    "type": "Expression"
+                },
+                "type": "string"
+            }
+        }
+    }
+}
+
+
+CELL-1
+from pyspark.sql.functions import col, current_timestamp, year, row_number, when
+from pyspark.sql.window import Window
+
+# Pipeline will pass this value.
+# For manual testing, keep a fallback value.
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = "test-run-001"
+
+bronze_table = "bhg_bronze.Dart.br_tblDartSrv"
+silver_table = "bhg_silver.pats.sl_tblDartSrv"
+
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+
+bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+
+bronze_count = bronze_df.count()
+print(f"Bronze rows for this run: {bronze_count}")
+
+if bronze_count == 0:
+    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+
+# Deduplicate within current run.
+# Key = _site_code + dsID.
+# Keep latest extracted row if duplicates ever appear.
+w = Window.partitionBy("_site_code", "dsID").orderBy(col("_extracted_at").desc())
+
+src_df = (
+    bronze_df
+    .where(col("_site_code").isNotNull() & col("dsID").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+    .withColumn("dsDtStartYear", year(col("dsDtStart")))
+    .withColumn("silver_updated_at", current_timestamp())
+    .withColumn("last_seen_at", current_timestamp())
+    .withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))
+)
+
+src_df.createOrReplaceTempView("vw_darts_current_run")
+
+src_count = src_df.count()
+print(f"Prepared source rows for Silver: {src_count}")
+
+# Create Silver table if it does not exist.
+if not spark.catalog.tableExists(silver_table):
+    (
+        src_df
+        .withColumn("silver_created_at", current_timestamp())
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created Silver table and inserted rows: {src_count}")
+else:
+    print(f"Silver table already exists: {silver_table}")
+
+
+CELL-2
+
+
+from delta.tables import DeltaTable
+
+silver_table = "bhg_silver.pats.sl_tblDartSrv"
+
+if not spark.catalog.tableExists(silver_table):
+    raise Exception(f"Silver table does not exist: {silver_table}")
+
+silver_delta = DeltaTable.forName(spark, silver_table)
+
+src_cols = src_df.columns
+
+# Do not overwrite original created timestamp during updates.
+update_cols = [
+    c for c in src_cols
+    if c != "silver_created_at"
+]
+
+update_set = {c: f"src.{c}" for c in update_cols}
+
+# Preserve created timestamp for existing rows.
+update_set["silver_updated_at"] = "current_timestamp()"
+update_set["last_seen_at"] = "current_timestamp()"
+
+insert_values = {c: f"src.{c}" for c in src_cols}
+
+(
+    silver_delta.alias("tgt")
+    .merge(
+        src_df.alias("src"),
+        "tgt._site_code = src._site_code AND tgt.dsID = src.dsID"
+    )
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum IS NULL
+            OR src.RowChkSum IS NULL
+            OR tgt.RowChkSum <> src.RowChkSum
+        """,
+        set=update_set
+    )
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum = src.RowChkSum
+        """,
+        set={
+            "last_seen_at": "current_timestamp()",
+            "_ingest_run_id": "src._ingest_run_id",
+            "_extracted_at": "src._extracted_at",
+            "_source_query_start_date": "src._source_query_start_date",
+            "_source_query_end_date": "src._source_query_end_date"
+        }
+    )
+    .whenNotMatchedInsert(values=insert_values)
+    .execute()
+)
+
+print("Silver MERGE completed successfully.")

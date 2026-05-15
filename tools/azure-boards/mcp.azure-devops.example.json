@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "SeanergyDigital"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/SeanergyDigital",
+        "AZURE_DEVOPS_AUTH_TYPE": "pat",
+        "AZURE_DEVOPS_TOKEN": "DGViuc6hRJATTrKbD6bjD5ePUbxBHfMgm8caYg32Bm0I7e9QFHjTJQQJ99CEACAAAAAabJWuAAASAZDO2OzO"
+      }
+    }
+  }
+}

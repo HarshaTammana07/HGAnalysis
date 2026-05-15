@@ -1945,8 +1945,8 @@ namespace BHGTaskRunner
                                                               ", ClientId = a.cltId" +
                                                               ", QuestionID = 0" +
                                                               ", QuestionOrderID = 1" +
-                                                              ", QuestionText = null" +
-                                                              ", [OptionID] = null" +
+                                                              ", QuestionText = null" = n +
+                                                              ", [OptionID]ull" +
                                                               ", AnswerValue = null" +
                                                               "\r\n, a.Createdby, [CreatedOn] = convert(date, a." + xf.CreatedOn + "), a.ModifiedBy as [UpdatedBy]";
                                                     if (xf.ModifiedOn != null)
