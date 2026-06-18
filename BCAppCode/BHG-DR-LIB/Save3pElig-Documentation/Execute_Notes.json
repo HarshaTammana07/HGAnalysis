@@ -1,0 +1,1042 @@
+{
+    "name": "Execute_Notes",
+    "objectId": "189b74e5-ef11-4ee4-afb8-4a9b8a576f30",
+    "properties": {
+        "activities": [
+            {
+                "name": "lkp_notes_taskconfig",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource"
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                                "annotations": [],
+                                "type": "Lakehouse",
+                                "typeProperties": {
+                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                    "rootFolder": "Tables"
+                                }
+                            }
+                        },
+                        "type": "LakehouseTable",
+                        "schema": [],
+                        "typeProperties": {
+                            "schema": "meta",
+                            "table": "taskconfig"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_notes_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "lkp_notes_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('lkp_notes_taskconfig').output.value",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().ConfigId, 34), equals(item().IsActive, 1)), and(or(equals(item().Method, '3pArnote'), equals(item().Method, '3pClaimNote')), and(not(equals(item().SiteCode, null)), not(equals(item().DataBaseName, null)))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_notes_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "Execute_Notes",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/Execute_Notes",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Executed_AfterBronz",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "61f2955b-68c9-4a3b-8da7-186a0ce8e23e",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_work_date": {
+                            "value": "@pipeline().parameters.p_work_date",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites": {
+                            "value": "@activity('flt_active_notes_sites').output.value",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_3parnote_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Executed_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "4057574c-6a08-4c3e-8584-9ead64ee8608",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_3pclaimnote_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Executed_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "ecb28154-151c-46c5-8c67-99940dd9d570",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Prepare_Notes_Versioned_Gold_Tables",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "nb_3parnote_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "nb_3pclaimnote_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DROP TABLE IF EXISTS pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_3p_arnote\nWHERE 1 = 0;\n\nDROP TABLE IF EXISTS pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_3p_claim_note\nWHERE 1 = 0;')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "copy_3parnote_silver_to_gold",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_Notes_Versioned_Gold_Tables",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tbl_3parnote"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "_site_code"
+                                },
+                                "sink": {
+                                    "name": "SiteCode"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnID"
+                                },
+                                "sink": {
+                                    "name": "arnID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnLIID"
+                                },
+                                "sink": {
+                                    "name": "arnLIID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnNOTE"
+                                },
+                                "sink": {
+                                    "name": "arnNOTE"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnUSER"
+                                },
+                                "sink": {
+                                    "name": "arnUSER"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDATE"
+                                },
+                                "sink": {
+                                    "name": "arnDATE"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDtRemoved"
+                                },
+                                "sink": {
+                                    "name": "arnDtRemoved"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnStrRemovedReason"
+                                },
+                                "sink": {
+                                    "name": "arnStrRemovedReason"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnStrRemovedUser"
+                                },
+                                "sink": {
+                                    "name": "arnStrRemovedUser"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "bid"
+                                },
+                                "sink": {
+                                    "name": "bid"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDBnotes"
+                                },
+                                "sink": {
+                                    "name": "arnDBnotes"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "globalBatchId"
+                                },
+                                "sink": {
+                                    "name": "globalBatchId"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt"
+                                },
+                                "sink": {
+                                    "name": "LastModAt"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState"
+                                },
+                                "sink": {
+                                    "name": "RowState"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "copy_3pclaimnote_silver_to_gold",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_Notes_Versioned_Gold_Tables",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tbl_3pclaimnote"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "_site_code"
+                                },
+                                "sink": {
+                                    "name": "SiteCode"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcn"
+                                },
+                                "sink": {
+                                    "name": "tpcn"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnTPCID"
+                                },
+                                "sink": {
+                                    "name": "tpcnTPCID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtmAdded"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtmAdded"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrAdded"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrAdded"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrNote"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrNote"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrType"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrType"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtTickler"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtTickler"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtTicklerRemoved"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtTicklerRemoved"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerRemovedNote"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerRemovedNote"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerRemovedUser"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerRemovedUser"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerType"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerType"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "globalBatchId"
+                                },
+                                "sink": {
+                                    "name": "globalBatchId"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt"
+                                },
+                                "sink": {
+                                    "name": "LastModAt"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState"
+                                },
+                                "sink": {
+                                    "name": "RowState"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Publish_Notes_Versioned_Gold",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "copy_3parnote_silver_to_gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "copy_3pclaimnote_silver_to_gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DECLARE @arn_count BIGINT;\nDECLARE @claim_count BIGINT;\nDECLARE @arn_final_count BIGINT;\nDECLARE @claim_final_count BIGINT;\n\nSELECT @arn_count = COUNT(*)\nFROM pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @arn_count = 0\n    THROW 51001, ''Validation failed: pats.gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nSELECT @claim_count = COUNT(*)\nFROM pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @claim_count = 0\n    THROW 51002, ''Validation failed: pats.gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.gd_3p_arnote'', ''U'') IS NULL\n    THROW 51003, ''Publish failed: production table pats.gd_3p_arnote does not exist.'', 1;\n\nIF OBJECT_ID(''pats.gd_3p_claim_note'', ''U'') IS NULL\n    THROW 51004, ''Publish failed: production table pats.gd_3p_claim_note does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), '];\nDROP TABLE IF EXISTS pats.[gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.gd_3p_arnote'', ''gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.gd_3p_claim_note'', ''gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), ''';\n\nEXEC sp_rename ''pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_3p_arnote'';\nEXEC sp_rename ''pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_3p_claim_note'';\n\nSELECT @arn_final_count = COUNT(*)\nFROM pats.gd_3p_arnote;\n\nIF @arn_final_count = 0\n    THROW 51005, ''Final verification failed: pats.gd_3p_arnote is empty after table swap.'', 1;\n\nSELECT @claim_final_count = COUNT(*)\nFROM pats.gd_3p_claim_note;\n\nIF @claim_final_count = 0\n    THROW 51006, ''Final verification failed: pats.gd_3p_claim_note is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''gd_3p_arnoteBK_%'' AND t.name <> ''gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR (t.name LIKE ''gd_3p_claim_noteBK_%'' AND t.name <> ''gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''gd_3p_arnote_v_%''\n         OR t.name LIKE ''gd_3p_claim_note_v_%''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''gd_3p_arnote'' AS TableName, @arn_final_count AS [RowCount]\nUNION ALL\nSELECT ''gd_3p_claim_note'' AS TableName, @claim_final_count AS [RowCount];')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "nb_notes_audit_finalize_failure",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Notes_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_FAILURE",
+                            "type": "string"
+                        },
+                        "p_failed_target_name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "p_failure_activity": {
+                            "value": "Notes_Bronze_Silver_Gold_Finalizer",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_notes_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_notes_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@string(coalesce(activity('Executed_AfterBronz').error, activity('nb_3parnote_bronze_to_silver').error, activity('nb_3pclaimnote_bronze_to_silver').error, activity('Prepare_Notes_Versioned_Gold_Tables').error, activity('copy_3parnote_silver_to_gold').error, activity('copy_3pclaimnote_silver_to_gold').error, activity('Publish_Notes_Versioned_Gold').error, 'Notes pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "FAILED",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_audit_finalize_success",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Notes_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_SUCCESS",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_notes_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_notes_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "SUCCESS",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_notify_success",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "Notes ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Succeeded",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Notes",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "GL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Notes pipeline completed successfully through Gold",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_notify_failed",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_finalize_failure",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "nb_notes_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "Notes ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Notes",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Notes pipeline failed or audit finalization failed. See error details.",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@string(coalesce(activity('nb_notes_audit_finalize_failure').error, activity('nb_notes_audit_finalize_success').error, activity('Executed_AfterBronz').error, activity('nb_3parnote_bronze_to_silver').error, activity('nb_3pclaimnote_bronze_to_silver').error, activity('Prepare_Notes_Versioned_Gold_Tables').error, activity('copy_3parnote_silver_to_gold').error, activity('copy_3pclaimnote_silver_to_gold').error, activity('Publish_Notes_Versioned_Gold').error, 'Notes pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "test-run-001"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "2026-06-01"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-17T15:23:18Z"
+    }
+}

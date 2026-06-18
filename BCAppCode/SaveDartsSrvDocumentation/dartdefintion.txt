@@ -1,0 +1,1723 @@
+-->child dartSRV_Pipeline
+
+{
+    "name": "dartSRV_Pipeline",
+    "objectId": "b2101370-34a9-4695-bf4a-eebdb3ced50b",
+    "properties": {
+        "activities": [
+            {
+                "name": "fe_each_samms_database_sites",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 3,
+                    "activities": [
+                        {
+                            "name": "lkp_check_optional_columns_exist",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,\n    COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,\n    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists,\n    COUNT(CASE WHEN c.name = ''upsize_ts''           THEN 1 END) AS upsize_ts_exists\nFROM [', item().DataBaseName, '].sys.columns c\nINNER JOIN [', item().DataBaseName, '].sys.tables t\n    ON c.object_id = t.object_id\nINNER JOIN [', item().DataBaseName, '].sys.schemas s\n    ON t.schema_id = s.schema_id\nWHERE s.name = ''dbo''\n  AND t.name = ''tblDartsSrv''\n  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'', ''upsize_ts'');'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "Dart_Source_to_Bronz",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_optional_columns_exist",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS _site_code,\n    ''', item().DataBaseName, ''' AS _source_database,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS _ingest_run_id,\n    GETDATE() AS _extracted_at,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE())) AS _source_query_start_date,\n    CONVERT(date, GETDATE()) AS _source_query_end_date,\n\n    dsID,\n    dsClt,\n    dsDIM1,\n    dsDIM2,\n    dsDIM3,\n    dsDIM4,\n    dsDIM5,\n    dsDIM6,\n    dsTxtSrv,\n    dsDtStart,\n    dsDtEnd,\n    dsTxtType,\n    dsdblUnits,\n    dsNoteID,\n    dsDtAdded,\n    dstxtStaff,\n    dstxtNote,\n    dsRTBNOTE,\n    DSbilled,\n    dsGROUPNUM,\n    dsPROGRAM,\n    dsUpdate,\n    dsUPDATEStaff,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists, 1),\n    'upsize_ts',\n    'CAST(NULL AS varbinary(8)) AS upsize_ts'\n),\n',\n    dsInvalidatedOn,\n    dsError,\n    dsTxtHIV,\n    dsDartsGroup,\n    repOldSrv,\n    dsSignature,\n    dsSigDate,\n    dssigdateCOSIGN,\n    dssignatureCOSIGN,\n    dsSigUser,\n    dsSigUserCosign,\n    dsSIGCLT,\n    dsSIGCLTDATE,\n    dsSIGCLTUSER,\n    dsAPTID,\n    dsuncharted,\n    dsTxDim1,\n    dsTxDim2,\n    dsTxDim3,\n    dsTxDim4,\n    dsTxDim5,\n    dsTxDim6,\n    dsDIAG,\n    dsArea,\n    dsGroupDefaultNote,\n    dsGroupEnd,\n    dsGroupIdentity,\n    dsGroupStart,\n    dsDIAG10,\n    SiteID,\n    dsDBnotes,\n    dsSigCltImg,\n    dsSignatureCoSignImg,\n    dsSignatureIMG,\n    MG,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100)) AS ServiceType'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit) AS dsTelehealthSession'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int) AS HoldId'\n),\n',\n\n    RowChkSum = CHECKSUM(\n        dsID,\n        dsClt,\n        dsDIM1,\n        dsDIM2,\n        dsDIM3,\n        dsDIM4,\n        dsDIM5,\n        dsDIM6,\n        dsTxtSrv,\n        dsDtStart,\n        dsDtEnd,\n        dsTxtType,\n        dsdblUnits,\n        dsNoteID,\n        dsDtAdded,\n        dstxtStaff,\n        DSbilled,\n        dsGROUPNUM,\n        dsPROGRAM,\n        dsUpdate,\n        dsUPDATEStaff,\n        dsInvalidatedOn,\n        dsError,\n        dsTxtHIV,\n        dsDartsGroup,\n        repOldSrv,\n        dsSigDate,\n        dssigdateCOSIGN,\n        dsSigUser,\n        dsSigUserCosign,\n        dsSIGCLTDATE,\n        dsSIGCLTUSER,\n        dsAPTID,\n        dsuncharted,\n        dsTxDim1,\n        dsTxDim2,\n        dsTxDim3,\n        dsTxDim4,\n        dsTxDim5,\n        dsTxDim6,\n        dsDIAG,\n        dsArea,\n        dsGroupDefaultNote,\n        dsGroupEnd,\n        dsGroupIdentity,\n        dsGroupStart,\n        dsDIAG10,\n        SiteID,\n        dsDBnotes,\n        MG,\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100))'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit)'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int)'\n),\n'\n    )\n\nFROM [', item().DataBaseName, '].dbo.tblDartsSrv\nWHERE dsClt IS NOT NULL\n  AND (\n       CONVERT(date, dsdtstart) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsDtAdded) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsUpdate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsBilled) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsSigDate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR dsClt <= 0\n  )\nORDER BY 1, 2'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Dart",
+                                            "table": "br_tblDartSrv"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_audit_context_json": {
+                "type": "string"
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-04T19:53:44Z"
+    }
+}
+
+->>Parent pipline which consist of this invoke pipline
+
+{
+    "name": "Execute_DartSrv",
+    "objectId": "12ad712f-3d73-48e9-b4b0-826ab69e388c",
+    "properties": {
+        "activities": [
+            {
+                "name": "lkp_darts_taskconfig",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource"
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                                "annotations": [],
+                                "type": "Lakehouse",
+                                "typeProperties": {
+                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                    "rootFolder": "Tables"
+                                }
+                            }
+                        },
+                        "type": "LakehouseTable",
+                        "schema": [],
+                        "typeProperties": {
+                            "schema": "meta",
+                            "table": "taskconfig"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_darts_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "lkp_darts_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('lkp_darts_taskconfig').output.value",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().ConfigId, 25), equals(item().IsActive, 1)), and(not(equals(item().SiteCode, null)), not(equals(item().DataBaseName, null))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_darts_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_darts_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "Execute_DartSrv",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/Execute_DartSrv",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Exected_AfterBronz",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "b2101370-34a9-4695-bf4a-eebdb3ced50b",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites": {
+                            "value": "@activity('flt_active_darts_sites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_audit_context_json": {
+                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_darts_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Exected_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "89769158-4ba9-4e86-9b6d-ff22852dddd5",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Prepare_DartsSrv_Versioned_Gold_Table",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DROP TABLE IF EXISTS pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_darts_srv\nWHERE 1 = 0;')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "Copy_darts_silver_to_gold_version",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_DartsSrv_Versioned_Gold_Table",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tbldartsrv"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "_site_code",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "SiteCode",
+                                    "physicalType": "varchar",
+                                    "length": "100"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsID",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsClt",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsClt",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM1",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim1",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM2",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim2",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM3",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim3",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM4",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim4",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM5",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim5",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIM6",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsDim6",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxtSrv",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsTxtSrv",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDtStart",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsDtStart",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDtEnd",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsDtEnd",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxtType",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsTxtType",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsdblUnits",
+                                    "type": "Double",
+                                    "physicalType": "double"
+                                },
+                                "sink": {
+                                    "name": "DsdblUnits",
+                                    "physicalType": "float"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsNoteID",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsNoteId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDtAdded",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsDtAdded",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dstxtStaff",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DstxtStaff",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dstxtNote",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DstxtNote",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsRTBNOTE",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsRtbnote",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DSbilled",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsBilled",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsGROUPNUM",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsGroupnum",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsPROGRAM",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsProgram",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsUpdate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsUpdate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsUPDATEStaff",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsUpdateStaff",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsInvalidatedOn",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsInvalidatedOn",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsError",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsError",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxtHIV",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsTxtHiv",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDartsGroup",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsDartsGroup",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "repOldSrv",
+                                    "type": "Decimal",
+                                    "physicalType": "decimal",
+                                    "scale": 0,
+                                    "precision": 18
+                                },
+                                "sink": {
+                                    "name": "RepOldSrv",
+                                    "physicalType": "decimal",
+                                    "scale": 0,
+                                    "precision": 18
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSignature",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSignature",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSigDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsSigDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dssigdateCOSIGN",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsSigDateCosign",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dssignatureCOSIGN",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSignatureCosign",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSigUser",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSigUser",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSigUserCosign",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSigUserCosign",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSIGCLT",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSigClt",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSIGCLTDATE",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsSigCltDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSIGCLTUSER",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsSigCltUser",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsAPTID",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsAptId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsuncharted",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsUncharted",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim1",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim1",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim2",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim2",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim3",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim3",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim4",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim4",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim5",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim5",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTxDim6",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsTxDim6",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIAG",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsDiag",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsArea",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsArea",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsGroupDefaultNote",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "DsGroupDefaultNote",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsGroupEnd",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsGroupEnd",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsGroupIdentity",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsGroupIdentity",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsGroupStart",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DsGroupStart",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDIAG10",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsDiag10",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "SiteID",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "SiteId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDBnotes",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "DsDbNotes",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSigCltImg",
+                                    "type": "Byte[]",
+                                    "physicalType": "binary"
+                                },
+                                "sink": {
+                                    "name": "DsSigCltImg",
+                                    "physicalType": "varbinary",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSignatureCoSignImg",
+                                    "type": "Byte[]",
+                                    "physicalType": "binary"
+                                },
+                                "sink": {
+                                    "name": "DsSignatureCoSignImg",
+                                    "physicalType": "varbinary",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsSignatureIMG",
+                                    "type": "Byte[]",
+                                    "physicalType": "binary"
+                                },
+                                "sink": {
+                                    "name": "DsSignatureImg",
+                                    "physicalType": "varbinary",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "MG",
+                                    "type": "Double",
+                                    "physicalType": "double"
+                                },
+                                "sink": {
+                                    "name": "Mg",
+                                    "physicalType": "float"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "upsize_ts",
+                                    "type": "Byte[]",
+                                    "physicalType": "binary"
+                                },
+                                "sink": {
+                                    "name": "upsize_ts",
+                                    "physicalType": "varbinary",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "silver_updated_at",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "LastModAt",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "RowState",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ServiceType",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "ServiceType",
+                                    "physicalType": "varchar",
+                                    "length": "4000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsTelehealthSession",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "dsTelehealthSession",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "HoldId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "HoldId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "dsDtStartYear",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "DsDtStartYear",
+                                    "physicalType": "int"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Publish_DartsSrv_Versioned_Gold",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_darts_silver_to_gold_version",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DECLARE @version_count BIGINT;\nDECLARE @final_count BIGINT;\n\nSELECT @version_count = COUNT(*)\nFROM pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @version_count = 0\n    THROW 50001, ''Validation failed: pats.gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.gd_darts_srv'', ''U'') IS NULL\n    THROW 50002, ''Publish failed: production table pats.gd_darts_srv does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.gd_darts_srv'', ''gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_darts_srv'';\n\nSELECT @final_count = COUNT(*)\nFROM pats.gd_darts_srv;\n\nIF @final_count = 0\n    THROW 50003, ''Final verification failed: pats.gd_darts_srv is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''gd_darts_srvBK_%'' AND t.name <> ''gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''gd_darts_srv_v_%''\n         OR t.name = ''gd_darts_srv_load''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''gd_darts_srv'' AS TableName, @final_count AS [RowCount];')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "nb_darts_audit_finalize_failure",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_DartsSrv_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_FAILURE",
+                            "type": "string"
+                        },
+                        "p_failed_target_name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "p_failure_activity": {
+                            "value": "Darts_Bronze_Silver_Gold_Finalizer",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_darts_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@string(coalesce(activity('Exected_AfterBronz').error, activity('nb_darts_bronze_to_silver').error, activity('Prepare_DartsSrv_Versioned_Gold_Table').error, activity('Copy_darts_silver_to_gold_version').error, activity('Publish_DartsSrv_Versioned_Gold').error, 'Darts pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "FAILED",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_darts_audit_finalize_success",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_DartsSrv_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_SUCCESS",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_darts_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "SUCCESS",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notify_success",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "DartsSrv ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Succeeded",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Darts",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "GL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "DartsSrv pipeline completed successfully through Gold",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notify_failed",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_audit_finalize_failure",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "DartsSrv ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Darts",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "DartsSrv pipeline failed. See audit finalization error for details.",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@string(coalesce(activity('nb_darts_audit_finalize_failure').error, activity('Exected_AfterBronz').error, activity('nb_darts_bronze_to_silver').error, activity('Prepare_DartsSrv_Versioned_Gold_Table').error, activity('Copy_darts_silver_to_gold_version').error, activity('Publish_DartsSrv_Versioned_Gold').error, 'DartsSrv pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-17T16:06:31Z"
+    }
+}
+
+nb_darts_bronze_to_silver_silver
+cell:1
+
+
+from pyspark.sql.functions import col, current_timestamp, year, row_number, when
+from pyspark.sql.window import Window
+
+# The pipeline passes p_ingest_run_id as a parameter.
+# The try/except allows you to run this cell manually during development
+# without the pipeline by falling back to a hardcoded test value.
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = "test-run-001"
+
+bronze_table = "bhg_bronze.Dart.br_tblDartSrv"
+silver_table = "bhg_silver.pats.sl_tbldartsrv"
+
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+
+# Read only the rows from THIS pipeline run.
+# Bronze is an append-only table with rows from many runs.
+# We filter to p_ingest_run_id so we only process today's extraction.
+bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+
+bronze_count = bronze_df.count()
+print(f"Bronze rows for this run: {bronze_count}")
+
+# Safety check: if no rows found, the pipeline or copy activity failed.
+# Raising an exception here marks the notebook activity as failed in the pipeline.
+if bronze_count == 0:
+    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+
+# Deduplicate within current run.
+# Key = _site_code + dsID.
+# If the same record appears twice (e.g., due to a retry), keep the latest one.
+w = Window.partitionBy("_site_code", "dsID").orderBy(col("_extracted_at").desc())
+
+src_df = (
+    bronze_df
+    .where(col("_site_code").isNotNull() & col("dsID").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+    # Extract the year from session start date.
+    # Used for partitioning and year-based filtering in Silver.
+    .withColumn("dsDtStartYear", year(col("dsDtStart")))
+    # Timestamp set every time this row is written/updated in Silver.
+    .withColumn("silver_updated_at", current_timestamp())
+    # Timestamp of when this row was last seen in a SAMMS extraction.
+    .withColumn("last_seen_at", current_timestamp())
+    # Matches the stored procedure logic: 1 = active/valid patient, 0 = placeholder (dsClt < 0).
+    .withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))
+)
+
+# Create a temp view so you can query src_df with SQL if needed for debugging.
+src_df.createOrReplaceTempView("vw_darts_current_run")
+
+src_count = src_df.count()
+print(f"Prepared source rows for Silver: {src_count}")
+
+# If the Silver table does not exist yet (first-ever run), create it.
+# This uses overwrite mode to write the full initial load.
+# silver_created_at is added here and will never be overwritten in future updates.
+if not spark.catalog.tableExists(silver_table):
+    (
+        src_df
+        .withColumn("silver_created_at", current_timestamp())
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created Silver table and inserted rows: {src_count}")
+else:
+    print(f"Silver table already exists: {silver_table}")
+    silver_columns = {field.name for field in spark.table(silver_table).schema.fields}
+    if "upsize_ts" not in silver_columns:
+        spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (upsize_ts BINARY)")
+        print("Added missing Silver column: upsize_ts")
+
+
+
+cell2:
+
+
+from delta.tables import DeltaTable
+
+silver_table = "bhg_silver.pats.sl_tbldartsrv"
+
+if not spark.catalog.tableExists(silver_table):
+    raise Exception(f"Silver table does not exist: {silver_table}")
+
+silver_delta = DeltaTable.forName(spark, silver_table)
+
+src_cols = src_df.columns
+
+# Do not overwrite original created timestamp during updates.
+update_cols = [
+    c for c in src_cols
+    if c != "silver_created_at"
+]
+
+update_set = {c: f"src.{c}" for c in update_cols}
+
+# Preserve created timestamp for existing rows.
+update_set["silver_updated_at"] = "current_timestamp()"
+update_set["last_seen_at"] = "current_timestamp()"
+
+insert_values = {c: f"src.{c}" for c in src_cols}
+
+(
+    silver_delta.alias("tgt")
+    .merge(
+        src_df.alias("src"),
+        "tgt._site_code = src._site_code AND tgt.dsID = src.dsID"
+    )
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum IS NULL
+            OR src.RowChkSum IS NULL
+            OR tgt.RowChkSum <> src.RowChkSum
+        """,
+        set=update_set
+    )
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum = src.RowChkSum
+        """,
+        set={
+            "last_seen_at": "current_timestamp()",
+            "_ingest_run_id": "src._ingest_run_id",
+            "_extracted_at": "src._extracted_at",
+            "_source_query_start_date": "src._source_query_start_date",
+            "_source_query_end_date": "src._source_query_end_date"
+        }
+    )
+    .whenNotMatchedInsert(values=insert_values)
+    .execute()
+)
+
+print("Silver MERGE completed successfully.")

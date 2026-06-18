@@ -67,6 +67,9 @@ namespace BHGTaskRunner
                     case "11":
                         pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.TaskName == "SAMMS-ETL-Orders" && x.RunAt < DateTime.Now).ToList();
                         break;
+                    case "12":
+                        pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.TaskName == "SAMMS-ETL-PPA" && x.RunAt < DateTime.Now).ToList();
+                        break;
                     default:
                         pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.RunAt < DateTime.Now).ToList();
                         break;
@@ -503,7 +506,8 @@ namespace BHGTaskRunner
                             case "pats.tbl_tbldiag10":
                                 strCmd += " Where " + strWhere + " " + st.SortOrder;
                                 SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
-                                rCodes = sd.SaveTblDiags(SrcDt, st.SiteCode, null);
+                                //rCodes = sd.SaveTblDiags(SrcDt, st.SiteCode, null);
+                                rCodes = bldr.BulkDartsSrvLoader(SrcDt, "stg." + st.TaskName.Substring(5, st.TaskName.Length - 5), st.SiteCode, st.WorkDate.Value, null);
                                 break;
                             case "pats.tbl_bottle":
                                 if (st.SiteCode == "Lab")
@@ -882,6 +886,14 @@ namespace BHGTaskRunner
                                 if ((tblDartcols.Rows.Count == 0))
                                 {
                                     strCmd = strCmd.Replace(", [ServiceType] ServiceType", "").Replace(", [ServiceType]", "");
+                                
+                                }
+                                // Remove Holdid
+                                tblDartcols = sm.GetTableData("tcols", "select name, column_id from sys.all_columns c where c.object_id = " +
+                                 "(select object_id from sys.all_objects where upper(name) = 'TBLDARTSSRV') and name = 'HoldId'", st.ConStr);
+                                if ((tblDartcols.Rows.Count == 0))
+                                {
+                                    strCmd = strCmd.Replace(", [HoldId] HoldId", "").Replace(", [HoldId]", "");
                                 }
                                 //strCmd += " Where Year(dsdtstart) = 2021 order by 1, 2";
                                 strCmd += " Where dsClt is not null and (convert(date,dsdtstart) >= '" + DartsDate.ToShortDateString()
@@ -1417,8 +1429,14 @@ namespace BHGTaskRunner
                                 { rCodes.IsResult = true; }
                                 break;
                             case "pats.tbl_uaresultdetail":
-                                
-                                strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                if (st.WorkDate.Value.ToShortDateString() == "2/10/2026")
+                                {
+                                    strCmd += " Where 1 = 1 " + st.SortOrder;
+                                }
+                                else
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                }
                                 SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
                                 //rCodes = sd.SaveUAResultDetail(SrcDt, st.SiteCode, st.WorkDate.Value, null);
                                 rCodes = bldr.BulkDartsSrvLoader(SrcDt, "stg." + st.TaskName.Substring(5, st.TaskName.Length - 5), st.SiteCode, st.WorkDate.Value.Date, null);
@@ -1457,6 +1475,9 @@ namespace BHGTaskRunner
                                 {
                                     if (st.RowTrax.Value)
                                     {
+                                        sd.SaveRowTrax(st.SiteCode, st.WorkDate.Value.Date, st.TaskName,
+                                            int.Parse(sm.GetTableData("lcltbl", "Select tblcnt = count(1) from " + st.SrcSchema + "." + st.FromTblVw, st.ConStr).Rows[0][0].ToString()),
+                                            int.Parse(sm.GetTableData("Aztbl", "Select tblcnt = count(1) from " + st.TaskName + " where SiteCode = '" + st.SiteCode + "' ", sm.ConnectionString).Rows[0][0].ToString()), null);
                                     }
                                 }
                                 break;
@@ -1945,8 +1966,8 @@ namespace BHGTaskRunner
                                                               ", ClientId = a.cltId" +
                                                               ", QuestionID = 0" +
                                                               ", QuestionOrderID = 1" +
-                                                              ", QuestionText = null" = n +
-                                                              ", [OptionID]ull" +
+                                                              ", QuestionText = null" +
+                                                              ", [OptionID] = null" +
                                                               ", AnswerValue = null" +
                                                               "\r\n, a.Createdby, [CreatedOn] = convert(date, a." + xf.CreatedOn + "), a.ModifiedBy as [UpdatedBy]";
                                                     if (xf.ModifiedOn != null)
@@ -2351,6 +2372,10 @@ namespace BHGTaskRunner
                                                                 strCmd += "\r\n, CounselorSignatureSignatureDate = case when convert(date, b." + xf.Counselor
                                                                      + ") is null then '1900-01-01' else convert(date, b." + xf.Counselor + ") end";
                                                                 break;
+                                                            case "MNComprehensiveAssessment":
+                                                                strCmd += "\r\n, CounselorSignatureSignatureDate = case when convert(date, b." + xf.Counselor
+                                                                     + ") is null then '1900-01-01' else convert(date, b." + xf.Counselor + ") end";
+                                                                break;
                                                             default:
                                                                 strCmd += "\r\n, CounselorSignatureSignatureDate = case when convert(date, a." + xf.Counselor
                                                                      + ") is null then '1900-01-01' else convert(date, a." + xf.Counselor + ") end";
@@ -2400,6 +2425,10 @@ namespace BHGTaskRunner
                                                                 strCmd += "\r\n, PatientSignatureDate = case when convert(date, b." + xf.Patient
                                                                     + ") is null then '1900-01-01' else convert(date, b." + xf.Patient + ") end";
                                                                 break;
+                                                            case "MNComprehensiveAssessment":
+                                                                strCmd += "\r\n, PatientSignatureDate = case when convert(date, b." + xf.Patient
+                                                                    + ") is null then '1900-01-01' else convert(date, b." + xf.Patient + ") end";
+                                                                break;
                                                             default:
                                                                 strCmd += "\r\n, PatientSignatureDate = case when convert(date, a." + xf.Patient
                                                                     + ") is null then '1900-01-01' else convert(date, a." + xf.Patient + ") end";
@@ -2444,6 +2473,10 @@ namespace BHGTaskRunner
                                                                 strCmd += "\r\n, [StaffSignatureDate] = case when convert(date, b." + xf.Staff
                                                                     + ") is null then '1900-01-01' else convert(date, b." + xf.Staff + ") end\r\n";
                                                                 break;
+                                                            case "MNComprehensiveAssessment":
+                                                                strCmd += "\r\n, [StaffSignatureDate] = case when convert(date, b." + xf.Staff
+                                                                    + ") is null then '1900-01-01' else convert(date, b." + xf.Staff + ") end\r\n";
+                                                                break;
                                                             case "SF_PatientPreAdmission":
                                                                 if (st.SiteCode.ToUpper() == "LAB")
                                                                 {
@@ -2475,6 +2508,11 @@ namespace BHGTaskRunner
                                                                                 + ") is null then '1900-01-01' else convert(date, b." + xf.Supervisor + ") end\r\n";
 
                                                                 break;
+                                                            case "MNComprehensiveAssessment":
+                                                                strCmd += "\r\n, SupervisorSignatureSignatureDate = case when convert(date, b." + xf.Supervisor
+                                                                                + ") is null then '1900-01-01' else convert(date, b." + xf.Supervisor + ") end\r\n";
+
+                                                                break;
                                                             default:
                                                                 strCmd += "\r\n, SupervisorSignatureSignatureDate = case when convert(date, a." + xf.Supervisor
                                                                         + ") is null then '1900-01-01' else convert(date, a." + xf.Supervisor + ") end\r\n";
@@ -2501,6 +2539,11 @@ namespace BHGTaskRunner
                                                     {
                                                         strCmd += " inner join [dbo].[NewAdmissionAssessmentASAMDimension6] b on (a.preadmissionID = b.preadmissionID and a.ID = b.NewAdmissionAssessmentFormId) \r\n";
                                                     }
+                                                    if (xf.TableName == "MNComprehensiveAssessment")
+                                                    {
+                                                        strCmd += " inner join [dbo].[MNComprehensiveAssessmentSocialHistory] b on (a.preadmissionID = b.preadmissionID and a.Id = b.MNComprehensiveAssessmentFormId) \r\n";
+                                                    }
+
                                                     if (xf.DateFilterEnabled)
                                                     {
                                                         strCmd += "\r\n where a." + xf.CreatedOn + " >= '" + wrkdt.ToShortDateString() + "' or isnull(a." + xf.ModifiedOn + ", a." + xf.CreatedOn + ") >= '" 
@@ -3085,8 +3128,14 @@ namespace BHGTaskRunner
                                 strCmd = strCmd.Replace("[charge] charge", "isnull(charge, 0) charge");
                                 strCmd += " Where " + strWhere + " " + st.SortOrder;
                                 SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
-                                rCodes = bldr.BulkDartsSrvLoader(SrcDt, "stg." + st.TaskName.Substring(5, st.TaskName.Length - 5), st.SiteCode, st.WorkDate.Value.AddDays(DaysBack).Date, db);
-                                //rCodes = sd.SaveAuthBillsub(SrcDt, st.SiteCode, st.WorkDate.Value.Date, false, null);
+                                if ((st.SiteCode == "B41") || (st.SiteCode == "B42"))
+                                {
+                                    rCodes = sd.SaveAuthBillsub(SrcDt, st.SiteCode, st.WorkDate.Value.Date, false, null);
+                                }
+                                else
+                                {
+                                    rCodes = bldr.BulkDartsSrvLoader(SrcDt, "stg." + st.TaskName.Substring(5, st.TaskName.Length - 5), st.SiteCode, st.WorkDate.Value.AddDays(DaysBack).Date, db);
+                                }
                                 if ((st.RowTrax.HasValue))
                                 {
                                     if (st.RowTrax.Value)
@@ -3200,6 +3249,48 @@ namespace BHGTaskRunner
                                     rCodes.ExceptMsg = "Table does not exists.";
                                 }
                                 break;
+                            case "pats.tbl_newadmissionassessmentasamdimension2":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'NewAdmissionassessmentASAMDimension2'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewAdmissionAssessmentASAMDimension2(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newadmissionassessmentasamdimension4":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'NewAdmissionassessmentASAMDimension4'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewAdmissionAssessmentASAMDimension4(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newadmissionassessmentasamdimension5":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'NewAdmissionassessmentASAMDimension5'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewAdmissionAssessmentASAMDimension5(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
                             case "pats.tbl_newadmissionassessmentasamdimension6":
                                 SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'NewAdmissionassessmentASAMDimension6'", st.ConStr);
                                 if (SrcDt.Rows.Count == 1)
@@ -3235,6 +3326,78 @@ namespace BHGTaskRunner
                                     strCmd += " Where " + strWhere + " " + st.SortOrder;
                                     SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
                                     rCodes = sd.Savenewperiodicreassessmentcounselorreview(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                    _ = sm.ExeSqlCmd("exec [pats].[MergeFormSignaturesPeriodicReassessments] '" + st.SiteCode + "'", sm.ConnectionString);
+
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newperiodicreassessmentd2":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newperiodicreassessmentd2'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewPeriodicReassessmentD2(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newperiodicreassessmentd3":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newperiodicreassessmentd3'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewPeriodicReassessmentD3(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newperiodicreassessmentd4":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newperiodicreassessmentd4'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewPeriodicReassessmentD4(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newperiodicreassessmentd5":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newperiodicreassessmentd5'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewPeriodicReassessmentD5(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_newperiodicreassessmentd6":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newperiodicreassessmentd6'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewPeriodicReassessmentD6(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
                                 }
                                 else
                                 {
@@ -3286,6 +3449,129 @@ namespace BHGTaskRunner
                                 strCmd += " Where " + strWhere + " " + st.SortOrder;
                                 SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
                                 rCodes = sd.SavedropDownListItems(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                break;
+                            case "pats.tbl_consenttomarketing":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'consenttomarketing'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveConsenttoMarketing(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "pats.tbl_newdischargetransferplanform":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'newdischargetransferplanform'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveNewDischargeTransferPlanForm(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "pats.tbl_mntreatmentservicereview":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'mntreatmentservicereview'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveMNTreatmentServiceReview(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "pats.tbl_takehomeagreementanddiversioncontrol":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'takehomeagreementanddiversioncontrol'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveTakeHomeAgreementandDiversionControl(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "sf.tbl_dataforms":
+                            case "pats.tbl_sf_dataforms":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'SF_DataForms'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    if (st.SiteCode.ToUpper() == "LAB")
+                                    {
+                                        strCmd = strCmd.Replace(", [dsID] dsID", "").Replace(", [dsID]", "")
+                                            .Replace(", [EnrollmentDate] EnrollmentDate", "").Replace(", [EnrollmentDate]", "");
+                                    }
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveDataForms(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "pats.tbl_takehomeriskassessment":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'TakeHomeRiskAssessment'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    if (st.SiteCode.ToUpper() == "LAB")
+                                    {
+                                        //strCmd = strCmd.Replace(", [dsID] dsID", "").Replace(", [dsID]", "")
+                                            //.Replace(", [EnrollmentDate] EnrollmentDate", "").Replace(", [EnrollmentDate]", "");
+                                    }
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveTakeHomeRiskAssessment(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists";
+                                }
+                                break;
+                            case "pats.tbl_smstextconsentform":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'SMSTextConsentForm'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveSMSTextConsentForm(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
+                                break;
+                            case "pats.tbl_sf_patientpreadmission":
+                                SrcDt = sm.GetTableData(st.FromTblVw, "select name from sys.tables t where name = 'SF_PatientPreAdmission'", st.ConStr);
+                                if (SrcDt.Rows.Count == 1)
+                                {
+                                    strCmd += " Where " + strWhere + " " + st.SortOrder;
+                                    SrcDt = sm.GetTableData(st.FromTblVw, strCmd, st.ConStr);
+                                    rCodes = sd.SaveSFPatientPreAdmission(SrcDt, st.SiteCode, st.WorkDate.Value.AddDays(DaysBack), null);
+                                }
+                                else
+                                {
+                                    rCodes.IsResult = true;
+                                    rCodes.ExceptMsg = "Table does not exists.";
+                                }
                                 break;
                         }
                     }
@@ -3362,6 +3648,12 @@ namespace BHGTaskRunner
                             break;
                         case "10":
                             pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.TaskName == "SAMMS-ETL-Dose" && x.RunAt < DateTime.Now).ToList();
+                            break;
+                        case "11":
+                            pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.TaskName == "SAMMS-ETL-Orders" && x.RunAt < DateTime.Now).ToList();
+                            break;
+                        case "12":
+                            pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.TaskName == "SAMMS-ETL-PPA" && x.RunAt < DateTime.Now).ToList();
                             break;
                         default:
                             pTasks = db.VwTaskList.Where(x => x.SiteCode != "PHC" && x.Status == 17 && x.RunAt < DateTime.Now).ToList();

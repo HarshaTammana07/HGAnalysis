@@ -1,0 +1,1779 @@
+    from datetime import datetime
+    import requests
+
+    # ==========================================================
+    # TEAMS WEBHOOK
+    # ==========================================================
+
+    WEBHOOK_URL = "https://default647119b92120453dab27e02884c15a.1b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4daef3db2a2f44108a59e7c8060c80d5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=zh8rA45m265vX49R6OPwP-Zc6GYmBHQDuzwyufuPGVs"
+
+    # ==========================================================
+    # SEND FAILURE ALERT
+    # ==========================================================
+
+    def send_teams_failure_alert(
+        pipeline_name,
+        config_name,
+        source_system,
+        target_name,
+        environment_name,
+        run_id,
+        failed_count,
+        failures
+    ):
+        target_layer_map = {
+        "BR": "Bronze",
+        "SL": "Silver",
+        "GL": "Gold"
+        }
+
+        target_layer = target_layer_map.get(
+            str(target_name).upper(),
+            str(target_name)
+        )
+
+        display_config_name = (
+            str(config_name)
+            .replace(" Pipeline", "")
+            .replace(" pipeline", "")
+        )
+
+        failure_text = ""
+
+        for idx, failure in enumerate(failures, start=1):
+        
+            failure_text += f"""
+
+            Failure {idx}
+
+            Task Config ID : {failure['task_config_id']}
+
+            Task Name : {failure['task']}
+
+            Error :
+            {failure['error']}
+
+            --------------------------------------------------
+
+            """
+        payload = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "FF0000",
+            "summary": f"Pipeline Failed - {pipeline_name}",
+            "title": (
+                f"{environment_name}: Failed - "
+                f"{source_system} - "
+                f"{target_layer} - "
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            ),
+            "sections": [
+                {
+                    "facts": [
+                        {
+                            "name": "Pipeline:",
+                            "value": str(pipeline_name)
+                        },
+                        {
+                            "name": "Config Name:",
+                            "value": display_config_name
+                        },
+                        {
+                            "name": "Run ID:",
+                            "value": str(run_id)
+                        },
+                        {
+                            "name": "Failed Tasks:",
+                            "value": str(failed_count)
+                        }
+                    ]
+                },
+                {
+                    "activityTitle": "Failure Details",
+                    "text": failure_text[:12000]
+                }
+            ]
+        }
+
+        response = requests.post(
+            WEBHOOK_URL,
+            json=payload,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
+
+        print(
+            f"Teams Notification Status : "
+            f"{response.status_code}"
+        )
+    
+    def send_teams_success_alert(
+        pipeline_name,
+        config_name,
+        source_system,
+        target_name,
+        environment_name,
+        run_id,
+        success_count,
+        successes
+    ):
+
+        target_layer_map = {
+            "BR": "Bronze",
+            "SL": "Silver",
+            "GL": "Gold"
+        }
+
+        target_layer = target_layer_map.get(
+            str(target_name).upper(),
+            str(target_name)
+        )
+
+        display_config_name = (
+            str(config_name)
+            .replace(" Pipeline", "")
+            .replace(" pipeline", "")
+        )
+
+        success_text = ""
+
+        for idx, success in enumerate(successes, start=1):
+        
+            success_text += f"""
+
+        Success {idx}
+
+        Task Config ID : {success['task_config_id']}
+
+        Task Name : {success['task']}
+
+        --------------------------------------------------
+
+        """
+
+        payload = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "00AA00",
+            "summary": f"Pipeline Success - {pipeline_name}",
+            "title": (
+                f"{environment_name}: Success - "
+                f"{source_system} - "
+                f"{target_layer} - "
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            ),
+            "sections": [
+                {
+                    "facts": [
+                        {
+                            "name": "Pipeline:",
+                            "value": str(pipeline_name)
+                        },
+                        {
+                            "name": "Config Name:",
+                            "value": display_config_name
+                        },
+                        {
+                            "name": "Run ID:",
+                            "value": str(run_id)
+                        },
+                        {
+                            "name": "Successful Tasks:",
+                            "value": str(success_count)
+                        }
+                    ]
+                },
+                {
+                    "activityTitle": "Successful Task Details",
+                    "text": success_text[:12000]
+                }
+            ]
+        }
+
+        response = requests.post(
+            WEBHOOK_URL,
+            json=payload,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
+
+        print(
+            f"Teams Notification Status : "
+            f"{response.status_code}"
+        )
+
+    # ==========================================
+    # VALIDATE PIPELINE NAME
+    # ==========================================
+
+    if "PIPELINE_NAME" not in locals():
+
+        raise Exception(
+            "PIPELINE_NAME variable not defined"
+        )
+
+    # ==========================================
+    # SAFE PIPELINE NAME
+    # ==========================================
+
+    SAFE_PIPELINE_NAME = (
+        PIPELINE_NAME.replace("'", "''")
+    )
+
+    # ==========================================
+    # READ ETL CONFIG
+    # ==========================================
+
+    config_df = spark.sql(f"""
+
+    SELECT *
+
+    FROM meta.EtlConfig
+
+    WHERE UPPER(PipelineName) =
+    UPPER('{SAFE_PIPELINE_NAME}')
+
+    AND IsActive = 1
+
+    """)
+
+    configs = config_df.collect()
+
+    # ==========================================
+    # VALIDATE CONFIG
+    # ==========================================
+
+    if not configs:
+
+        raise Exception(
+
+            f"No active config found "
+            f"for {PIPELINE_NAME}"
+
+        )
+
+    # ==========================================
+    # PIPELINE CONFIG
+    # ==========================================
+
+    pipeline_config = configs[0]
+
+    CONFIG_ID = pipeline_config.ConfigId
+
+    CONFIG_NAME = pipeline_config.ConfigName
+
+    PIPELINE_PATH = pipeline_config.PipelinePath
+
+    SOURCE_SYSTEM = pipeline_config.SourceSystem
+
+    SOURCE_TYPE = pipeline_config.SourceType
+
+    TARGET_NAME = pipeline_config.TargetName
+
+    ENVIRONMENT_NAME = (
+        pipeline_config.EnvironmentName
+    )
+
+    TRIGGER_TYPE = (
+        pipeline_config.TriggerType
+    )
+
+    TRIGGERED_BY = (
+        pipeline_config.TriggeredBy
+    )
+
+    CONNECTION_CONFIG = (
+        pipeline_config.ConnectionConfig
+    )
+
+    # ==========================================
+    # LOAD CONNECTION CONFIG
+    # ==========================================
+
+    connection_config = load_connection_config(
+        CONNECTION_CONFIG
+    )
+
+    headers = build_dynamic_headers(
+        connection_config
+    )
+
+    auth_object = build_auth_object(
+        connection_config
+    )
+        
+    # ==========================================
+    # READ TASK CONFIG
+    # ==========================================
+
+    task_df = spark.sql(f"""
+
+    SELECT *
+
+    FROM meta.TaskConfig
+
+    WHERE ConfigId = {CONFIG_ID}
+
+    AND IsActive = 1
+
+    ORDER BY ExecutionOrder
+
+    """)
+
+    task_configs = task_df.collect()
+
+    # ==========================================
+    # VALIDATE TASK CONFIG
+    # ==========================================
+
+    if not task_configs:
+
+        raise Exception(
+            "No active task config found"
+        )
+
+    # ==========================================
+    # CHECK FAILED RUN
+    # ==========================================
+
+    failed_run_df = spark.sql(f"""
+
+    SELECT DISTINCT failed_tq.RunId
+
+    FROM meta.TaskQueue failed_tq
+
+    WHERE failed_tq.ConfigId = {CONFIG_ID}
+
+    AND failed_tq.Status IN (
+
+        'FAILED',
+
+        'SKIPPED'
+
+    )
+
+    AND NOT EXISTS (
+
+        SELECT 1
+
+        FROM meta.TaskQueue success_tq
+
+        WHERE success_tq.RunId =
+            failed_tq.RunId
+
+        AND success_tq.TaskConfigId =
+            failed_tq.TaskConfigId
+
+        AND success_tq.Status = 'SUCCESS'
+
+    )
+
+    ORDER BY failed_tq.RunId DESC
+
+    LIMIT 1
+
+    """)
+
+    failed_runs = failed_run_df.collect()
+
+    # ==========================================
+    # RESTART MODE
+    # ==========================================
+
+    if len(failed_runs) > 0:
+
+        RUN_ID = failed_runs[0]["RunId"]
+
+        restart_flag = 1
+
+        attempt_number_df = spark.sql(f"""
+
+        SELECT COALESCE(
+            MAX(AttemptNumber),
+            0
+        )
+
+        FROM meta.PipelineRun
+
+        WHERE RunId = {RUN_ID}
+
+        """)
+
+        pipeline_attempt_number  = (
+            attempt_number_df.collect()[0][0]
+        ) + 1
+
+        print("=" * 70)
+
+        print(
+            f"RESTARTING FAILED RUN : "
+            f"{RUN_ID}"
+        )
+
+        print(
+            f"ATTEMPT NUMBER : "
+            f"{pipeline_attempt_number}"
+        )
+
+        print("=" * 70)
+
+    else:
+
+        RUN_ID = int(
+
+            datetime.now().strftime(
+                "%Y%m%d%H%M%S"
+            )
+
+        )
+
+        restart_flag = 0
+
+        pipeline_attempt_number = 1
+
+        print("=" * 70)
+
+        print(
+            f"STARTING NEW RUN : "
+            f"{RUN_ID}"
+        )
+
+        print(
+            f"ATTEMPT NUMBER : "
+            f"{pipeline_attempt_number}"
+        )
+
+        print("=" * 70)
+
+    # ==========================================
+    # INSERT PIPELINE RUN
+    # ==========================================
+    pipeline_start_time = datetime.now()
+
+    spark.sql(f"""
+
+    INSERT INTO meta.PipelineRun
+
+    VALUES (
+
+        {RUN_ID},
+
+        {CONFIG_ID},
+
+        '{CONFIG_NAME}',
+
+        '{PIPELINE_NAME}',
+
+        '{PIPELINE_PATH}',
+
+        '{SOURCE_SYSTEM}',
+
+        '{TARGET_NAME}',
+
+        '{ENVIRONMENT_NAME}',
+
+        TIMESTAMP('{pipeline_start_time}'),
+
+        NULL,
+
+        'RUNNING',
+
+        '{TRIGGER_TYPE}',
+
+        '{TRIGGERED_BY}',
+
+        {len(task_configs)},
+
+        0,
+
+        0,
+
+        0,
+
+        {restart_flag},
+
+        {pipeline_attempt_number},
+
+        current_timestamp()
+
+    )
+
+    """)
+
+    # ==========================================
+    # FAILURE TRACKER
+    # ==========================================
+
+    pipeline_failures = []
+
+    pipeline_successes = [] # Success tracker for Teams alert
+
+    # ==========================================
+    # EXECUTE TASKS
+    # ==========================================
+
+    for row in task_configs:
+
+        safe_task_name = (
+            row.TaskName.replace(
+                "'",
+                "''"
+            )
+        )
+
+        safe_target_table = (
+            row.TargetTable.replace(
+                "'",
+                "''"
+            )
+        )
+
+        # ======================================
+        # DEPENDENCY CHECK
+        # ======================================
+
+        dependency_task_id = (
+            row.DependencyTaskConfigId
+        )
+
+        if dependency_task_id is not None:
+
+            dependency_df = spark.sql(f"""
+
+            SELECT Status
+            
+            FROM meta.TaskQueue
+            
+            WHERE TaskConfigId =
+                {dependency_task_id}
+            
+            AND Status IN (
+            
+                'SUCCESS',
+            
+                'FAILED',
+            
+                'SKIPPED'
+            
+            )
+            
+            ORDER BY RunId DESC,
+                    CreatedAt DESC
+            
+            LIMIT 1
+
+            """)
+
+            dependency_rows = (
+                dependency_df.collect()
+            )
+
+            dependency_failed = (
+
+                len(dependency_rows) == 0
+
+                or
+
+                dependency_rows[0]["Status"]
+                != "SUCCESS"
+
+            )
+
+            if dependency_failed:
+
+                TASK_ID = int(
+
+                    datetime.now().strftime(
+                        "%Y%m%d%H%M%S%f"
+                    )[:18]
+
+                )
+
+                AUDIT_ID = int(
+
+                    datetime.now().strftime(
+                        "%Y%m%d%H%M%S%f"
+                    )[:18]
+
+                )
+
+                attempt_number = spark.sql(f"""
+
+                SELECT COALESCE(
+                    MAX(AttemptNumber),
+                    0
+                )
+
+                FROM meta.TaskQueue
+
+                WHERE RunId = {RUN_ID}
+
+                AND TaskConfigId =
+                    {row.TaskConfigId}
+
+                """).collect()[0][0] + 1
+
+                spark.sql(f"""
+
+                INSERT INTO meta.TaskQueue
+
+                VALUES (
+
+                    {TASK_ID},
+
+                    {RUN_ID},
+
+                    {CONFIG_ID},
+
+                    {row.TaskConfigId},
+
+                    '{safe_task_name}',
+
+                    '{SOURCE_TYPE}',
+
+                    '{safe_target_table}',
+
+                    {row.ExecutionOrder},
+
+                    0,
+
+                    'SKIPPED',
+
+                    0,
+
+                    {restart_flag},
+
+                    {attempt_number},
+
+                    0,
+
+                    0,
+
+                    current_timestamp(),
+
+                    current_timestamp(),
+
+                    'Dependency Failed',
+
+                    current_timestamp(),
+
+                    NULL,
+
+                    NULL,
+
+                    NULL 
+
+                )
+
+                """)
+
+                spark.sql(f"""
+
+                INSERT INTO meta.TaskAudit
+
+                VALUES (
+
+                    {AUDIT_ID},
+
+                    {TASK_ID},
+
+                    {RUN_ID},
+
+                    {CONFIG_ID},
+
+                    {row.TaskConfigId},
+
+                    '{safe_task_name}',
+
+                    '{safe_target_table}',
+
+                    'TASK_SKIPPED',
+
+                    'SKIPPED',
+
+                    'WARN',
+
+                    0,
+
+                    0,
+
+                    0,
+
+                    'Dependency Failed',
+
+                    current_timestamp(),
+
+                    current_timestamp(),
+
+                    0,
+
+                    current_timestamp(),
+
+                    NULL,
+
+                    NULL
+
+                )
+
+                """)
+
+                print("=" * 70)
+
+                print(
+                    f"SKIPPED : "
+                    f"{row.TaskName}"
+                )
+
+                print(
+                    f"DEPENDENCY FAILED : "
+                    f"{dependency_task_id}"
+                )
+
+                print("=" * 70)
+
+                continue
+
+        # ======================================
+        # SKIP SUCCESS TASKS
+        # ======================================
+
+        if restart_flag == 1:
+
+            success_df = spark.sql(f"""
+
+            SELECT COUNT(*)
+
+            FROM meta.TaskQueue
+
+            WHERE RunId = {RUN_ID}
+
+            AND TaskConfigId =
+                {row.TaskConfigId}
+
+            AND Status = 'SUCCESS'
+
+            """)
+
+            already_success = (
+                success_df.collect()[0][0]
+            )
+
+            if already_success > 0:
+
+                print("=" * 70)
+
+                print(
+                    f"SKIPPING : "
+                    f"{row.TargetTable}"
+                )
+
+                print("=" * 70)
+
+                continue
+
+        # ======================================
+        # TASK IDS
+        # ======================================
+
+        TASK_ID = int(
+
+            datetime.now().strftime(
+                "%Y%m%d%H%M%S%f"
+            )[:18]
+
+        )
+
+        AUDIT_ID = int(
+
+            datetime.now().strftime(
+                "%Y%m%d%H%M%S%f"
+            )[:18]
+
+        )
+
+        # ======================================
+        # INSERT TASKQUEUE
+        # ======================================
+        attempt_number = spark.sql(f"""
+
+        SELECT COALESCE(
+            MAX(AttemptNumber),
+            0
+        )
+
+        FROM meta.TaskQueue
+
+        WHERE RunId = {RUN_ID}
+
+        AND TaskConfigId =
+            {row.TaskConfigId}
+
+        """).collect()[0][0] + 1
+
+        spark.sql(f"""
+
+        INSERT INTO meta.TaskQueue
+
+        VALUES (
+
+            {TASK_ID},
+
+            {RUN_ID},
+
+            {CONFIG_ID},
+
+            {row.TaskConfigId},
+
+            '{safe_task_name}',
+
+            '{SOURCE_TYPE}',
+
+            '{safe_target_table}',
+
+            {row.ExecutionOrder},
+
+            0,
+
+            'RUNNING',
+
+            0,
+
+            {restart_flag},
+
+            {attempt_number},
+
+            0,
+
+            0,
+
+            current_timestamp(),
+
+            NULL,
+
+            NULL,
+
+            current_timestamp(),
+
+            NULL,
+
+            NULL,
+
+            NULL
+
+            )
+
+            """)
+
+        # ======================================
+        # TASK START TIME
+        # ======================================
+
+        task_start_time = spark.sql(f"""
+
+        SELECT StartTime
+
+        FROM meta.TaskQueue
+
+        WHERE TaskId = {TASK_ID}
+
+        """).collect()[0][0]
+
+        retry_attempt = 0
+
+        http_status_code = 0
+        
+        api_response_time_ms = 0
+
+        df = None
+
+        try:
+
+            print("=" * 70)
+
+            print(
+                f"EXECUTING : "
+                f"{row.TaskName}"
+            )
+
+            print("=" * 70)
+
+            # ==================================
+            # API SOURCE
+            # ==================================
+
+            task_headers = dict(headers)
+
+            if (
+                hasattr(row, "RequestHeaders")
+                and
+                row.RequestHeaders
+            ):
+
+                task_headers.update(
+                    json.loads(
+                        row.RequestHeaders
+                    )
+                )
+
+            if SOURCE_TYPE.upper() == "API":
+
+                task_auth_object = auth_object
+
+                if (
+                
+                    hasattr(row, "AuthType")
+
+                    and
+
+                    str(row.AuthType).upper() == "OAUTH"
+
+                ):
+
+                    access_token = get_oauth_token(
+                        connection_config
+                    )
+
+                    task_headers[
+                        "Authorization"
+                    ] = f"Bearer {access_token}"
+
+                    task_auth_object = None
+
+                print(
+                    f"FINAL HEADERS : {task_headers}"
+                )
+
+                request_body = build_request_body(
+                
+                    connection_config,
+
+                    row.RequestBody
+
+                )
+
+                print(
+                    f"REQUEST BODY : "
+                    f"{request_body}"
+                )
+
+                print(
+                    f"AUTH TYPE : "
+                    f"{type(task_auth_object)}"
+                )
+
+                response = fetch_api_data(
+
+                    url=row.Endpoint,
+
+                    method=row.Method,
+
+                    headers=task_headers,
+
+                    auth_object=task_auth_object,
+
+                    request_body=request_body,
+
+                    pagination_enabled=row.PaginationEnabled,
+
+                    pagination_param=row.PaginationParam,
+
+                    timeout_seconds=row.TimeoutSeconds,
+
+                    retry_count=row.RetryCount
+
+                )
+
+                records = response["records"]
+
+                rows_processed = (
+                    response["rows_processed"]
+                )
+
+                api_response_time_ms = (
+                    response[
+                        "api_response_time_ms"
+                    ]
+                )
+
+                http_status_code = (
+                    response[
+                        "http_status_code"
+                    ]
+                )
+
+                retry_attempt = (
+                    response[
+                        "retry_attempt"
+                    ]
+                )
+
+                df = create_spark_df(records)
+
+                if df is None:
+                
+                    rows_processed = 0
+
+            # ==================================
+            # TABLE SOURCE
+            # ==================================
+
+            elif SOURCE_TYPE.upper() == "TABLE":
+                print("TABLE SOURCE LOGIC V2")
+                print(f"Source Table = {row.SourceTable}")
+                print(
+                    f"Exists = "
+                    f"{spark.catalog.tableExists(row.SourceTable)}"
+                )
+            
+                if not spark.catalog.tableExists(
+                    row.SourceTable
+                ):
+            
+                    print(
+                        f"Source table not found : "
+                        f"{row.SourceTable}"
+                    )
+            
+                    rows_processed = 0
+            
+                else:
+                
+                    df = read_source_table(
+                        row.SourceTable
+                    )
+            
+                    rows_processed = df.count()
+
+                retry_attempt = 0
+
+                api_response_time_ms = 0
+
+                http_status_code = 0
+
+            else:
+
+                raise Exception(
+
+                    f"Unsupported SourceType : "
+                    f"{SOURCE_TYPE}"
+
+                )
+
+            # ==================================
+            # EMPTY SOURCE
+            # ==================================
+
+            if rows_processed == 0:
+            
+                print(
+                    f"No records returned : "
+                    f"{row.TaskName}"
+                )
+            
+                rows_written = 0
+            
+                spark.sql(f"""
+            
+                UPDATE meta.TaskQueue
+            
+                SET
+            
+                    ExecutionFlag = 1,
+            
+                    Status = 'SUCCESS',
+            
+                    RetryAttempt =
+                        {retry_attempt},
+            
+                    HttpStatusCode =
+                        {http_status_code},
+            
+                    ApiResponseTimeMs =
+                        {api_response_time_ms},
+            
+                    EndTime =
+                        current_timestamp(),
+            
+                    ErrorMessage = NULL
+            
+                WHERE TaskId = {TASK_ID}
+            
+                """)
+            
+                task_end_time = datetime.now()
+            
+                duration_seconds = (
+                    calculate_duration_seconds(
+                        task_start_time,
+                        task_end_time
+                    )
+                )
+            
+                spark.sql(f"""
+            
+                INSERT INTO meta.TaskAudit
+            
+                VALUES (
+                
+                    {AUDIT_ID},
+            
+                    {TASK_ID},
+            
+                    {RUN_ID},
+            
+                    {CONFIG_ID},
+            
+                    {row.TaskConfigId},
+            
+                    '{safe_task_name}',
+            
+                    '{safe_target_table}',
+            
+                    'TASK_COMPLETE',
+            
+                    'SUCCESS',
+            
+                    'INFO',
+            
+                    0,
+            
+                    0,
+            
+                    0,
+            
+                    'No records returned',
+            
+                    TIMESTAMP('{task_start_time}'),
+            
+                    current_timestamp(),
+            
+                    {duration_seconds},
+            
+                    current_timestamp(),
+
+                    NULL,
+
+                    NULL
+            
+                )
+            
+                """)
+            
+                DQ_ID = int(
+                
+                    datetime.now().strftime(
+                        "%Y%m%d%H%M%S%f"
+                    )[:18]
+            
+                )
+            
+                spark.sql(f"""
+            
+                INSERT INTO meta.DataQuality
+            
+                VALUES (
+                
+                    {DQ_ID},
+            
+                    {RUN_ID},
+            
+                    {CONFIG_ID},
+            
+                    {row.TaskConfigId},
+            
+                    '{safe_target_table}',
+            
+                    0,
+            
+                    0,
+            
+                    0,
+            
+                    'SUCCESS',
+            
+                    current_timestamp()
+            
+                )
+            
+                """)
+
+                pipeline_successes.append({
+                
+                    "task": row.TaskName,
+                
+                    "task_config_id": row.TaskConfigId
+                
+                })
+            
+                continue
+
+            # ==================================
+            # CACHE DF
+            # ==================================
+
+            df = df.cache()
+
+            source_count = df.count()
+
+            dedup_df = df.dropDuplicates()
+
+            dedup_count = dedup_df.count()
+
+            duplicate_count = (
+                source_count - dedup_count
+            )
+
+            # ==================================
+            # SILVER DEDUP
+            # ==================================
+
+            if TARGET_NAME.upper() == "SL":
+            
+                df = dedup_df
+
+                if SOURCE_SYSTEM.upper() == "UKG":
+                    print(f"BEFORE TRANSFORMATION : {type(df)}")
+                    df = apply_gold_transformations(
+                        df=df,
+                        target_table=row.TargetTable
+                    )
+                    print(f"AFTER TRANSFORMATION : {type(df)}")
+                    print(
+                            f"TRANSFORMATION RETURN TYPE : "
+                            f"{type(df)}"
+                        )
+            # ==================================
+            # GOLD TRANSFORMATIONS
+            # ==================================
+
+            if TARGET_NAME.upper() == "GL":
+
+                df = apply_gold_transformations(
+
+                    df=df,
+
+                    target_table=row.TargetTable
+
+                )
+                
+            print("=" * 80)
+            print(f"DF TYPE BEFORE WRITE : {type(df)}")
+            print(f"TARGET TABLE : {row.TargetTable}")
+            print("=" * 80)
+
+            rows_written = df.count()
+
+            full_table_name = (
+
+                f"{row.TargetSchema}."
+
+                f"{row.TargetTable}"
+
+            )
+
+            # ==================================
+            # WRITE TARGET
+            # ==================================
+
+            if TARGET_NAME.upper() == "GL":
+
+                write_gold_table(
+
+                    df=df,
+
+                    table_name=full_table_name,
+
+                    load_type=row.LoadType
+
+                )
+
+            else:
+
+                write_delta(
+
+                    df=df,
+
+                    table_name=full_table_name,
+
+                    load_type=row.LoadType
+
+                )
+            
+            df.unpersist(blocking=True)
+
+            # ==================================
+            # UPDATE TASKQUEUE
+            # ==================================
+
+            spark.sql(f"""
+
+            UPDATE meta.TaskQueue
+
+            SET
+
+                ExecutionFlag = 1,
+
+                Status = 'SUCCESS',
+
+                RetryAttempt =
+                    {retry_attempt},
+
+                HttpStatusCode =
+                    {http_status_code},
+
+                ApiResponseTimeMs =
+                    {api_response_time_ms},
+
+                EndTime =
+                    current_timestamp(),
+
+                ErrorMessage = NULL
+
+            WHERE TaskId = {TASK_ID}
+
+            """)
+
+            # ==================================
+            # INSERT TASK AUDIT
+            # ==================================
+
+            task_end_time = datetime.now()
+
+            duration_seconds = (
+                calculate_duration_seconds(
+                    task_start_time,
+                    task_end_time
+                )
+            )
+
+            spark.sql(f"""
+
+            INSERT INTO meta.TaskAudit
+
+            VALUES (
+
+                {AUDIT_ID},
+
+                {TASK_ID},
+
+                {RUN_ID},
+
+                {CONFIG_ID},
+
+                {row.TaskConfigId},
+
+                '{safe_task_name}',
+
+                '{safe_target_table}',
+
+                'TASK_COMPLETE',
+
+                'SUCCESS',
+
+                'INFO',
+
+                {rows_processed},
+
+                {rows_written},
+
+                0,
+
+                NULL,
+
+                TIMESTAMP('{task_start_time}'),
+
+                current_timestamp(),
+
+                {duration_seconds},
+
+                current_timestamp(),
+
+                NULL,
+
+                NULL
+
+            )
+
+            """)
+
+            # ==================================
+            # INSERT DQ
+            # ==================================
+
+            DQ_ID = int(
+
+                datetime.now().strftime(
+                    "%Y%m%d%H%M%S%f"
+                )[:18]
+
+            )
+
+            spark.sql(f"""
+
+            INSERT INTO meta.DataQuality
+
+            VALUES (
+
+                {DQ_ID},
+
+                {RUN_ID},
+
+                {CONFIG_ID},
+
+                {row.TaskConfigId},
+
+                '{safe_target_table}',
+
+                {source_count},
+
+                0,
+
+                {duplicate_count},
+
+                'SUCCESS',
+
+                current_timestamp()
+
+            )
+
+            """)
+
+            print(
+                f"SUCCESS : "
+                f"{full_table_name}"
+            )
+
+            pipeline_successes.append({
+
+                "task": row.TaskName,
+
+                "task_config_id": row.TaskConfigId
+
+            })
+
+        except Exception as e:
+        
+            retry_attempt = getattr(
+            
+                e,
+        
+                "retry_attempts",
+        
+                0
+        
+            )
+            if df is not None:
+
+                try:
+
+                    df.unpersist(blocking=True)
+
+                except:
+
+                    pass
+            import traceback
+
+            print("=" * 100)
+            print("FULL EXCEPTION")
+            print("=" * 100)
+
+            print(type(e))
+            print(str(e))
+
+            traceback.print_exc()
+
+            print("=" * 100)
+            
+            error_message = clean_sql_text(
+                str(e)
+            )
+
+            pipeline_failures.append({
+            
+                "task": row.TaskName,
+
+                "task_config_id": row.TaskConfigId,
+
+                "error": error_message,
+
+                "timestamp": datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+            })
+
+            spark.sql(f"""
+
+            UPDATE meta.TaskQueue
+
+            SET
+
+                ExecutionFlag = 0,
+
+                Status = 'FAILED',
+
+                RetryAttempt =
+                    {retry_attempt if 'retry_attempt' in locals() else 0},
+
+                EndTime =
+                    current_timestamp(),
+
+                ErrorMessage =
+                    '{error_message}'
+
+            WHERE TaskId = {TASK_ID}
+
+            """)
+            
+            task_end_time = datetime.now()
+
+            duration_seconds = (
+                calculate_duration_seconds(
+                    task_start_time,
+                    task_end_time
+                )
+            )
+
+        
+            spark.sql(f"""
+
+            INSERT INTO meta.TaskAudit
+
+            VALUES (
+
+                {AUDIT_ID},
+
+                {TASK_ID},
+
+                {RUN_ID},
+
+                {CONFIG_ID},
+
+                {row.TaskConfigId},
+
+                '{safe_task_name}',
+
+                '{safe_target_table}',
+
+                'TASK_FAILED',
+
+                'FAILED',
+
+                'ERROR',
+
+                0,
+
+                0,
+
+                0,
+
+                '{error_message}',
+
+                TIMESTAMP('{task_start_time}'),
+
+                current_timestamp(),
+
+                {duration_seconds},
+
+                current_timestamp(),
+
+                NULL,
+
+                NULL
+
+            )
+
+            """)
+
+            print("=" * 70)
+
+            print(
+                f"FAILED : "
+                f"{row.TaskName}"
+            )
+
+            print(
+                f"ERROR : "
+                f"{error_message}"
+            )
+
+            print("=" * 70)
+
+            continue
+
+    # ==========================================
+    # FINAL COUNTS
+    # ==========================================
+
+    success_count = spark.sql(f"""
+
+    SELECT COUNT(DISTINCT TaskConfigId)
+
+    FROM meta.TaskQueue
+
+    WHERE RunId = {RUN_ID}
+
+    AND Status = 'SUCCESS'
+
+    """).collect()[0][0]
+
+    failed_count = spark.sql(f"""
+
+    SELECT COUNT(DISTINCT TaskConfigId)
+
+    FROM meta.TaskQueue failed_tq
+
+    WHERE failed_tq.RunId = {RUN_ID}
+
+    AND failed_tq.Status = 'FAILED'
+
+    AND NOT EXISTS (
+
+        SELECT 1
+
+        FROM meta.TaskQueue success_tq
+
+        WHERE success_tq.RunId =
+            failed_tq.RunId
+
+        AND success_tq.TaskConfigId =
+            failed_tq.TaskConfigId
+
+        AND success_tq.Status = 'SUCCESS'
+
+    )
+
+    """).collect()[0][0]
+
+    skipped_count = spark.sql(f"""
+
+    SELECT COUNT(DISTINCT TaskConfigId)
+
+    FROM meta.TaskQueue
+
+    WHERE RunId = {RUN_ID}
+
+    AND Status = 'SKIPPED'
+
+    """).collect()[0][0]
+
+    final_pipeline_status = (
+
+        "FAILED"
+
+        if failed_count > 0
+
+        else "SUCCESS"
+
+    )
+
+    # ==========================================
+    # UPDATE PIPELINE RUN
+    # ==========================================
+
+    spark.sql(f"""
+
+    UPDATE meta.PipelineRun
+
+    SET
+
+        EndTime = current_timestamp(),
+
+        Status = '{final_pipeline_status}',
+
+        SuccessTasks = {success_count},
+
+        FailedTasks = {failed_count},
+
+        SkippedTasks = {skipped_count}
+
+    WHERE RunId = {RUN_ID}
+
+    AND AttemptNumber = {pipeline_attempt_number}
+
+    """)
+
+    # ==========================================
+    # FINAL STATUS
+    # ==========================================
+
+    print("=" * 70)
+
+    print(
+        f"PIPELINE STATUS : "
+        f"{final_pipeline_status}"
+    )
+
+    print(
+        f"SUCCESS TASKS : "
+        f"{success_count}"
+    )
+
+    print(
+        f"FAILED TASKS : "
+        f"{failed_count}"
+    )
+
+    print(
+
+        f"SKIPPED TASKS : "
+
+        f"{skipped_count}"
+
+    ) 
+    print("=" * 70)
+
+    # ==========================================
+    # FAILED TASK SUMMARY
+    # ==========================================
+
+    if pipeline_failures:
+
+        print("=" * 70)
+
+        print("FAILED TASK SUMMARY")
+
+        print("=" * 70)
+
+        for failure in pipeline_failures:
+
+            print(
+
+                f"TASK : "
+                f"{failure['task']} | "
+
+                f"ERROR : "
+                f"{failure['error']}"
+
+            )
+
+        print("=" * 70)
+
+    # ==========================================================
+    # SEND TEAMS NOTIFICATION
+    # ==========================================================
+    if final_pipeline_status == "FAILED":
+        send_teams_failure_alert(
+            pipeline_name=PIPELINE_NAME,
+            config_name=CONFIG_NAME,
+            source_system=SOURCE_SYSTEM,
+            target_name=TARGET_NAME,
+            environment_name=ENVIRONMENT_NAME,
+            run_id=RUN_ID,
+            failed_count=failed_count,
+            failures=pipeline_failures
+        )
+    elif final_pipeline_status == "SUCCESS":
+        
+        send_teams_success_alert(
+            pipeline_name=PIPELINE_NAME,
+            config_name=CONFIG_NAME,
+            source_system=SOURCE_SYSTEM,
+            target_name=TARGET_NAME,
+            environment_name=ENVIRONMENT_NAME,
+            run_id=RUN_ID,
+            success_count=success_count,
+            successes=pipeline_successes
+        )

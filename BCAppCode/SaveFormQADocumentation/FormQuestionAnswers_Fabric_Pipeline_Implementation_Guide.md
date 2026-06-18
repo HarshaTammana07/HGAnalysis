@@ -9,6 +9,182 @@
 
 ---
 
+## 0. Orchestration Pattern — Multi-Pipeline Execution at Scale
+
+**When you have 80+ clinic sites**, running all sites in a single ForEach causes concurrent Delta writes → conflicts. The solution: **split into multiple independent pipelines**, each handling a smaller batch, orchestrated by a parent pipeline.
+
+### Scaling Strategy: 115 Sites → 23 Pipelines × 5 Sites Per Pipeline
+
+```
+Parent Pipeline (Orchestrator)
+  │
+  ├─→ Invoke Child Pipeline 1 (sites 1-5)    → ForEach runs 5 sites in parallel
+  │                                            → Bronze write commits 5 times (sequential inside ForEach)
+  │                                            → Silver notebook transforms these 5
+  │
+  ├─→ Invoke Child Pipeline 2 (sites 6-10)   → same pattern
+  ├─→ Invoke Child Pipeline 3 (sites 11-15)
+  ├─→ Invoke Child Pipeline 4 (sites 16-20)
+  └─→ ... (23 child pipelines total)
+  
+  After ALL children complete (waitOnCompletion: true):
+  └─→ Final consolidation notebook (optional) or report
+```
+
+### Why This Works
+
+| Concern | Single Pipeline (115 sites) | Multi-Pipeline (23 × 5 sites) |
+|---|---|---|
+| Concurrent Delta writes | High conflict risk | Each child writes sequentially within batch; no inter-pipeline conflicts |
+| Runtime | Sequential = slow | Parallel execution of independent children |
+| Recoverability | One site fails → whole run fails | One child fails → re-run that child only |
+| Silver transformation | One notebook processes all 115 | Each child's notebook processes 5 → faster, less memory |
+
+### Parent Pipeline JSON Template
+
+The parent pipeline invokes each child pipeline sequentially with `waitOnCompletion: true`, passing site lists:
+
+```json
+{
+    "name": "Execute_AfterBronzFormQuestionAnswer",
+    "type": "InvokePipeline",
+    "dependsOn": [],
+    "policy": { "timeout": "0.12:00:00", "retry": 0 },
+    "typeProperties": {
+        "waitOnCompletion": true,
+        "operationType": "InvokeFabricPipeline",
+        "pipelineId": "<<child-pipeline-guid>>",
+        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+        "parameters": {
+            "p_ingest_run_id": "@pipeline().parameters.p_ingest_run_id",
+            "p_lookback_days": "@pipeline().parameters.p_lookback_days",
+            "p_sites": { "value": "@pipeline().parameters.p_sites_batch_1", "type": "Expression" },
+            "p_reload": "@pipeline().parameters.p_reload"
+        }
+    },
+    "externalReferences": { "connection": "9efac0af-aea0-4007-90e5-0fa555fb1fa2" }
+}
+```
+
+Repeat 23 times (once per batch), with `p_sites_batch_1`, `p_sites_batch_2`, etc.
+
+### Step-by-Step: Building the Parent Orchestrator Pipeline
+
+#### 0.1 Create the Parent Pipeline
+
+1. In Fabric, create a new data pipeline: **`FormQuestionAnswers_Orchestrator`**
+2. This pipeline will **NOT** contain a ForEach or Copy activities
+3. It will **only invoke the 23 child pipelines** sequentially, then run a final Silver notebook
+
+#### 0.2 Add Parameters to the Parent Pipeline
+
+In the **Edit → Parameters** tab, add:
+
+| Parameter Name | Type | Default Value |
+|---|---|---|
+| `p_ingest_run_id` | String | `@pipeline().RunId` |
+| `p_work_date` | String | `@formatDateTime(addDays(utcNow(), -1), 'yyyy-MM-dd')` |
+| `p_lookback_days` | Int | `30` |
+| `p_reload` | Bool | `false` |
+| `p_sites_batch_1` | Array | `[{"site_code": "Site1", "source_database": "SAMMS-Site1"}, {"site_code": "Site2", ...}, ...]` |
+| `p_sites_batch_2` | Array | `[...next 5 sites...]` |
+| ... (repeat for batch 3 through 23) | Array | |
+
+Each batch contains exactly 5 sites in the same format as the child pipeline's `p_sites` parameter.
+
+#### 0.3 Add ONE Invoke Pipeline Activity
+
+There is only **one** Invoke Pipeline activity in the parent. The parallelism is inside the child pipeline via 5 ForEach activities — not in the parent.
+
+The full flow is:
+```
+Parent Pipeline
+  └── Execute_AfterBronzFormQuestionAnswer (InvokePipeline — waitOnCompletion: true)
+        └── Child Pipeline (pl_forms_samms_to_lakehouse)
+              ├── ForEach 1 → 23 sites  (p_sites)
+              ├── ForEach 2 → 23 sites  (p_sites_copy1)
+              ├── ForEach 3 → 23 sites  (p_sites3)
+              ├── ForEach 4 → 23 sites  (p_sites4)
+              └── ForEach 5 → 23 sites  (p_sites5)
+              [all 5 ForEach run in parallel — 115 sites total]
+
+  After InvokePipeline succeeds:
+  └── nb_forms_bronze_to_silver (Silver Notebook)
+```
+
+**Steps:**
+
+1. **Drag one Invoke Pipeline activity** onto the parent canvas
+2. **Rename it:** `Execute_AfterBronzFormQuestionAnswer`
+3. **No dependency** — it starts immediately when the parent runs
+4. **Configure Settings tab:**
+
+| Setting | Value |
+|---|---|
+| Pipeline | `pl_forms_samms_to_lakehouse` (your child pipeline) |
+| Wait on completion | ✓ (must be checked — parent must wait for all 115 sites to finish before Silver runs) |
+
+5. **Configure Parameters tab** — pass all 5 site arrays down to the child:
+
+| Parameter | Value |
+|---|---|
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_lookback_days` | `@pipeline().parameters.p_lookback_days` (Expression) |
+| `p_reload` | `@pipeline().parameters.p_reload` (Expression) |
+| `p_sites` | `@pipeline().parameters.p_sites` (Expression) |
+| `p_sites_copy1` | `@pipeline().parameters.p_sites_copy1` (Expression) |
+| `p_sites3` | `@pipeline().parameters.p_sites3` (Expression) |
+| `p_sites4` | `@pipeline().parameters.p_sites4` (Expression) |
+| `p_sites5` | `@pipeline().parameters.p_sites5` (Expression) |
+
+**Full JSON:**
+```json
+{
+    "name": "Execute_AfterBronzFormQuestionAnswer",
+    "type": "InvokePipeline",
+    "dependsOn": [],
+    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
+    "typeProperties": {
+        "waitOnCompletion": true,
+        "operationType": "InvokeFabricPipeline",
+        "pipelineId": "d7caff4a-595e-4826-a75e-75919ed5d30f",
+        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+        "parameters": {
+            "p_ingest_run_id": { "value": "@pipeline().parameters.p_ingest_run_id", "type": "Expression" },
+            "p_lookback_days": { "value": "@pipeline().parameters.p_lookback_days", "type": "Expression" },
+            "p_reload": { "value": "@pipeline().parameters.p_reload", "type": "Expression" },
+            "p_sites": { "value": "@pipeline().parameters.p_sites", "type": "Expression" },
+            "p_sites_copy1": { "value": "@pipeline().parameters.p_sites_copy1", "type": "Expression" },
+            "p_sites3": { "value": "@pipeline().parameters.p_sites3", "type": "Expression" },
+            "p_sites4": { "value": "@pipeline().parameters.p_sites4", "type": "Expression" },
+            "p_sites5": { "value": "@pipeline().parameters.p_sites5", "type": "Expression" }
+        }
+    },
+    "externalReferences": { "connection": "9efac0af-aea0-4007-90e5-0fa555fb1fa2" }
+}
+```
+
+> **Why `waitOnCompletion: true` matters:** All 5 ForEach batches in the child pipeline must finish writing to Bronze before the Silver notebook runs. Without this, the Silver notebook starts while some sites are still mid-extraction and misses their rows.
+
+#### 0.4 Add the Silver Notebook Activity
+
+After the Invoke Pipeline activity:
+
+1. **Drag a Notebook activity** onto the parent canvas
+2. **Rename it:** `nb_forms_bronze_to_silver`
+3. **Dependency:** `Execute_AfterBronzFormQuestionAnswer` → `nb_forms_bronze_to_silver` (Succeeded)
+4. **Configure Parameters:**
+
+| Parameter | Value |
+|---|---|
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_lookback_days` | `@pipeline().parameters.p_lookback_days` (Expression) |
+| `p_reload` | `@pipeline().parameters.p_reload` (Expression) |
+
+This notebook reads Bronze filtered by `_ingest_run_id`, processes all 115 sites' rows together, and merges into Silver in a single pass.
+
+---
+
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
@@ -22,8 +198,7 @@
 9. [Step 4 — Inside ForEach: IfCondition — Gate on Form Table](#9-step-4--inside-foreach-ifcondition--gate-on-form-table)
 10. [Step 5 — Inside IfCondition True Branch: Lookup 2 — Get All Existing Tables](#10-step-5--inside-ifcondition-true-branch-lookup-2--get-all-existing-tables)
 11. [Step 6 — Inside True Branch: Notebook Activity — SQL Builder](#11-step-6--inside-true-branch-notebook-activity--sql-builder)
-12. [Step 7 — Inside True Branch: Set Variable — Capture Built SQL](#12-step-7--inside-true-branch-set-variable--capture-built-sql)
-13. [Step 8 — Inside True Branch: Copy Activity — Extract to Bronze](#13-step-8--inside-true-branch-copy-activity--extract-to-bronze)
+12. [Step 7 — Inside True Branch: Copy Activity — Extract to Bronze](#12-step-7--inside-true-branch-copy-activity--extract-to-bronze)
 14. [Step 9 — Add the Silver Notebook Activity (After ForEach)](#14-step-9--add-the-silver-notebook-activity-after-foreach)
 15. [Step 10 — Create the SQL Builder Notebook: nb_forms_build_site_sql](#15-step-10--create-the-sql-builder-notebook-nb_forms_build_site_sql)
 16. [Step 11 — Create the Silver Notebook: nb_forms_bronze_to_silver](#16-step-11--create-the-silver-notebook-nb_forms_bronze_to_silver)
@@ -95,17 +270,11 @@
 │  │  │                   │ exitValue                   ││                │  │
 │  │  │                   ▼                            ││                │  │
 │  │  │  ┌──────────────────────────────────────┐     ││                │  │
-│  │  │  │ sv_set_site_sql (Set Variable)       │     ││                │  │
-│  │  │  │ v_site_sql = exitValue               │     ││                │  │
-│  │  │  └────────────────┬─────────────────────┘     ││                │  │
-│  │  │                   │ Succeeded                   ││                │  │
-│  │  │                   ▼                            ││                │  │
-│  │  │  ┌──────────────────────────────────────┐     ││                │  │
 │  │  │  │ cp_forms_to_bronze (Copy Activity)   │     ││                │  │
 │  │  │  │                                      │     ││                │  │
 │  │  │  │ Source: SAMMS SQL Server             │     ││                │  │
-│  │  │  │   query = @variables('v_site_sql')   │     ││                │  │
-│  │  │  │   (full UNION SQL, already built)    │     ││                │  │
+│  │  │  │   query = activity exit value        │     ││                │  │
+│  │  │  │   (full UNION SQL from notebook)     │     ││                │  │
 │  │  │  │                                      │     ││                │  │
 │  │  │  │ Sink: bhg_bronze                     │     ││                │  │
 │  │  │  │       Form.br_tblFormQA (APPEND)    │     ││                │  │
@@ -231,7 +400,19 @@ Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
 
 ---
 
-#### Parameter 2: `p_lookback_days`
+#### Parameter 2: `p_work_date`
+
+| Setting | Value |
+|---|---|
+| Name | `p_work_date` |
+| Type | `String` |
+| Default | `2026-05-25` |
+
+**Why:** Mirrors `st.WorkDate` in the old scheduler. FormQuestionAnswers computes `wrkdt = WorkDate - 30 days`. For QA against BHG_DR, set this to the exact `tsk.tbl_Tasks2.WorkDate` for the old run.
+
+---
+
+#### Parameter 3: `p_lookback_days`
 
 | Setting | Value |
 |---|---|
@@ -243,7 +424,7 @@ Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
 
 ---
 
-#### Parameter 3: `p_sites`
+#### Parameter 4: `p_sites`
 
 | Setting | Value |
 |---|---|
@@ -268,7 +449,7 @@ Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
 
 ---
 
-#### Parameter 4: `p_reload`
+#### Parameter 5: `p_reload`
 
 | Setting | Value |
 |---|---|
@@ -512,12 +693,48 @@ Returns all table names in this SAMMS database — e.g., `[{"name":"Form"}, {"na
 
 ---
 
+## 10A. Step 5B - Inside True Branch: Lookup Existing Source Columns
+
+### What this does
+
+Queries `sys.all_columns` for the current SAMMS database and returns the optional source columns the builder needs. Right now that is `tblTP17REVIEW.tprReviewFrequency`.
+
+### Add the activity
+1. Inside the True branch canvas, drag another **Lookup** activity
+2. Rename it: `lkp_get_existing_columns`
+
+### Configure Settings tab
+
+| Setting | Value |
+|---|---|
+| Source type | SQL Server |
+| Connection | Same SQL Server connection as `lkp_get_existing_tables` |
+| Use query | **Query** |
+| Query | Use the expression below |
+| First row only | **Unchecked** |
+
+**Query expression (Expression mode):**
+```
+@concat('SELECT t.name AS TABLE_NAME, c.name AS COLUMN_NAME FROM [', item().source_database, '].sys.tables t INNER JOIN [', item().source_database, '].sys.all_columns c ON t.object_id = c.object_id WHERE t.name IN (''tblTP17REVIEW'')')
+```
+
+**This produces:**
+```sql
+SELECT t.name AS TABLE_NAME, c.name AS COLUMN_NAME
+FROM [SAMMS-ColoradoSpringsV5].sys.tables t
+INNER JOIN [SAMMS-ColoradoSpringsV5].sys.all_columns c
+    ON t.object_id = c.object_id
+WHERE t.name IN ('tblTP17REVIEW')
+```
+
+---
+
 ## 11. Step 6 — Inside True Branch: Notebook Activity — SQL Builder
 
 ### What this does
 
 This notebook is a **pure string generator**. It:
-- Receives the list of existing SAMMS tables (from Lookup 2) as a JSON string parameter
+- Receives the list of existing SAMMS tables and columns as JSON string parameters
 - Reads `bhg_silver.ctrl.tbl_Forms2Process` (Fabric lakehouse — no SAMMS connection)
 - Builds the full UNION SQL for this site (base query + one UNION block per enabled form table that exists in this SAMMS)
 - Returns the SQL string via `mssparkutils.notebook.exit()` — the pipeline captures this as the notebook's `exitValue`
@@ -527,7 +744,7 @@ This notebook is a **pure string generator**. It:
 ### Add the activity
 1. On the True branch canvas, drag a **Notebook** activity
 2. Rename it: `nb_forms_build_site_sql`
-3. Draw a dependency: `lkp_get_existing_tables` → `nb_forms_build_site_sql` (Succeeded)
+3. Draw dependencies from both `lkp_get_existing_tables` and `lkp_get_existing_columns` to `nb_forms_build_site_sql` (Succeeded)
 
 ### Configure Settings tab
 
@@ -543,11 +760,14 @@ This notebook is a **pure string generator**. It:
 | `p_site_code` | String | `@item().site_code` (Expression) |
 | `p_source_database` | String | `@item().source_database` (Expression) |
 | `p_ingest_run_id` | String | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_work_date` | String | `@pipeline().parameters.p_work_date` (Expression) |
 | `p_lookback_days` | Int | `@pipeline().parameters.p_lookback_days` (Expression) |
 | `p_reload` | Bool | `@pipeline().parameters.p_reload` (Expression) |
 | `p_existing_tables_json` | String | `@string(activity('lkp_get_existing_tables').output.value)` (Expression) |
+| `p_existing_columns_json` | String | `@string(activity('lkp_get_existing_columns').output.value)` (Expression) |
 
 > **`p_existing_tables_json`** is the Lookup 2 result serialised to a JSON string. The notebook deserialises it and extracts the table name set.
+> **`p_existing_columns_json`** is the source column list used for legacy optional-column cases such as `tblTP17REVIEW.tprReviewFrequency`.
 
 **Policy tab:** Timeout `0.12:00:00`, Retry `0`.
 
@@ -557,7 +777,8 @@ This notebook is a **pure string generator**. It:
     "name": "nb_forms_build_site_sql",
     "type": "TridentNotebook",
     "dependsOn": [
-        { "activity": "lkp_get_existing_tables", "dependencyConditions": ["Succeeded"] }
+        { "activity": "lkp_get_existing_tables", "dependencyConditions": ["Succeeded"] },
+        { "activity": "lkp_get_existing_columns", "dependencyConditions": ["Succeeded"] }
     ],
     "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
     "typeProperties": {
@@ -567,9 +788,11 @@ This notebook is a **pure string generator**. It:
             "p_site_code":             { "value": { "value": "@item().site_code",                                                               "type": "Expression" }, "type": "string" },
             "p_source_database":       { "value": { "value": "@item().source_database",                                                        "type": "Expression" }, "type": "string" },
             "p_ingest_run_id":         { "value": { "value": "@pipeline().parameters.p_ingest_run_id",                                         "type": "Expression" }, "type": "string" },
+            "p_work_date":             { "value": { "value": "@pipeline().parameters.p_work_date",                                             "type": "Expression" }, "type": "string" },
             "p_lookback_days":         { "value": { "value": "@pipeline().parameters.p_lookback_days",                                         "type": "Expression" }, "type": "int"    },
             "p_reload":                { "value": { "value": "@pipeline().parameters.p_reload",                                                 "type": "Expression" }, "type": "bool"   },
-            "p_existing_tables_json":  { "value": { "value": "@string(activity('lkp_get_existing_tables').output.value)",                       "type": "Expression" }, "type": "string" }
+            "p_existing_tables_json":  { "value": { "value": "@string(activity('lkp_get_existing_tables').output.value)",                       "type": "Expression" }, "type": "string" },
+            "p_existing_columns_json": { "value": { "value": "@string(activity('lkp_get_existing_columns').output.value)",                      "type": "Expression" }, "type": "string" }
         }
     }
 }
@@ -577,9 +800,9 @@ This notebook is a **pure string generator**. It:
 
 ---
 
-## 12. Step 7 — Inside True Branch: Set Variable — Capture Built SQL
+## 12. Step 7 — Inside True Branch: Copy Activity — Extract to Bronze
 
-After the notebook exits, its return value is captured into the pipeline variable `v_site_sql`.
+The notebook `nb_forms_build_site_sql` constructs the full UNION SQL string and returns it via `mssparkutils.notebook.exit()`. The Copy activity receives this directly and executes it.
 
 ### Add the activity
 1. Drag a **Set Variable** activity onto the True branch canvas
@@ -613,14 +836,13 @@ After the notebook exits, its return value is captured into the pipeline variabl
 
 ---
 
-## 13. Step 8 — Inside True Branch: Copy Activity — Extract to Bronze
 
-This is the **only** activity that connects to SAMMS for data extraction. It executes the pre-built UNION SQL string from `v_site_sql` against the clinic's SAMMS SQL Server and appends the results to Bronze.
+This is the **only** activity that connects to SAMMS for data extraction. It executes the dynamically-built UNION SQL string (from the notebook's exit value) against the clinic's SAMMS SQL Server and appends the results to Bronze.
 
 ### Add the activity
 1. Drag a **Copy** activity onto the True branch canvas
 2. Rename it: `cp_forms_to_bronze`
-3. Draw a dependency: `sv_set_site_sql` → `cp_forms_to_bronze` (Succeeded)
+3. Draw a dependency: `nb_forms_build_site_sql` → `cp_forms_to_bronze` (Succeeded)
 
 ### Configure Source tab
 
@@ -629,10 +851,10 @@ This is the **only** activity that connects to SAMMS for data extraction. It exe
 | Source type | SQL Server |
 | Connection | `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` |
 | Use query | **Query** |
-| Query | `@variables('v_site_sql')` (Expression) |
+| Query | `@activity('nb_forms_build_site_sql').output.result.exitValue` (Expression) |
 | Query timeout | `02:00:00` |
 
-> The `v_site_sql` variable holds the complete `SELECT DISTINCT * FROM (...all UNIONs...) z` string built by the notebook. The Copy activity executes it verbatim against the current site's SAMMS database.
+> The notebook exit value holds the complete `SELECT DISTINCT * FROM (...all UNIONs...) z` string. The Copy activity executes it verbatim against the current site's SAMMS database.
 
 ### Configure Sink tab
 
@@ -669,13 +891,13 @@ This is the **only** activity that connects to SAMMS for data extraction. It exe
     "name": "cp_forms_to_bronze",
     "type": "Copy",
     "dependsOn": [
-        { "activity": "sv_set_site_sql", "dependencyConditions": ["Succeeded"] }
+        { "activity": "nb_forms_build_site_sql", "dependencyConditions": ["Succeeded"] }
     ],
     "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
     "typeProperties": {
         "source": {
             "type": "SqlServerSource",
-            "sqlReaderQuery": { "value": "@variables('v_site_sql')", "type": "Expression" },
+            "sqlReaderQuery": { "value": "@activity('nb_forms_build_site_sql').output.result.exitValue", "type": "Expression" },
             "queryTimeout": "02:00:00",
             "partitionOption": "None",
             "datasetSettings": {
@@ -737,6 +959,7 @@ This is the **only** activity that connects to SAMMS for data extraction. It exe
 | Parameter | Type | Value |
 |---|---|---|
 | `p_ingest_run_id` | String | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_work_date` | String | `@pipeline().parameters.p_work_date` (Expression) |
 | `p_lookback_days` | Int | `@pipeline().parameters.p_lookback_days` (Expression) |
 | `p_reload` | Bool | `@pipeline().parameters.p_reload` (Expression) |
 
@@ -762,9 +985,10 @@ This is the **only** activity that connects to SAMMS for data extraction. It exe
 # PURPOSE: Pure SQL string generator — NO SAMMS connection.
 #
 # READS:  bhg_silver.ctrl.tbl_Forms2Process  (Fabric lakehouse)
-# INPUT:  p_existing_tables_json  — JSON string from Lookup 2 (sys.tables)
+# INPUT:  p_existing_tables_json, p_existing_columns_json
+#         JSON strings from the source metadata lookups
 #         p_site_code, p_source_database, p_ingest_run_id,
-#         p_lookback_days, p_reload
+#         p_work_date, p_lookback_days, p_reload
 #
 # OUTPUT: Full UNION SQL string via mssparkutils.notebook.exit()
 #         The Copy activity executes this string against SAMMS.
@@ -785,11 +1009,17 @@ except NameError: p_ingest_run_id = "test-run-001"
 try: p_lookback_days
 except NameError: p_lookback_days = 30
 
+try: p_work_date
+except NameError: p_work_date = datetime.now().strftime("%Y-%m-%d")
+
 try: p_reload
 except NameError: p_reload = False
 
 try: p_existing_tables_json
 except NameError: p_existing_tables_json = "[]"
+
+try: p_existing_columns_json
+except NameError: p_existing_columns_json = "[]"
 
 # ── Build the set of tables that exist in this SAMMS database ────────
 # p_existing_tables_json is the string form of the Lookup 2 output:
@@ -797,17 +1027,44 @@ except NameError: p_existing_tables_json = "[]"
 existing_rows = json.loads(p_existing_tables_json)
 existing_tables = {row["name"].lower() for row in existing_rows}
 
+# Optional source-column lookup, used for legacy optional columns such as
+# tblTP17REVIEW.tprReviewFrequency. If this parameter is not supplied, optional
+# column branches are skipped instead of generating invalid SQL.
+existing_col_rows = json.loads(p_existing_columns_json)
+
+def _lookup_value(row, *names):
+    for name in names:
+        if name in row and row[name] is not None:
+            return row[name]
+    return None
+
+existing_columns = {
+    (
+        str(_lookup_value(row, "TABLE_NAME", "table_name", "table", "name")).lower(),
+        str(_lookup_value(row, "COLUMN_NAME", "column_name", "column")).lower(),
+    )
+    for row in existing_col_rows
+    if _lookup_value(row, "TABLE_NAME", "table_name", "table", "name")
+    and _lookup_value(row, "COLUMN_NAME", "column_name", "column")
+}
+
+def column_exists(table_name, column_name):
+    return (table_name.lower(), column_name.lower()) in existing_columns
+
 print(f"Site:           {p_site_code}")
 print(f"Database:       {p_source_database}")
 print(f"Run ID:         {p_ingest_run_id}")
 print(f"Existing tables in SAMMS (count): {len(existing_tables)}")
+print(f"Existing source columns supplied: {len(existing_columns)}")
 
 # ── Compute lookback date ────────────────────────────────────────────
 if p_reload:
     wrkdt = "2010-01-01"
 else:
-    wrkdt = (datetime.now() - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
+    work_date = datetime.strptime(p_work_date, "%Y-%m-%d")
+    wrkdt = (work_date - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
 
+print(f"Work date:      {p_work_date}")
 print(f"Lookback date:  {wrkdt}")
 
 # ── Read Forms2Process from bhg_silver.ctrl ───────────────────────────
@@ -831,11 +1088,28 @@ def sys_all_columns():
     return f"{db}.sys.all_columns"
 
 # ── Standard SQL fragments reused across cases ─────────────────────
-# Legacy SaveFormQA keeps IsDeleted nullable. It passes source IsDeleted through
-# and lets SaveFormQuestionAnswers derive RowState from IsDeleted + ClientId.
-std_isdeleted = "IsDeleted = a.IsDeleted"
+# Forms2Process custom-table UNIONs use the same legacy compound delete check
+# as Program.cs: source row + pre-admission + data-form state.
+std_isdeleted = (
+    "IsDeleted = CASE WHEN ISNULL(a.IsDeleted,0)=0 "
+    "AND pa.IsDeleted<>1 "
+    "AND ISNULL(pa.DataFormId,0)>=0 "
+    "AND ISNULL(d.IsDeleted,0)=0 "
+    "THEN 0 ELSE 1 END"
+)
 std_pa_join = (
     f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.PreAdmissionId = pa.ID "
+    f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
+)
+base_isdeleted = (
+    "IsDeleted = CASE WHEN ISNULL(f.IsDeleted,0)=0 "
+    "AND pa.IsDeleted<>1 "
+    "AND ISNULL(pa.DataFormId,0)>=0 "
+    "AND ISNULL(d.IsDeleted,0)=0 "
+    "THEN 0 ELSE 1 END"
+)
+base_pa_join = (
+    f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON f.PreAdmissionId = pa.ID "
     f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
 )
 
@@ -879,7 +1153,7 @@ FROM (
       f.ClientId,
       f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy,
       f.PreAdmissionId,
-      IsDeleted = f.IsDeleted,
+      {base_isdeleted},
       QuestionId      = ISNULL(q.Id, 0),
       QuestionOrderId = q.QuestionOrderId,
       q.QuestionText,
@@ -890,6 +1164,7 @@ FROM (
       LEFT JOIN {tbl('FormTemplate')} ft ON f.FormTemplateId = ft.Id
       LEFT JOIN {tbl('Question')} q      ON ft.Id = q.FormTemplateId
       LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
+      {base_pa_join}
   WHERE a.Value IS NOT NULL
     AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
 
@@ -902,7 +1177,7 @@ FROM (
       f.ClientId,
       f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy,
       f.PreAdmissionId,
-      IsDeleted = f.IsDeleted,
+      {base_isdeleted},
       QuestionId      = ISNULL(q.Id, 0),
       QuestionOrderId = q.QuestionOrderId,
       q.QuestionText,
@@ -913,6 +1188,7 @@ FROM (
       LEFT JOIN {tbl('FormTemplate')} ft ON f.FormTemplateId = ft.Id
       LEFT JOIN {tbl('Question')} q      ON ft.Id = q.FormTemplateId
       LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
+      {base_pa_join}
   WHERE q.Id IS NULL
     AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
 
@@ -1005,25 +1281,22 @@ for _, xf in f2p_df.iterrows():
 
     elif tname_lower == "tbltp17review":
         # Completely custom — no standard cols, no PA join.
-        # tprReviewFrequency (UNION D) checked via existing_tables set.
-        # tblTP17REVIEW never gets a date filter — always full extract.
-        has_review_freq = "tprReviewFrequency".lower() in existing_tables  # won't work this way
-
-        # NOTE: existing_tables contains TABLE names from sys.tables, not column names.
-        # For the tprReviewFrequency column check, the old system queries sys.all_columns.
-        # Since we have no SAMMS connection in this notebook, we use a safe approach:
-        # Always include UNION D wrapped in a conditional SELECT that returns no rows
-        # when the column does not exist — using SQL Server's TRY_CAST on sys.all_columns.
-        # The column probe is embedded in the SQL itself:
-        #   WHERE EXISTS (SELECT 1 FROM [source_db].sys.all_columns WHERE object_id=OBJECT_ID('[source_db].dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')
-        # Since tprReviewFrequency appears inside a UNION SELECT with a WHERE clause
-        # that references sys.all_columns (not the column itself), SQL Server
-        # does NOT validate the column at parse time — the WHERE runs first.
-        # This is the correct SQL Server pattern for optional column UNIONs.
-        #
-        # IMPORTANT: This works because we are selecting a computed column name
-        # ('Review Frequency') not the actual column tprReviewFrequency in the
-        # EXISTS-gated UNION — the actual column reference is guarded separately.
+        # tprReviewFrequency (UNION D) checked via p_existing_columns_json.
+        # Date filtering is still applied below when Forms2Process.DateFilterEnabled = 1.
+        has_review_freq = column_exists("tblTP17REVIEW", "tprReviewFrequency")
+        tp_review_frequency_union = ""
+        if has_review_freq:
+            tp_review_frequency_union = (
+                f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
+                f"    , '8-4-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
+                f"    , null, ABS(tprCLTID), 4, 1, 'Review Frequency', null\n"
+                f"    , CASE WHEN LEN(tprReviewFrequency)>6\n"
+                f"           THEN RTRIM(SUBSTRING(tprReviewFrequency,6,LEN(tprReviewFrequency)-5))\n"
+                f"           ELSE RTRIM(tprReviewFrequency) END AS AnswerValue\n"
+                f"    , tprCreatedby, CONVERT(date,tprDT), null, null\n"
+                f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
+                f"  FROM {tbl('tblTP17REVIEW')}\n"
+            )
 
         # Build UNION A-C (always present)
         tp_block = (
@@ -1031,14 +1304,14 @@ for _, xf in f2p_df.iterrows():
             f"SELECT\n{meta_cols}"
             f"  SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID,\n"
             f"  QuestionOrderID = ROW_NUMBER() OVER(\n"
-            f"      PARTITION BY tp.FormName, tp.FormId, tp.ClientId, tp.QuestionId\n"
-            f"      ORDER BY tp.QuestionId\n"
+            f"      PARTITION BY v.FormName, v.FormId, v.ClientId, v.QuestionId\n"
+            f"      ORDER BY v.QuestionId\n"
             f"  ),\n"
             f"  QuestionText, OptionID, AnswerValue,\n"
             f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
             f"FROM (\n"
             # UNION A — QuestionID 1
-            f"  SELECT SiteCode='{sc}', 'TP-'+TprTYPE AS [FormName]\n"
+            f"  SELECT SiteCode='{sc}', 'Treatment Plan' AS [FormName]\n"
             f"    , '8-1-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID) AS [FormID]\n"
             f"    , null AS PreAdmissionId, ABS(tprCLTID) AS ClientId\n"
             f"    , 1 AS QuestionID, 1 AS QuestionOrderID\n"
@@ -1061,35 +1334,11 @@ for _, xf in f2p_df.iterrows():
             f"    , CONVERT(varchar,tprNEXT), tprCreatedby, CONVERT(date,tprDT), null, null\n"
             f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
             f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION D — QuestionID 4 (tprReviewFrequency — guarded by EXISTS on sys.all_columns)
-            # The actual column tprReviewFrequency is referenced ONLY inside a subquery
-            # that is gated by a WHERE EXISTS check on sys.all_columns.
-            # SQL Server validates column names at compile time for static SQL, so we use
-            # a dynamic approach: embed UNION D always but gate the SAMMS table reference
-            # inside an EXISTS subquery that short-circuits before accessing the column.
-            # The safest portable pattern: use a scalar subquery for the value.
-            f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
-            f"    , '8-4-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
-            f"    , null, ABS(tprCLTID), 4, 1, 'Review Frequency', null\n"
-            f"    , (\n"
-            f"        SELECT CASE WHEN LEN(tprReviewFrequency)>6\n"
-            f"               THEN RTRIM(SUBSTRING(tprReviewFrequency,6,LEN(tprReviewFrequency)-5))\n"
-            f"               ELSE RTRIM(tprReviewFrequency) END\n"
-            f"        FROM {tbl('tblTP17REVIEW')} t2\n"
-            f"        WHERE t2.tpRID = r.tpRID AND t2.tprTPID = r.tprTPID\n"
-            f"          AND EXISTS (SELECT 1 FROM {sys_all_columns()}\n"
-            f"              WHERE object_id=OBJECT_ID('{db}.dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')\n"
-            f"      ) AS AnswerValue\n"
-            f"    , tprCreatedby, CONVERT(date,tprDT), null, null\n"
-            f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
-            f"  FROM {tbl('tblTP17REVIEW')} r\n"
-            f"  WHERE EXISTS (SELECT 1 FROM {sys_all_columns()}\n"
-            f"      WHERE object_id=OBJECT_ID('{db}.dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')\n"
-            f") tp"
+            # UNION D - QuestionID 4, included only when tprReviewFrequency exists.
+            f"{tp_review_frequency_union}"
+            f") v"
         )
-        strCmd += tp_block
-        print(f"  + tblTP17REVIEW (with tprReviewFrequency guard)")
-        continue  # skip standard date filter append below
+        block = tp_block
 
     elif tname_lower == "tblorderreq":
         test_filter = (
@@ -1129,9 +1378,7 @@ for _, xf in f2p_df.iterrows():
             f"  FROM {tbl('tblORDERREQ')} WHERE {test_filter}\n"
             f") v"
         )
-        strCmd += block
-        print(f"  + tblORDERREQ (Level Justification)")
-        continue  # no date filter
+        # Old C# still applies the common DateFilterEnabled WHERE after this switch.
 
     elif tname_lower == "insurancebenefitverification":
         block = (
@@ -1171,9 +1418,8 @@ for _, xf in f2p_df.iterrows():
             f"\n  FROM {tbl(table_name)} a {std_pa_join}"
             f"\n) v"
         )
-        strCmd += block
-        print(f"  + {table_name} (ReferralForm — always full extract, no date filter)")
-        continue  # explicitly skip date filter append
+        # Old C# still applies the common DateFilterEnabled WHERE after this switch.
+        # ReferralForm should be full extract because Forms2Process.DateFilterEnabled is 0.
 
     elif tname_lower == "sf_understandingoftreatment":
         block = (
@@ -1298,19 +1544,20 @@ mssparkutils.notebook.exit(final_sql)
 ### What Cell 1 does
 1. Reads Bronze filtered to this run's rows
 2. Deduplicates on the 7-column PK — keeps latest `_extracted_at`
-3. Normalises `FormId` to UPPER (mirrors `fqa.FormId.ToUpper()` in the old EF path)
-4. Preserves nullable `IsDeleted` exactly like the old EF path
+3. Normalises key fields like the old EF path: `FormId` to UPPER, NULL `FormName` to blank, NULL `PreAdmissionId` to `-1`
+4. Uses source `IsDeleted` for `RowState`, but stores public `IsDeleted` like the old EF path: `1` becomes true, `0`/NULL become NULL
 5. Adds nullable `IsChildForm` because the legacy SQL comments it out for the main Form path
-6. Computes `RowState`: `0` if `ClientId < 0` or `IsDeleted = 1`; `1` otherwise
-7. Drops `_site_code` from the final Silver shape so only `SiteCode` is exposed
-8. Adds audit columns (`LastModAt`, `silver_updated_at`)
-9. Loads `tbl_Forms2Process` into `f2p_df` for use in Cell 2's pre-pass
-10. Creates the Silver table on the very first run
+6. Casts `OptionId` to string to match BHG_DR's varchar model column
+7. Computes `RowState`: `0` if `ClientId < 0` or `IsDeleted = 1`; `1` otherwise
+8. Drops `_site_code` from the final Silver shape so only `SiteCode` is exposed
+9. Adds audit columns (`LastModAt`, `silver_updated_at`)
+10. Loads `tbl_Forms2Process` into `f2p_df` for use in Cell 2's pre-pass
+11. Creates the Silver table on the very first run
 
 ### Cell 1 Code
 
 ```python
-from pyspark.sql.functions import col, current_timestamp, row_number, when, lit, upper
+from pyspark.sql.functions import col, coalesce, current_timestamp, row_number, when, lit, upper
 from pyspark.sql.window import Window
 from datetime import datetime, timedelta
 
@@ -1319,6 +1566,9 @@ except NameError: p_ingest_run_id = "test-run-001"
 
 try: p_lookback_days
 except NameError: p_lookback_days = 30
+
+try: p_work_date
+except NameError: p_work_date = datetime.now().strftime("%Y-%m-%d")
 
 try: p_reload
 except NameError: p_reload = False
@@ -1333,7 +1583,8 @@ print(f"Run ID: {p_ingest_run_id}")
 if p_reload:
     wrkdt = datetime(2010, 1, 1)
 else:
-    wrkdt = datetime.now() - timedelta(days=int(p_lookback_days))
+    work_date = datetime.strptime(p_work_date, "%Y-%m-%d")
+    wrkdt = work_date - timedelta(days=int(p_lookback_days))
 
 # Load Forms2Process for pre-pass
 f2p_df = (
@@ -1342,9 +1593,7 @@ f2p_df = (
     .select("FormName", "DateFilterEnabled")
     .toPandas()
 )
-non_date_filtered_forms = set(
-    f2p_df[f2p_df["DateFilterEnabled"] == False]["FormName"].tolist()
-)
+# Cell 2 re-derives non-date-filtered forms (with TP-* normalization) before pre-pass.
 
 # Read Bronze for this run
 bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
@@ -1363,15 +1612,25 @@ w = Window.partitionBy(*pk_cols).orderBy(col("_extracted_at").desc())
 src_df = (
     bronze_df
     .withColumn("FormId", upper(col("FormId")))       # normalise to UPPER
+    .withColumn("FormName", coalesce(col("FormName"), lit("")))
+    .withColumn("ClientId", coalesce(col("ClientId"), lit(0)))
+    .withColumn("PreAdmissionId", coalesce(col("PreAdmissionId"), lit(-1)))
+    .withColumn("QuestionId", coalesce(col("QuestionId"), lit(0)))
     .withColumn("_rn", row_number().over(w))
     .where(col("_rn") == 1)
     .drop("_rn")
-    .withColumn("IsDeleted", col("IsDeleted").cast("boolean"))
+    .withColumn("_source_isdeleted", col("IsDeleted").cast("boolean"))
+    .withColumn(
+        "IsDeleted",
+        when(col("_source_isdeleted") == True, lit(True)).otherwise(lit(None).cast("boolean"))
+    )
     .withColumn("IsChildForm", lit(None).cast("boolean"))
+    .withColumn("OptionId", col("OptionId").cast("string"))
     .withColumn(
         "RowState",
-        when((col("IsDeleted") == True) | (col("ClientId") < 0), lit(0)).otherwise(lit(1))
+        when((col("_source_isdeleted") == True) | (col("ClientId") < 0), lit(0)).otherwise(lit(1))
     )
+    .drop("_source_isdeleted")
     .drop("_site_code")
     .withColumn("LastModAt",         current_timestamp())
     .withColumn("silver_updated_at", current_timestamp())
@@ -1408,9 +1667,10 @@ Before merging new data, existing Silver rows within the current extraction scop
 
 | Form type | Pre-pass action |
 |---|---|
-| `DateFilterEnabled = 0` (e.g., ReferralForm) | Reset `RowState = 0` unconditionally for all rows of this form at affected sites |
-| `DateFilterEnabled = 1` (most forms) | Reset `RowState = 0` only where `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` AND `RowState = 1` |
-| `FormName` starts with `TP-` | Treated as `Treatment Plan` for Forms2Process lookup (date-gated reset) |
+| `DateFilterEnabled = 0` (e.g., ReferralForm) | Reset `RowState = 0` unconditionally for all rows of that `FormName` at affected sites |
+| `DateFilterEnabled = 1` | Reset `RowState = 0` only where `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` AND `RowState = 1` |
+| `FormName` starts with `TP-` | Lookup **`Treatment Plan`** in Forms2Process; if `DateFilterEnabled = 0`, reset **all** `TP-%` rows; if `1`, date-gated only (same as C# lines 27–57) |
+| Form not in Forms2Process | Date-gated only (same as C# lines 59–74) |
 
 ### Cell 2 Code
 
@@ -1435,18 +1695,45 @@ sites_this_run = (
 )
 print(f"Sites in this run: {sites_this_run}")
 
+if not sites_this_run:
+    raise Exception(f"No SiteCode values found in Bronze for run {p_ingest_run_id}")
+
 site_filter = " OR ".join([f"SiteCode = '{s}'" for s in sites_this_run])
 
-# Unconditional reset — non-date-filtered forms (e.g., ReferralForm)
-if non_date_filtered_forms:
-    ndf_list = ", ".join([f"'{f}'" for f in non_date_filtered_forms])
+# ── TP-* normalization (SaveFormQAData.cs lines 27–30) ───────────────
+# tblTP17REVIEW rows are mixed: QuestionID 1 uses "Treatment Plan";
+# QuestionID 2-4 use "TP-..." names. Forms2Process has one
+# "Treatment Plan" entry, and its DateFilterEnabled controls all TP-* rows too.
+tp_row = f2p_df[f2p_df["FormName"] == "Treatment Plan"]
+tp_date_filtered = True
+if not tp_row.empty:
+    tp_date_filtered = bool(tp_row.iloc[0]["DateFilterEnabled"])
+
+print(f"Treatment Plan DateFilterEnabled: {tp_date_filtered}")
+
+# Non-date-filtered FormNames — exclude "Treatment Plan" (handled via TP-%)
+non_date_filtered_forms_no_tp = set(
+    f2p_df[(f2p_df["DateFilterEnabled"] == False) & (f2p_df["FormName"] != "Treatment Plan")]
+    ["FormName"].tolist()
+)
+
+# ── Unconditional reset (DateFilterEnabled = 0) ───────────────────────
+uncond_parts = []
+if non_date_filtered_forms_no_tp:
+    ndf_list = ", ".join([f"'{f}'" for f in non_date_filtered_forms_no_tp])
+    uncond_parts.append(f"FormName IN ({ndf_list})")
+if not tp_date_filtered:
+    uncond_parts.append("FormName LIKE 'TP-%'")
+
+if uncond_parts:
+    uncond_condition = " OR ".join(uncond_parts)
     silver_delta.update(
-        condition=f"({site_filter}) AND FormName IN ({ndf_list}) AND RowState = 1",
+        condition=f"({site_filter}) AND ({uncond_condition}) AND RowState = 1",
         set={"RowState": lit(0)}
     )
-    print(f"Unconditional pre-pass reset applied to: {non_date_filtered_forms}")
+    print(f"Unconditional pre-pass reset applied.")
 
-# Date-gated reset — all other forms (date-filtered + unknown + TP-* forms)
+# ── Date-gated reset (DateFilterEnabled = 1 + not in Forms2Process) ───
 silver_delta.update(
     condition=(
         f"({site_filter})"
@@ -1457,7 +1744,7 @@ silver_delta.update(
     set={"RowState": lit(0)}
 )
 print(f"Date-gated pre-pass reset applied (wrkdt={wrkdt_str}).")
-print("Pre-pass complete.")
+print("Pre-pass committed. Proceeding to MERGE.")
 ```
 
 ---
@@ -1501,13 +1788,13 @@ insert_values["silver_created_at"] = "current_timestamp()"
     .merge(
         src_df.alias("src"),
         """
-        tgt.SiteCode         = src.SiteCode
-        AND tgt.FormName     = src.FormName
-        AND tgt.FormId       = src.FormId
-        AND tgt.ClientId     = src.ClientId
-        AND tgt.PreAdmissionId  = src.PreAdmissionId
-        AND tgt.QuestionId   = src.QuestionId
-        AND tgt.QuestionOrderId = src.QuestionOrderId
+        tgt.SiteCode         <=> src.SiteCode
+        AND tgt.FormName     <=> src.FormName
+        AND tgt.FormId       <=> src.FormId
+        AND tgt.ClientId     <=> src.ClientId
+        AND tgt.PreAdmissionId  <=> src.PreAdmissionId
+        AND tgt.QuestionId   <=> src.QuestionId
+        AND tgt.QuestionOrderId <=> src.QuestionOrderId
         """
     )
     # Matched: full update — no RowChkSum, always refresh from source
@@ -1557,7 +1844,7 @@ STEP 4 — nb_forms_build_site_sql (Notebook, True branch)
   Loops Forms2Process:
     AdmissionAssessment → in existing_tables → default case → UNION appended
     ReferralForm        → in existing_tables → referralform case → UNION, no date filter
-    tblTP17REVIEW       → in existing_tables → custom case → 3-4 UNIONs, tprReviewFrequency guarded
+    tblTP17REVIEW       → in existing_tables → custom case → 3-4 UNIONs, tprReviewFrequency from p_existing_columns_json
     tblORDERREQ         → in existing_tables → custom case → 2 UNIONs, approved-only filter
     FinancialHardshipAppl → in existing_tables → custom cltId case → UNION
     MissingFormTable    → NOT in existing_tables → skip
@@ -1646,7 +1933,11 @@ Notebook generates:
          , [CreatedOn] = CONVERT(date, a.CreatedOn)
          , a.ModifiedBy AS [UpdatedBy]
          , CONVERT(date, a.ModifiedOn) AS [UpdatedOn]
-         , IsDeleted = a.IsDeleted
+         , IsDeleted = CASE WHEN ISNULL(a.IsDeleted,0)=0
+                            AND pa.IsDeleted<>1
+                            AND ISNULL(pa.DataFormId,0)>=0
+                            AND ISNULL(d.IsDeleted,0)=0
+                            THEN 0 ELSE 1 END
     FROM [SAMMS-ColoradoSpringsV5].dbo.[AdmissionAssessment] a
     INNER JOIN [SAMMS-ColoradoSpringsV5].dbo.[SF_PatientPreAdmission] pa ON a.PreAdmissionId = pa.ID
     LEFT JOIN [SAMMS-ColoradoSpringsV5].dbo.[SF_DataForms] d ON pa.DataFormId = d.Id
@@ -1688,7 +1979,7 @@ All cases produce the same 15-column output (plus metadata columns) so they UNIO
 |---|---|---|---|---|---|
 | `adversechildhood` | `Prefix-PreAdmId-PreAdmId-id` | `a.ClientId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | PreAdmId used TWICE in FormID |
 | `financialhardshipapplication` | `Prefix-cltId-PreAdmId-id` | `a.cltId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | Source column is `cltId` not `ClientId` |
-| `tbltp17review` | `8-{1-4}-ABS(tprCLTID)-tpRID-tprTPID` | `ABS(tprCLTID)` | `null` | No PA join | 3–4 rows per record; tprReviewFrequency guarded by `EXISTS (sys.all_columns)` |
+| `tbltp17review` | `8-{1-4}-ABS(tprCLTID)-tpRID-tprTPID` | `ABS(tprCLTID)` | `null` | No PA join | 3-4 rows per record; date filter applies when `DateFilterEnabled=1`; `tprReviewFrequency` added only when `p_existing_columns_json` says the column exists |
 | `tblorderreq` | `9-{1-2}-ABS(cltID)-ReqNum-''` | `cltID` | `StatusUser` | No PA join | 2 rows per record; filter: `Status='Approved'` + exclude test data |
 | `insurancebenefitverification` | `Prefix-PreAdmId-PreAdmId-id` | `a.PreAdmissionId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | No `ClientId` column — `PreAdmissionId` used for both slots |
 | `referralform` | `Prefix-ClientId-PreAdmId-id` | `a.ClientId` | `a.updatedby` | `a.PreAdmissionId = pa.ID` | `DateFilterEnabled=0` — no date filter, always full extract |
@@ -1699,15 +1990,29 @@ All cases produce the same 15-column output (plus metadata columns) so they UNIO
 
 ---
 
-## 24. IsDeleted — Legacy Nullable Pass-Through
+## 24. IsDeleted — Base Compound Check and Legacy Nullable Storage
 
-Legacy `Program.cs` passes the source table's nullable `IsDeleted` value into `SaveFormQuestionAnswers`. It does not coalesce NULL to 0 before saving.
+For the main `Form`/`FormTemplate`/`Question`/`Answer` path, legacy `Program.cs` does **not** pass `f.IsDeleted` alone. It computes the same compound deletion flag used elsewhere in the old ETL:
 
 ```sql
-IsDeleted = a.IsDeleted
+IsDeleted =
+CASE WHEN ISNULL(f.IsDeleted,0)=0
+      AND pa.IsDeleted<>1
+      AND ISNULL(pa.DataFormId,0)>=0
+      AND ISNULL(d.IsDeleted,0)=0
+     THEN 0 ELSE 1 END
 ```
 
-For the main `Form`/`FormTemplate`/`Question`/`Answer` path, the old SQL selects `f.IsDeleted`; `f.IsChildForm` is present in comments only and is not returned to the save method. This is why BHG_DR commonly has `IsChildForm = NULL`.
+This requires the base query to join:
+
+```sql
+INNER JOIN SF_PatientPreAdmission pa ON f.PreAdmissionId = pa.ID
+LEFT JOIN SF_DataForms d ON pa.DataFormId = d.Id
+```
+
+For the Forms2Process custom-table UNIONs, legacy `Program.cs` generally computes the same compound check using `a`, `pa`, and `d`. The save method uses that value for `RowState`, but only assigns the public `IsDeleted` property when the source value is `1`.
+
+In `SaveFormQuestionAnswers`, source `IsDeleted = 0` does not execute `fqa.IsDeleted = false`; it only leaves `RowState = 1`. For newly inserted rows, that means the destination `IsDeleted` remains NULL. This is why BHG_DR can show NULL even when the SAMMS source column contains 0. `f.IsChildForm` is present in old SQL comments only and is not returned to the save method, so BHG_DR commonly has `IsChildForm = NULL`.
 
 **Exceptions:**
 - `tbltp17review`: `CASE WHEN tprCLTID < 0 THEN 1 ELSE 0 END`
@@ -1733,10 +2038,10 @@ The pre-pass resets `RowState = 0` on existing Silver rows **before** the MERGE 
 
 | Condition | Reset Applied |
 |---|---|
-| `DateFilterEnabled = 0` (e.g., ReferralForm) | Unconditional: `SET RowState = 0` for ALL rows of this form at affected sites |
+| `DateFilterEnabled = 0` (e.g., ReferralForm) | Unconditional: `SET RowState = 0` for ALL rows of that `FormName` at affected sites |
 | `DateFilterEnabled = 1` | Date-gated: `SET RowState = 0` WHERE `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` AND `RowState = 1` |
-| FormName like `TP-*` | Treated as date-filtered (same as DateFilterEnabled = 1) |
-| Form not found in Forms2Process | Treated as date-filtered |
+| FormName like `TP-*` | Lookup **`Treatment Plan`** in Forms2Process; if `DateFilterEnabled = 0`, unconditional reset on **`FormName LIKE 'TP-%'`**; if `1`, date-gated only |
+| Form not found in Forms2Process | Date-gated only (e.g., Personal Safety Plan from base query) |
 
 ---
 
@@ -1776,22 +2081,24 @@ Reload:       p_reload = true  →  wrkdt = 2010-01-01
 | Property | Value |
 |---|---|
 | PA join | None — standalone table |
-| FormName | Dynamic: `'TP-' + TprTYPE` |
+| FormName | QuestionID 1 = `Treatment Plan`; QuestionID 2-4 = `'TP-' + TprTYPE` |
 | FormID | `8-{1-4}-ABS(tprCLTID)-tpRID-tprTPID` |
 | Rows per record | 3 (or 4 if `tprReviewFrequency` column exists) |
 | IsDeleted | `CASE WHEN tprCLTID < 0 THEN 1 ELSE 0 END` |
-| Date filter | None |
+| Date filter | Uses `Forms2Process.DateFilterEnabled`; when enabled, filters `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` |
 
-**tprReviewFrequency handling:** Since the SQL builder notebook cannot probe `sys.all_columns` directly (no SAMMS connection), UNION D is always included in the generated SQL but is guarded by an `EXISTS` predicate against the source database's `sys.all_columns`. For example: `EXISTS (SELECT 1 FROM [SAMMS-ColoradoSpringsV5].sys.all_columns WHERE object_id=OBJECT_ID('[SAMMS-ColoradoSpringsV5].dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')`. If the column does not exist, the EXISTS check returns false and the UNION D produces zero rows — the query still succeeds.
+**tprReviewFrequency handling:** Legacy `Program.cs` checks `sys.all_columns` before adding this UNION. In Fabric, `lkp_get_existing_columns` supplies that column list as `p_existing_columns_json`; the notebook only emits the Review Frequency UNION when `tblTP17REVIEW.tprReviewFrequency` exists. If the lookup parameter is omitted, the optional UNION is skipped to keep the generated SQL valid.
+
+This mixed FormName behavior is intentional and matches `Program.cs`: the first row keeps `xf.FormName`, while later rows explicitly emit `TP-...`.
 
 **The 4 questions per Treatment Plan record:**
 
-| QuestionID | QuestionText | AnswerValue |
-|---|---|---|
-| 1 | `Treatment Plan Type` | `TprTYPE` |
-| 2 | `Treatment Phase Type` | `tpTreatmentPhase` |
-| 3 | `Next Due` | `CONVERT(varchar, tprNEXT)` |
-| 4 | `Review Frequency` | `RTRIM(SUBSTRING(..., 6, LEN-5))` if `>6 chars`, else raw |
+| QuestionID | FormName | QuestionText | AnswerValue |
+|---|---|---|---|
+| 1 | `Treatment Plan` | `Treatment Plan Type` | `TprTYPE` |
+| 2 | `TP-` + `TprTYPE` | `Treatment Phase Type` | `tpTreatmentPhase` |
+| 3 | `TP-` + `TprTYPE` | `Next Due` | `CONVERT(varchar, tprNEXT)` |
+| 4 | `TP-` + `TprTYPE` | `Review Frequency` | `RTRIM(SUBSTRING(..., 6, LEN-5))` if `>6 chars`, else raw |
 
 ---
 

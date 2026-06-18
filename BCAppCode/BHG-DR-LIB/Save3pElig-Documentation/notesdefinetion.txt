@@ -1,0 +1,1913 @@
+-->Child ETL for pl_notes_samms_to_lakehouse
+
+{
+    "name": "pl_note_saams_to_lakehouse",
+    "objectId": "61f2955b-68c9-4a3b-8da7-186a0ce8e23e",
+    "properties": {
+        "activities": [
+            {
+                "name": "flt_child_arnote_sites",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, '3pArnote')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "flt_child_claimnote_sites",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, '3pClaimNote')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_samms_site_arnote",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_arnote_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_arnote_sites').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 5,
+                    "activities": [
+                        {
+                            "name": "cp_arnote_to_bronze",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_arnote_globalbatchid_exists",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS _site_code,\n    ''', item().DataBaseName, ''' AS _source_database,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS _ingest_run_id,\n    GETDATE() AS _extracted_at,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))) AS _source_query_date_anchor,\n\n    arnID,\n    arnLIID,\n    arnNOTE,\n    arnUSER,\n    arnDATE,\n    arnDtRemoved,\n    arnStrRemovedReason,\n    arnStrRemovedUser,\n    bid,\n    arnDBnotes,\n    ', if(equals(activity('lkp_check_arnote_globalbatchid_exists').output.value[0].globalbatchid_exists, 1), 'globalBatchId,', 'CAST(NULL AS bigint) AS globalBatchId,'), '\n\n    RowChkSum = CHECKSUM(\n        arnID,\n        arnLIID,\n        arnNOTE,\n        arnUSER,\n        arnDATE,\n        arnDtRemoved,\n        arnStrRemovedReason,\n        arnStrRemovedUser,\n        bid,\n        arnDBnotes,\n        ', if(equals(activity('lkp_check_arnote_globalbatchid_exists').output.value[0].globalbatchid_exists, 1), 'globalBatchId', 'CAST(NULL AS bigint)'), '\n    )\n\nFROM [', item().DataBaseName, '].dbo.tbl3pARNOTE\nWHERE (arnDATE >= ''2023-01-01'' AND arnDATE >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))))\n   OR arnDtRemoved >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, ''')))\nORDER BY arnID'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Notes",
+                                            "table": "br_tbl3pArnote"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "lkp_check_arnote_globalbatchid_exists",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT globalbatchid_exists = COUNT(1)\nFROM [', item().DataBaseName, '].sys.columns c\nINNER JOIN [', item().DataBaseName, '].sys.tables t ON c.object_id = t.object_id\nINNER JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id\nWHERE s.name = ''dbo''\n  AND t.name = ''tbl3pARNOTE''\n  AND c.name = ''globalBatchId'''\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "firstRowOnly": false,
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "fe_each_samms_site_claimnote",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_claimnote_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_claimnote_sites').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 5,
+                    "activities": [
+                        {
+                            "name": "cp_claimnote_to_bronze",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_claimnote_globalbatchid_exists",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS _site_code,\n    ''', item().DataBaseName, ''' AS _source_database,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS _ingest_run_id,\n    GETDATE() AS _extracted_at,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))) AS _source_query_date_anchor,\n\n    tpcn,\n    tpcnTPCID,\n    tpcnDtmAdded,\n    tpcnStrAdded,\n    tpcnStrNote,\n    tpcnStrType,\n    tpcnDtTickler,\n    tpcnDtTicklerRemoved,\n    tpcnStrTicklerRemovedNote,\n    tpcnStrTicklerRemovedUser,\n    tpcnStrTicklerType,\n    ', if(equals(activity('lkp_check_claimnote_globalbatchid_exists').output.value[0].globalbatchid_exists, 1), 'globalBatchId,', 'CAST(NULL AS bigint) AS globalBatchId,'), '\n\n    RowChkSum = CHECKSUM(\n        tpcn,\n        tpcnTPCID,\n        tpcnDtmAdded,\n        tpcnStrAdded,\n        tpcnStrNote,\n        tpcnStrType,\n        tpcnDtTickler,\n        tpcnDtTicklerRemoved,\n        tpcnStrTicklerRemovedNote,\n        tpcnStrTicklerRemovedUser,\n        tpcnStrTicklerType,\n        ', if(equals(activity('lkp_check_claimnote_globalbatchid_exists').output.value[0].globalbatchid_exists, 1), 'globalBatchId', 'CAST(NULL AS bigint)'), '\n    )\n\nFROM [', item().DataBaseName, '].dbo.tbl3pClaimNote\nWHERE (tpcnDtmAdded >= ''2023-01-01'' AND tpcnDtmAdded >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))))\n   OR tpcnDtTickler >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, ''')))\nORDER BY tpcn'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Notes",
+                                            "table": "br_tbl3pClaimNote"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "lkp_check_claimnote_globalbatchid_exists",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT globalbatchid_exists = COUNT(1)\nFROM [', item().DataBaseName, '].sys.columns c\nINNER JOIN [', item().DataBaseName, '].sys.tables t ON c.object_id = t.object_id\nINNER JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id\nWHERE s.name = ''dbo''\n  AND t.name = ''tbl3pClaimNote''\n  AND c.name = ''globalBatchId'''\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "firstRowOnly": false,
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "test-run-001"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "2026-06-12"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": [
+                    {
+                        "SiteCode": "AHK",
+                        "DataBaseName": "SAMMS-Ahoskie",
+                        "Method": "3pArnote",
+                        "SourceTable": "tbl3pARNOTE"
+                    },
+                    {
+                        "SiteCode": "AHK",
+                        "DataBaseName": "SAMMS-Ahoskie",
+                        "Method": "3pClaimNote",
+                        "SourceTable": "tbl3pClaimNote"
+                    }
+                ]
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-12T15:57:12Z"
+    }
+}
+
+
+-->Parent ETL Execute_Notes
+
+{
+    "name": "Execute_Notes",
+    "objectId": "189b74e5-ef11-4ee4-afb8-4a9b8a576f30",
+    "properties": {
+        "activities": [
+            {
+                "name": "lkp_notes_taskconfig",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource"
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                                "annotations": [],
+                                "type": "Lakehouse",
+                                "typeProperties": {
+                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                    "rootFolder": "Tables"
+                                }
+                            }
+                        },
+                        "type": "LakehouseTable",
+                        "schema": [],
+                        "typeProperties": {
+                            "schema": "meta",
+                            "table": "taskconfig"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_notes_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "lkp_notes_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('lkp_notes_taskconfig').output.value",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().ConfigId, 34), equals(item().IsActive, 1)), and(or(equals(item().Method, '3pArnote'), equals(item().Method, '3pClaimNote')), and(not(equals(item().SiteCode, null)), not(equals(item().DataBaseName, null)))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_notes_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "Execute_Notes",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/Execute_Notes",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Executed_AfterBronz",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "61f2955b-68c9-4a3b-8da7-186a0ce8e23e",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_work_date": {
+                            "value": "@pipeline().parameters.p_work_date",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites": {
+                            "value": "@activity('flt_active_notes_sites').output.value",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_3parnote_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Executed_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "4057574c-6a08-4c3e-8584-9ead64ee8608",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_3pclaimnote_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Executed_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "ecb28154-151c-46c5-8c67-99940dd9d570",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Prepare_Notes_Versioned_Gold_Tables",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "nb_3parnote_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "nb_3pclaimnote_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DROP TABLE IF EXISTS pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_3p_arnote\nWHERE 1 = 0;\n\nDROP TABLE IF EXISTS pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_3p_claim_note\nWHERE 1 = 0;')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "copy_3parnote_silver_to_gold",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_Notes_Versioned_Gold_Tables",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tbl_3parnote"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "_site_code"
+                                },
+                                "sink": {
+                                    "name": "SiteCode"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnID"
+                                },
+                                "sink": {
+                                    "name": "arnID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnLIID"
+                                },
+                                "sink": {
+                                    "name": "arnLIID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnNOTE"
+                                },
+                                "sink": {
+                                    "name": "arnNOTE"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnUSER"
+                                },
+                                "sink": {
+                                    "name": "arnUSER"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDATE"
+                                },
+                                "sink": {
+                                    "name": "arnDATE"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDtRemoved"
+                                },
+                                "sink": {
+                                    "name": "arnDtRemoved"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnStrRemovedReason"
+                                },
+                                "sink": {
+                                    "name": "arnStrRemovedReason"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnStrRemovedUser"
+                                },
+                                "sink": {
+                                    "name": "arnStrRemovedUser"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "bid"
+                                },
+                                "sink": {
+                                    "name": "bid"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "arnDBnotes"
+                                },
+                                "sink": {
+                                    "name": "arnDBnotes"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "globalBatchId"
+                                },
+                                "sink": {
+                                    "name": "globalBatchId"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt"
+                                },
+                                "sink": {
+                                    "name": "LastModAt"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState"
+                                },
+                                "sink": {
+                                    "name": "RowState"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "copy_3pclaimnote_silver_to_gold",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_Notes_Versioned_Gold_Tables",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tbl_3pclaimnote"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "_site_code"
+                                },
+                                "sink": {
+                                    "name": "SiteCode"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcn"
+                                },
+                                "sink": {
+                                    "name": "tpcn"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnTPCID"
+                                },
+                                "sink": {
+                                    "name": "tpcnTPCID"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtmAdded"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtmAdded"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrAdded"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrAdded"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrNote"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrNote"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrType"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrType"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtTickler"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtTickler"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnDtTicklerRemoved"
+                                },
+                                "sink": {
+                                    "name": "tpcnDtTicklerRemoved"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerRemovedNote"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerRemovedNote"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerRemovedUser"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerRemovedUser"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "tpcnStrTicklerType"
+                                },
+                                "sink": {
+                                    "name": "tpcnStrTicklerType"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "globalBatchId"
+                                },
+                                "sink": {
+                                    "name": "globalBatchId"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt"
+                                },
+                                "sink": {
+                                    "name": "LastModAt"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState"
+                                },
+                                "sink": {
+                                    "name": "RowState"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Publish_Notes_Versioned_Gold",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "copy_3parnote_silver_to_gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "copy_3pclaimnote_silver_to_gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DECLARE @arn_count BIGINT;\nDECLARE @claim_count BIGINT;\nDECLARE @arn_final_count BIGINT;\nDECLARE @claim_final_count BIGINT;\n\nSELECT @arn_count = COUNT(*)\nFROM pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @arn_count = 0\n    THROW 51001, ''Validation failed: pats.gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nSELECT @claim_count = COUNT(*)\nFROM pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @claim_count = 0\n    THROW 51002, ''Validation failed: pats.gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.gd_3p_arnote'', ''U'') IS NULL\n    THROW 51003, ''Publish failed: production table pats.gd_3p_arnote does not exist.'', 1;\n\nIF OBJECT_ID(''pats.gd_3p_claim_note'', ''U'') IS NULL\n    THROW 51004, ''Publish failed: production table pats.gd_3p_claim_note does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), '];\nDROP TABLE IF EXISTS pats.[gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.gd_3p_arnote'', ''gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.gd_3p_claim_note'', ''gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), ''';\n\nEXEC sp_rename ''pats.[gd_3p_arnote_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_3p_arnote'';\nEXEC sp_rename ''pats.[gd_3p_claim_note_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_3p_claim_note'';\n\nSELECT @arn_final_count = COUNT(*)\nFROM pats.gd_3p_arnote;\n\nIF @arn_final_count = 0\n    THROW 51005, ''Final verification failed: pats.gd_3p_arnote is empty after table swap.'', 1;\n\nSELECT @claim_final_count = COUNT(*)\nFROM pats.gd_3p_claim_note;\n\nIF @claim_final_count = 0\n    THROW 51006, ''Final verification failed: pats.gd_3p_claim_note is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''gd_3p_arnoteBK_%'' AND t.name <> ''gd_3p_arnoteBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR (t.name LIKE ''gd_3p_claim_noteBK_%'' AND t.name <> ''gd_3p_claim_noteBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''gd_3p_arnote_v_%''\n         OR t.name LIKE ''gd_3p_claim_note_v_%''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''gd_3p_arnote'' AS TableName, @arn_final_count AS [RowCount]\nUNION ALL\nSELECT ''gd_3p_claim_note'' AS TableName, @claim_final_count AS [RowCount];')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "nb_notes_audit_finalize_failure",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Notes_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_FAILURE",
+                            "type": "string"
+                        },
+                        "p_failed_target_name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "p_failure_activity": {
+                            "value": "Notes_Bronze_Silver_Gold_Finalizer",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_notes_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_notes_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@string(coalesce(activity('Executed_AfterBronz').error, activity('nb_3parnote_bronze_to_silver').error, activity('nb_3pclaimnote_bronze_to_silver').error, activity('Prepare_Notes_Versioned_Gold_Tables').error, activity('copy_3parnote_silver_to_gold').error, activity('copy_3pclaimnote_silver_to_gold').error, activity('Publish_Notes_Versioned_Gold').error, 'Notes pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "FAILED",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_audit_finalize_success",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Notes_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_SUCCESS",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_notes_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_notes_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "SUCCESS",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_notify_success",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "Notes ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Succeeded",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Notes",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "GL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Notes pipeline completed successfully through Gold",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notes_notify_failed",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_notes_audit_finalize_failure",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "nb_notes_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "Notes ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Notes",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Notes pipeline failed or audit finalization failed. See error details.",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@string(coalesce(activity('nb_notes_audit_finalize_failure').error, activity('nb_notes_audit_finalize_success').error, activity('Executed_AfterBronz').error, activity('nb_3parnote_bronze_to_silver').error, activity('nb_3pclaimnote_bronze_to_silver').error, activity('Prepare_Notes_Versioned_Gold_Tables').error, activity('copy_3parnote_silver_to_gold').error, activity('copy_3pclaimnote_silver_to_gold').error, activity('Publish_Notes_Versioned_Gold').error, 'Notes pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "test-run-001"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "2026-06-01"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-17T15:23:18Z"
+    }
+}
+
+
+
+Notebook nb_3parnote_bronze_to_silver
+
+Cell1:
+
+
+from pyspark.sql.functions import col, current_timestamp, lit, row_number
+from pyspark.sql.window import Window
+
+# Pipeline passes p_ingest_run_id as a parameter.
+# The try/except lets you run this manually during development.
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = "test-run-001"
+
+bronze_table = "bhg_bronze.Notes.br_tbl3pArnote"
+silver_table = "bhg_silver.pats.sl_tbl_3pARNOTE"
+
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+
+# Read only rows from THIS pipeline run.
+bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+
+bronze_count = bronze_df.count()
+print(f"Bronze rows for this run: {bronze_count}")
+
+if bronze_count == 0:
+    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+
+# Deduplicate within current run.
+# Business key = _site_code + arnID   (mirrors Azure PK: SiteCode, ArnId)
+# If the same record appears twice (e.g. due to a retry), keep the latest extraction.
+w = Window.partitionBy("_site_code", "arnID").orderBy(col("_extracted_at").desc())
+
+src_df = (
+    bronze_df
+    .where(col("_site_code").isNotNull() & col("arnID").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+
+    # ── RowState Logic ─────────────────────────────────────────────────────────
+    # Save3pArnote always sets RowState = true for every incoming row.
+    # There is NO pre-reset and NO soft-delete condition for ARNote.
+    # C# reference: ar.RowState = true  (set in the "sitecode" case, line 452)
+    # Any record returned from SAMMS is considered active.
+    .withColumn("RowState", lit(True))
+    .withColumn("LastModAt", current_timestamp())
+
+    # Silver audit timestamps
+    .withColumn("silver_updated_at", current_timestamp())
+    .withColumn("last_seen_at", current_timestamp())
+)
+
+src_df.createOrReplaceTempView("vw_arnote_current_run")
+
+src_count = src_df.count()
+print(f"Prepared source rows for ARNote Silver: {src_count}")
+
+# First-ever run: create Silver table
+if not spark.catalog.tableExists(silver_table):
+    (
+        src_df
+        .withColumn("silver_created_at", current_timestamp())
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created ARNote Silver table and inserted rows: {src_count}")
+else:
+    print(f"Silver table already exists: {silver_table}")
+
+
+cell2:
+
+from delta.tables import DeltaTable
+
+silver_table = "bhg_silver.pats.sl_tbl_3pARNOTE"
+
+if not spark.catalog.tableExists(silver_table):
+    raise Exception(f"Silver table does not exist: {silver_table}")
+
+# One-time migration for Silver tables created before LastModAt was added.
+if "LastModAt" not in spark.table(silver_table).columns:
+    spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (LastModAt TIMESTAMP)")
+    spark.sql(f"""
+        UPDATE {silver_table}
+        SET LastModAt = silver_updated_at
+        WHERE LastModAt IS NULL
+          AND silver_updated_at IS NOT NULL
+    """)
+
+silver_delta = DeltaTable.forName(spark, silver_table)
+
+src_cols = src_df.columns
+
+# Update all columns EXCEPT silver_created_at (preserve original creation timestamp)
+update_cols = [c for c in src_cols if c != "silver_created_at"]
+update_set  = {c: f"src.{c}" for c in update_cols}
+
+# Always use server time for audit timestamps on update
+update_set["silver_updated_at"] = "current_timestamp()"
+update_set["last_seen_at"]      = "current_timestamp()"
+
+# On insert: write all columns including silver_created_at
+insert_values = {c: f"src.{c}" for c in src_cols}
+
+(
+    silver_delta.alias("tgt")
+    .merge(
+        src_df.alias("src"),
+        # Merge key: clinic + note ID (mirrors Azure PK: SiteCode + ArnId)
+        "tgt._site_code = src._site_code AND tgt.arnID = src.arnID"
+    )
+
+    # CASE 1: Record exists AND data changed (RowChkSum differs or NULL on either side)
+    # → Full update of all data columns
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum IS NULL
+            OR src.RowChkSum IS NULL
+            OR tgt.RowChkSum <> src.RowChkSum
+        """,
+        set=update_set
+    )
+
+    # CASE 2: Record exists AND data has NOT changed (RowChkSum identical)
+    # → Lightweight metadata-only update. No data columns touched.
+    # → Still refresh RowState (defensive — ARNote RowState is always true, but consistent)
+    .whenMatchedUpdate(
+        condition="tgt.RowChkSum = src.RowChkSum",
+        set={
+            "last_seen_at":              "current_timestamp()",
+            "RowState":                  "src.RowState",
+            "_ingest_run_id":            "src._ingest_run_id",
+            "_extracted_at":             "src._extracted_at",
+            "_source_query_date_anchor": "src._source_query_date_anchor"
+        }
+    )
+
+    # CASE 3: New record not yet in Silver → Insert all columns
+    .whenNotMatchedInsert(values=insert_values)
+
+    .execute()
+)
+
+print("ARNote Silver MERGE completed successfully.")
+
+
+nb_3pclaimnote_bronze_to_silver
+
+Cell1:
+
+from pyspark.sql.functions import col, current_timestamp, lit, row_number
+from pyspark.sql.window import Window
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = "test-run-001"
+
+bronze_table = "bhg_bronze.Notes.br_tbl3pClaimNote"
+silver_table = "bhg_silver.pats.sl_tbl_3pClaimNote"
+
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+
+bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+
+bronze_count = bronze_df.count()
+print(f"Bronze rows for this run: {bronze_count}")
+
+if bronze_count == 0:
+    raise Exception(f"No Bronze ClaimNote rows found for ingest_run_id = {p_ingest_run_id}")
+
+# ── CRITICAL: Deduplicate on _site_code + tpcnTPCID ─────────────────────────
+# The C# Save3pClaimNote matches existing records by TpcnTpcid, NOT by tpcn
+# (the Azure PK). See Section 20 for full explanation.
+# For Fabric, we use the same match logic: _site_code + tpcnTPCID.
+w = Window.partitionBy("_site_code", "tpcnTPCID").orderBy(col("_extracted_at").desc())
+
+src_df = (
+    bronze_df
+    .where(col("_site_code").isNotNull() & col("tpcnTPCID").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+
+    # ── RowState Logic ─────────────────────────────────────────────────────────
+    # Save3pClaimNote always sets RowState = true for every incoming row.
+    # There is NO pre-reset and NO soft-delete condition for ClaimNote.
+    # C# reference: claimNote.RowState = true  (set in the "sitecode" case, line 324)
+    .withColumn("RowState", lit(True))
+    .withColumn("LastModAt", current_timestamp())
+
+    .withColumn("silver_updated_at", current_timestamp())
+    .withColumn("last_seen_at", current_timestamp())
+)
+
+src_df.createOrReplaceTempView("vw_claimnote_current_run")
+
+src_count = src_df.count()
+print(f"Prepared source rows for ClaimNote Silver: {src_count}")
+
+if not spark.catalog.tableExists(silver_table):
+    (
+        src_df
+        .withColumn("silver_created_at", current_timestamp())
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created ClaimNote Silver table: {src_count}")
+else:
+    print(f"Silver table exists: {silver_table}")
+
+
+cell2:
+
+from delta.tables import DeltaTable
+
+silver_table = "bhg_silver.pats.sl_tbl_3pClaimNote"
+
+if not spark.catalog.tableExists(silver_table):
+    raise Exception(f"Silver table does not exist: {silver_table}")
+
+# One-time migration for Silver tables created before LastModAt was added.
+if "LastModAt" not in spark.table(silver_table).columns:
+    spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (LastModAt TIMESTAMP)")
+    spark.sql(f"""
+        UPDATE {silver_table}
+        SET LastModAt = silver_updated_at
+        WHERE LastModAt IS NULL
+          AND silver_updated_at IS NOT NULL
+    """)
+
+silver_delta = DeltaTable.forName(spark, silver_table)
+
+src_cols = src_df.columns
+
+update_cols = [c for c in src_cols if c != "silver_created_at"]
+update_set  = {c: f"src.{c}" for c in update_cols}
+update_set["silver_updated_at"] = "current_timestamp()"
+update_set["last_seen_at"]      = "current_timestamp()"
+
+insert_values = {c: f"src.{c}" for c in src_cols}
+
+(
+    silver_delta.alias("tgt")
+    .merge(
+        src_df.alias("src"),
+        # ── CRITICAL: Match on tpcnTPCID not tpcn ──────────────────────────────
+        # The C# Save3pClaimNote line 376:
+        #   tblCNs.FirstOrDefault(x => x.TpcnTpcid == claimNote.TpcnTpcid)
+        # Uses TpcnTpcid as the match key, not the Azure PK (tpcn).
+        # Fabric MERGE must mirror this: _site_code + tpcnTPCID
+        "tgt._site_code = src._site_code AND tgt.tpcnTPCID = src.tpcnTPCID"
+    )
+
+    # CASE 1: Record exists AND data changed → Full update
+    .whenMatchedUpdate(
+        condition="""
+            tgt.RowChkSum IS NULL
+            OR src.RowChkSum IS NULL
+            OR tgt.RowChkSum <> src.RowChkSum
+        """,
+        set=update_set
+    )
+
+    # CASE 2: Record exists AND data unchanged → Metadata-only update
+    .whenMatchedUpdate(
+        condition="tgt.RowChkSum = src.RowChkSum",
+        set={
+            "last_seen_at":              "current_timestamp()",
+            "RowState":                  "src.RowState",
+            "_ingest_run_id":            "src._ingest_run_id",
+            "_extracted_at":             "src._extracted_at",
+            "_source_query_date_anchor": "src._source_query_date_anchor"
+        }
+    )
+
+    # CASE 3: New record → Insert all columns
+    .whenNotMatchedInsert(values=insert_values)
+
+    .execute()
+)
+
+print("ClaimNote Silver MERGE completed successfully.")
+
+
+-->Gold Warehouse table creation queries
+
+-- Run this once in the bhg_gold Fabric Data Warehouse before enabling
+-- the Gold truncate + copy activities in Execute_Notes.
+
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'pats')
+    EXEC('CREATE SCHEMA pats');
+GO
+
+CREATE TABLE pats.gd_3p_arnote
+(
+    SiteCode varchar(25) NOT NULL,
+    arnID int NOT NULL,
+    arnLIID int NULL,
+    arnNOTE varchar(8000) NULL,
+    arnUSER varchar(50) NULL,
+    arnDATE datetime2(6) NULL,
+    arnDtRemoved datetime2(6) NULL,
+    arnStrRemovedReason varchar(8000) NULL,
+    arnStrRemovedUser varchar(100) NULL,
+    bid int NULL,
+    arnDBnotes varchar(250) NULL,
+    globalBatchId bigint NULL,
+    RowChkSum int NULL,
+    LastModAt datetime2(6) NULL,
+    RowState bit NULL
+);
+GO
+
+CREATE TABLE pats.gd_3p_claim_note
+(
+    SiteCode varchar(25) NOT NULL,
+    tpcn int NOT NULL,
+    tpcnTPCID int NULL,
+    tpcnDtmAdded datetime2(6) NULL,
+    tpcnStrAdded varchar(100) NULL,
+    tpcnStrNote varchar(1000) NULL,
+    tpcnStrType varchar(10) NULL,
+    tpcnDtTickler datetime2(6) NULL,
+    tpcnDtTicklerRemoved varchar(8000) NULL,
+    tpcnStrTicklerRemovedNote varchar(8000) NULL,
+    tpcnStrTicklerRemovedUser varchar(100) NULL,
+    tpcnStrTicklerType varchar(500) NULL,
+    globalBatchId bigint NULL,
+    RowChkSum int NULL,
+    LastModAt datetime2(6) NULL,
+    RowState bit NULL
+);
+GO
+
+
+-->Parent ETL Execute_Notes - add Gold activities after both Silver notebooks
+
+Pipeline parameters:
+
+p_ingest_run_id
+   -> parent passes Fabric pipeline().RunId into Bronze and Silver notebooks
+   -> keep the parameter only for manual/debug runs
+
+p_work_date
+   -> C# st.WorkDate equivalent for this run
+   -> source query anchor is DATEADD(day, -p_lookback_days, p_work_date)
+   -> daily run: pass today's work date
+   -> backfill/rerun: pass the original task WorkDate
+
+p_lookback_days
+   -> normally 15
+
+Activity order:
+
+1. lkp_notes_taskconfig
+   -> reads bhg_bronze.meta.taskconfig
+
+2. flt_active_notes_sites
+   -> filters ConfigId = 34, IsActive = 1
+   -> keeps Method = 3pArnote or 3pClaimNote
+
+3. nb_notes_audit_start
+   -> starts BR/SL/GL pipelinerun rows
+   -> starts taskqueue rows for active taskconfig rows
+   -> returns p_audit_context_json used by final audit writers
+
+4. Executed_AfterBronz
+   -> child pipeline pl_notes_samms_to_lakehouse
+   -> passes p_sites from flt_active_notes_sites
+   -> child splits p_sites into ARNote and ClaimNote rows
+
+5. nb_3parnote_bronze_to_silver
+   -> depends on Executed_AfterBronz succeeded
+
+6. nb_3pclaimnote_bronze_to_silver
+   -> depends on Executed_AfterBronz succeeded
+   -> runs in parallel with nb_3parnote_bronze_to_silver
+
+7. Prepare_Notes_Versioned_Gold_Tables
+   -> Script activity
+   -> depends on BOTH Silver notebooks succeeded:
+      nb_3parnote_bronze_to_silver
+      nb_3pclaimnote_bronze_to_silver
+   -> linked service: bhg_gold
+   -> creates empty run-specific version tables from current production schema:
+
+pats.gd_3p_arnote_v_<PipelineRunId>
+pats.gd_3p_claim_note_v_<PipelineRunId>
+
+8. copy_3parnote_silver_to_gold
+   -> Copy activity
+   -> depends on Prepare_Notes_Versioned_Gold_Tables succeeded
+   -> source: bhg_silver Lakehouse, schema pats, table sl_tbl_3pARNOTE
+   -> sink: bhg_gold Warehouse, schema pats, table gd_3p_arnote_v_<PipelineRunId>
+   -> write behavior: Insert
+   -> allow COPY command: True
+
+9. copy_3pclaimnote_silver_to_gold
+   -> Copy activity
+   -> depends on Prepare_Notes_Versioned_Gold_Tables succeeded
+   -> runs in parallel with copy_3parnote_silver_to_gold
+   -> source: bhg_silver Lakehouse, schema pats, table sl_tbl_3pClaimNote
+   -> sink: bhg_gold Warehouse, schema pats, table gd_3p_claim_note_v_<PipelineRunId>
+   -> write behavior: Insert
+   -> allow COPY command: True
+
+10. Publish_Notes_Versioned_Gold
+   -> Script activity
+   -> depends on both Gold copy activities succeeded
+   -> validates both version tables are not empty
+   -> renames current production tables to run-specific backup tables:
+      gd_3p_arnoteBK_<PipelineRunId>
+      gd_3p_claim_noteBK_<PipelineRunId>
+   -> renames version tables into production:
+      gd_3p_arnote_v_<PipelineRunId>      -> gd_3p_arnote
+      gd_3p_claim_note_v_<PipelineRunId>  -> gd_3p_claim_note
+   -> verifies final production tables are not empty
+   -> removes older backup/version tables so they do not pile up
+
+11. nb_notes_audit_finalize_success
+   -> depends on Publish_Notes_Versioned_Gold succeeded
+   -> updates pipelinerun/taskqueue/taskaudit/dataquality as SUCCESS
+
+12. nb_notes_audit_finalize_failure
+   -> depends on Publish_Notes_Versioned_Gold failed or skipped
+   -> updates pipelinerun/taskqueue/taskaudit as FAILED/SKIPPED and raises an exception to keep the pipeline failed
+
+
+-->Gold Copy mappings - ARNote
+
+Silver source table:
+bhg_silver.pats.sl_tbl_3pARNOTE
+
+Gold copy sink table:
+bhg_gold.pats.gd_3p_arnote_v_<PipelineRunId>
+
+Gold final published table after swap:
+bhg_gold.pats.gd_3p_arnote
+
+Map these columns:
+
+_site_code              -> SiteCode
+arnID                   -> arnID
+arnLIID                 -> arnLIID
+arnNOTE                 -> arnNOTE
+arnUSER                 -> arnUSER
+arnDATE                 -> arnDATE
+arnDtRemoved            -> arnDtRemoved
+arnStrRemovedReason     -> arnStrRemovedReason
+arnStrRemovedUser       -> arnStrRemovedUser
+bid                     -> bid
+arnDBnotes              -> arnDBnotes
+globalBatchId           -> globalBatchId
+RowChkSum               -> RowChkSum
+LastModAt               -> LastModAt
+RowState                -> RowState
+
+Do NOT map these Fabric-only operational columns to Gold:
+_source_database
+_ingest_run_id
+_extracted_at
+_source_query_date_anchor
+silver_created_at
+silver_updated_at
+last_seen_at
+
+
+-->Gold Copy mappings - ClaimNote
+
+Silver source table:
+bhg_silver.pats.sl_tbl_3pClaimNote
+
+Gold copy sink table:
+bhg_gold.pats.gd_3p_claim_note_v_<PipelineRunId>
+
+Gold final published table after swap:
+bhg_gold.pats.gd_3p_claim_note
+
+Map these columns:
+
+_site_code                     -> SiteCode
+tpcn                           -> tpcn
+tpcnTPCID                      -> tpcnTPCID
+tpcnDtmAdded                   -> tpcnDtmAdded
+tpcnStrAdded                   -> tpcnStrAdded
+tpcnStrNote                    -> tpcnStrNote
+tpcnStrType                    -> tpcnStrType
+tpcnDtTickler                  -> tpcnDtTickler
+tpcnDtTicklerRemoved           -> tpcnDtTicklerRemoved
+tpcnStrTicklerRemovedNote      -> tpcnStrTicklerRemovedNote
+tpcnStrTicklerRemovedUser      -> tpcnStrTicklerRemovedUser
+tpcnStrTicklerType             -> tpcnStrTicklerType
+globalBatchId                  -> globalBatchId
+RowChkSum                      -> RowChkSum
+LastModAt                      -> LastModAt
+RowState                       -> RowState
+
+Do NOT map these Fabric-only operational columns to Gold:
+_source_database
+_ingest_run_id
+_extracted_at
+_source_query_date_anchor
+silver_created_at
+silver_updated_at
+last_seen_at
+
+
+-->Alignment notes from control CSVs
+
+vw_mapAction.csv:
+ActionKey 1, StepKey 35 = dbo.tbl3pArnote -> pats.tbl_3pArnote
+ActionKey 1, StepKey 34 = dbo.tbl3pClaimNote -> pats.tbl_3pClaimNote
+
+vw_MapSrc2Dsn.csv:
+RowChkSum and RowState have Enabled = 0 because the old ETL manages them outside the source SELECT.
+Fabric still carries both fields into Silver and Gold.
+
+ClaimNote key note:
+The old Save3pClaimNote logic matches by SiteCode + tpcnTPCID, not by SiteCode + tpcn.
+Keep the Silver MERGE key as:
+tgt._site_code = src._site_code AND tgt.tpcnTPCID = src.tpcnTPCID
+
+Gold load strategy:
+Same as Darts. Gold is not merged incrementally. Gold is truncated and fully reloaded from Silver each run.

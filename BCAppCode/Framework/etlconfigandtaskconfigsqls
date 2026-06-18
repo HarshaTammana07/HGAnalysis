@@ -1,0 +1,1202 @@
+-- FormQuestionAnswers control config setup
+-- Run this in a Fabric Spark notebook attached to the Bronze lakehouse.
+-- It creates/updates the three layer config rows in bhg_bronze.meta.etlconfig
+-- and the matching task rows in bhg_bronze.meta.taskconfig.
+--
+-- Chosen IDs:
+--   etlconfig  : 28, 29, 30
+--   taskconfig : 91, 92, 93
+--
+-- If those IDs are already used in your environment, update them here before running.
+from pyspark.sql import functions as F
+from pyspark.sql.types import *
+from delta.tables import DeltaTable
+etlconfig_table = "bhg_bronze.meta.etlconfig"
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+created_by = "Harsha"
+environment_name = "DEV"
+trigger_type = "SCHEDULE"
+trigger_frequency = "DAILY"
+triggered_by = "Fabric"
+formqa_config_prefix = "SAMMS FormQuestionAnswers"
+# -------------------------------------------------------------------------
+# 1. etlconfig rows
+# -------------------------------------------------------------------------
+etl_schema = StructType([
+    StructField("ConfigId", LongType(), True),
+    StructField("ConfigName", StringType(), True),
+    StructField("PipelineName", StringType(), True),
+    StructField("PipelinePath", StringType(), True),
+    StructField("TransformationModule", StringType(), True),
+    StructField("SourceSystem", StringType(), True),
+    StructField("SourceType", StringType(), True),
+    StructField("TargetName", StringType(), True),
+    StructField("EnvironmentName", StringType(), True),
+    StructField("PipelineDependency", StringType(), True),
+    StructField("ExecutionSequence", IntegerType(), True),
+    StructField("TriggerType", StringType(), True),
+    StructField("TriggerFrequency", StringType(), True),
+    StructField("TriggeredBy", StringType(), True),
+    StructField("IsActive", IntegerType(), True),
+    StructField("ConnectionConfig", StringType(), True),
+    StructField("CreatedBy", StringType(), True),
+    StructField("ModifiedBy", StringType(), True)
+])
+etl_rows = [
+    (
+        28,
+        f"{formqa_config_prefix} Bronze Pipeline",
+        "pl_forms_samms_to_lakehouse",
+        "/pipelines/pl_forms_samms_to_lakehouse",
+        None,
+        "SAMMS",
+        "DATA BASE",
+        "BR",
+        environment_name,
+        None,
+        1,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    ),
+    (
+        29,
+        f"{formqa_config_prefix} Silver Pipeline",
+        "nb_forms_bronze_to_silver",
+        "/notebooks/nb_forms_bronze_to_silver",
+        "/notebooks/nb_forms_bronze_to_silver",
+        "SAMMS",
+        "TABLE",
+        "SL",
+        environment_name,
+        "FORMQUESTIONANSWERS_BRONZE",
+        2,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    ),
+    (
+        30,
+        f"{formqa_config_prefix} Gold Pipeline",
+        "Execute_Form_QuestionAnswer",
+        "/pipelines/Execute_Form_QuestionAnswer",
+        "Versioned Gold Publish",
+        "SAMMS",
+        "TABLE",
+        "GL",
+        environment_name,
+        "FORMQUESTIONANSWERS_SILVER",
+        3,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    )
+]
+etl_df = (
+    spark.createDataFrame(etl_rows, etl_schema)
+    .withColumn("CreatedAt", F.current_timestamp())
+    .withColumn("ModifiedAt", F.current_timestamp())
+)
+etl_cols = [f.name for f in etl_df.schema.fields]
+etl_update = {c: f"s.{c}" for c in etl_cols if c not in ["ConfigId", "CreatedAt", "CreatedBy"]}
+etl_insert = {c: f"s.{c}" for c in etl_cols}
+DeltaTable.forName(spark, etlconfig_table).alias("t") \
+    .merge(etl_df.alias("s"), "t.ConfigId = s.ConfigId") \
+    .whenMatchedUpdate(set=etl_update) \
+    .whenNotMatchedInsert(values=etl_insert) \
+    .execute()
+# -------------------------------------------------------------------------
+# 2. taskconfig rows
+# -------------------------------------------------------------------------
+task_schema = StructType([
+    StructField("TaskConfigId", LongType(), True),
+    StructField("ConfigId", LongType(), True),
+    StructField("TaskName", StringType(), True),
+    StructField("Endpoint", StringType(), True),
+    StructField("Method", StringType(), True),
+    StructField("AuthType", StringType(), True),
+    StructField("SourceTable", StringType(), True),
+    StructField("PaginationEnabled", IntegerType(), True),
+    StructField("PaginationParam", StringType(), True),
+    StructField("LoadType", StringType(), True),
+    StructField("IsIncremental", IntegerType(), True),
+    StructField("WatermarkColumn", StringType(), True),
+    StructField("LookbackDays", IntegerType(), True),
+    StructField("TargetSchema", StringType(), True),
+    StructField("TargetTable", StringType(), True),
+    StructField("TargetPath", StringType(), True),
+    StructField("ExecutionOrder", IntegerType(), True),
+    StructField("RetryCount", IntegerType(), True),
+    StructField("TimeoutSeconds", IntegerType(), True),
+    StructField("RequestBody", StringType(), True),
+    StructField("DependencyTaskConfigId", LongType(), True),
+    StructField("IsActive", IntegerType(), True),
+    StructField("CreatedBy", StringType(), True),
+    StructField("ModifiedBy", StringType(), True)
+])
+task_rows = [
+    (
+        91,
+        28,
+        "FormQuestionAnswers Bronze",
+        None,
+        None,
+        None,
+        "SAMMS Form / Question / Answer",
+        0,
+        None,
+        "INCREMENTAL",
+        1,
+        "CreatedOn,UpdatedOn",
+        30,
+        "Form",
+        "br_tblFormQA",
+        "/lakehouse/bhg_bronze/Form/br_tblFormQA",
+        1,
+        0,
+        43200,
+        None,
+        None,
+        1,
+        created_by,
+        created_by
+    ),
+    (
+        92,
+        29,
+        "FormQuestionAnswers Silver",
+        None,
+        None,
+        None,
+        "bhg_bronze.Form.br_tblFormQA",
+        0,
+        None,
+        "MERGE",
+        1,
+        "_ingest_run_id",
+        30,
+        "pats",
+        "sl_tblFormQuestionAnswers",
+        "/lakehouse/bhg_silver/pats/sl_tblFormQuestionAnswers",
+        1,
+        0,
+        43200,
+        None,
+        91,
+        1,
+        created_by,
+        created_by
+    ),
+    (
+        93,
+        30,
+        "FormQuestionAnswers Gold",
+        None,
+        None,
+        None,
+        "bhg_silver.pats.sl_tblFormQuestionAnswers",
+        0,
+        None,
+        "VERSIONED_FULL_OVERWRITE",
+        0,
+        None,
+        None,
+        "pats",
+        "tbl_dbo_FormQuestionAnswers",
+        "bhg_gold.pats.tbl_dbo_FormQuestionAnswers",
+        1,
+        0,
+        43200,
+        None,
+        92,
+        1,
+        created_by,
+        created_by
+    )
+]
+task_df = (
+    spark.createDataFrame(task_rows, task_schema)
+    .withColumn("CreatedAt", F.current_timestamp())
+    .withColumn("ModifiedAt", F.current_timestamp())
+)
+task_cols = [f.name for f in task_df.schema.fields]
+task_update = {c: f"s.{c}" for c in task_cols if c not in ["TaskConfigId", "CreatedAt", "CreatedBy"]}
+task_insert = {c: f"s.{c}" for c in task_cols}
+DeltaTable.forName(spark, taskconfig_table).alias("t") \
+    .merge(task_df.alias("s"), "t.TaskConfigId = s.TaskConfigId") \
+    .whenMatchedUpdate(set=task_update) \
+    .whenNotMatchedInsert(values=task_insert) \
+    .execute()
+# -------------------------------------------------------------------------
+# 3. Verification
+# -------------------------------------------------------------------------
+display(spark.sql("""
+SELECT ConfigId, ConfigName, PipelineName, SourceSystem, SourceType,
+       TargetName, EnvironmentName, ExecutionSequence, IsActive,
+       CreatedAt, CreatedBy, ModifiedAt, ModifiedBy
+FROM bhg_bronze.meta.etlconfig
+WHERE ConfigId IN (28, 29, 30)
+   OR ConfigName LIKE 'SAMMS FormQuestionAnswers%'
+ORDER BY ConfigId
+"""))
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, SourceTable, LoadType,
+       IsIncremental, WatermarkColumn, LookbackDays,
+       TargetSchema, TargetTable, TargetPath, ExecutionOrder,
+       DependencyTaskConfigId, IsActive, CreatedAt, CreatedBy,
+       ModifiedAt, ModifiedBy
+FROM bhg_bronze.meta.taskconfig
+WHERE TaskConfigId IN (91, 92, 93)
+   OR TaskName LIKE 'FormQuestionAnswers%'
+ORDER BY TaskConfigId
+"""))
+
+
+# =========================================================================
+# FormAnswerSignatures control config setup
+# -------------------------------------------------------------------------
+# Run this in the same Fabric Spark notebook attached to the Bronze lakehouse.
+# It creates/updates the three layer config rows in bhg_bronze.meta.etlconfig
+# and the matching task rows in bhg_bronze.meta.taskconfig.
+#
+# Chosen IDs:
+#   etlconfig  : 31, 32, 33
+#   taskconfig : 94, 95, 96
+#
+# If those IDs are already used in your environment, update them here before running.
+# =========================================================================
+formanswersig_config_prefix = "SAMMS FormAnswerSignatures"
+
+# -------------------------------------------------------------------------
+# 4. etlconfig rows - FormAnswerSignatures
+# -------------------------------------------------------------------------
+answersig_etl_rows = [
+    (
+        31,
+        f"{formanswersig_config_prefix} Bronze Pipeline",
+        "pl_answersig_samms_to_lakehouse",
+        "/pipelines/pl_answersig_samms_to_lakehouse",
+        None,
+        "SAMMS",
+        "DATA BASE",
+        "BR",
+        environment_name,
+        None,
+        1,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    ),
+    (
+        32,
+        f"{formanswersig_config_prefix} Silver Pipeline",
+        "nb_answersig_bronze_to_silver",
+        "/notebooks/nb_answersig_bronze_to_silver",
+        "/notebooks/nb_answersig_bronze_to_silver",
+        "SAMMS",
+        "TABLE",
+        "SL",
+        environment_name,
+        "FORMANSWERSIGNATURES_BRONZE",
+        2,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    ),
+    (
+        33,
+        f"{formanswersig_config_prefix} Gold Pipeline",
+        "Execute_Pipeline_AnswerSignature",
+        "/pipelines/Execute_Pipeline_AnswerSignature",
+        "Versioned Gold Publish",
+        "SAMMS",
+        "TABLE",
+        "GL",
+        environment_name,
+        "FORMANSWERSIGNATURES_SILVER",
+        3,
+        trigger_type,
+        trigger_frequency,
+        triggered_by,
+        1,
+        "{}",
+        created_by,
+        created_by
+    )
+]
+
+answersig_etl_df = (
+    spark.createDataFrame(answersig_etl_rows, etl_schema)
+    .withColumn("CreatedAt", F.current_timestamp())
+    .withColumn("ModifiedAt", F.current_timestamp())
+)
+
+answersig_etl_cols = [f.name for f in answersig_etl_df.schema.fields]
+answersig_etl_update = {c: f"s.{c}" for c in answersig_etl_cols if c not in ["ConfigId", "CreatedAt", "CreatedBy"]}
+answersig_etl_insert = {c: f"s.{c}" for c in answersig_etl_cols}
+
+DeltaTable.forName(spark, etlconfig_table).alias("t") \
+    .merge(answersig_etl_df.alias("s"), "t.ConfigId = s.ConfigId") \
+    .whenMatchedUpdate(set=answersig_etl_update) \
+    .whenNotMatchedInsert(values=answersig_etl_insert) \
+    .execute()
+
+# -------------------------------------------------------------------------
+# 5. taskconfig rows - FormAnswerSignatures
+# -------------------------------------------------------------------------
+answersig_task_rows = [
+    (
+        94,
+        31,
+        "FormAnswerSignatures Bronze",
+        None,
+        None,
+        None,
+        "SAMMS Form / AnswerSignature",
+        0,
+        None,
+        "INCREMENTAL",
+        1,
+        "CreatedOn,UpdatedOn,SignatureDate",
+        30,
+        "Forms",
+        "br_tblFormAnswerSig",
+        "/lakehouse/bhg_bronze/Forms/br_tblFormAnswerSig",
+        1,
+        0,
+        43200,
+        None,
+        None,
+        1,
+        created_by,
+        created_by
+    ),
+    (
+        95,
+        32,
+        "FormAnswerSignatures Silver",
+        None,
+        None,
+        None,
+        "bhg_bronze.Forms.br_tblFormAnswerSig",
+        0,
+        None,
+        "MERGE",
+        1,
+        "_ingest_run_id",
+        30,
+        "pats",
+        "sl_tblFormAnswerSignatures",
+        "/lakehouse/bhg_silver/pats/sl_tblFormAnswerSignatures",
+        1,
+        0,
+        43200,
+        None,
+        94,
+        1,
+        created_by,
+        created_by
+    ),
+    (
+        96,
+        33,
+        "FormAnswerSignatures Gold",
+        None,
+        None,
+        None,
+        "bhg_silver.pats.sl_tblFormAnswerSignatures",
+        0,
+        None,
+        "VERSIONED_FULL_OVERWRITE",
+        0,
+        None,
+        None,
+        "pats",
+        "tbl_dbo_FormAnswerSignature",
+        "bhg_gold.pats.tbl_dbo_FormAnswerSignature",
+        1,
+        0,
+        43200,
+        None,
+        95,
+        1,
+        created_by,
+        created_by
+    )
+]
+
+answersig_task_df = (
+    spark.createDataFrame(answersig_task_rows, task_schema)
+    .withColumn("CreatedAt", F.current_timestamp())
+    .withColumn("ModifiedAt", F.current_timestamp())
+)
+
+answersig_task_cols = [f.name for f in answersig_task_df.schema.fields]
+answersig_task_update = {c: f"s.{c}" for c in answersig_task_cols if c not in ["TaskConfigId", "CreatedAt", "CreatedBy"]}
+answersig_task_insert = {c: f"s.{c}" for c in answersig_task_cols}
+
+DeltaTable.forName(spark, taskconfig_table).alias("t") \
+    .merge(answersig_task_df.alias("s"), "t.TaskConfigId = s.TaskConfigId") \
+    .whenMatchedUpdate(set=answersig_task_update) \
+    .whenNotMatchedInsert(values=answersig_task_insert) \
+    .execute()
+
+# -------------------------------------------------------------------------
+# 6. Verification - FormAnswerSignatures
+# -------------------------------------------------------------------------
+display(spark.sql("""
+SELECT ConfigId, ConfigName, PipelineName, SourceSystem, SourceType,
+       TargetName, EnvironmentName, ExecutionSequence, IsActive,
+       CreatedAt, CreatedBy, ModifiedAt, ModifiedBy
+FROM bhg_bronze.meta.etlconfig
+WHERE ConfigId IN (31, 32, 33)
+   OR ConfigName LIKE 'SAMMS FormAnswerSignatures%'
+ORDER BY ConfigId
+"""))
+
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, SourceTable, LoadType,
+       IsIncremental, WatermarkColumn, LookbackDays,
+       TargetSchema, TargetTable, TargetPath, ExecutionOrder,
+       DependencyTaskConfigId, IsActive, CreatedAt, CreatedBy,
+       ModifiedAt, ModifiedBy
+FROM bhg_bronze.meta.taskconfig
+WHERE TaskConfigId IN (94, 95, 96)
+   OR TaskName LIKE 'FormAnswerSignatures%'
+ORDER BY TaskConfigId
+"""))
+
+
+
+
+
+
+
+
+
+
+
+
+import json
+from pyspark.sql import functions as F
+from delta.tables import DeltaTable
+from pyspark.sql.window import Window
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+
+try:
+    created_by
+except NameError:
+    created_by = "Harsha"
+
+# Paste content from AllsiteCodesAndDatabses.txt here
+sites_json = r'''
+[
+  {"site_code": "AHK", "source_database": "SAMMS-Ahoskie"},
+  {"site_code": "B12B", "source_database": "SAMMS-ColoradoSpringsV5"},
+  {"site_code": "B24", "source_database": "SAMMS-PaintsvilleV5"},
+  {"site_code": "B25", "source_database": "SAMMS-PikevilleV5"},
+  {"site_code": "B26", "source_database": "SAMMS-HazardV5"},
+  {"site_code": "B27", "source_database": "SAMMS-SavannahV6"},
+  {"site_code": "B28", "source_database": "SAMMS-WestPlainesV5"},
+  {"site_code": "B29", "source_database": "SAMMS-PoplarBluffV5"},
+  {"site_code": "B30", "source_database": "SAMMS-KCNv5"},
+  {"site_code": "B31", "source_database": "SAMMS-DyersburgV5"},
+  {"site_code": "B33", "source_database": "SAMMS-Paducah"},
+  {"site_code": "B34", "source_database": "SAMMS-CorbinV5"},
+  {"site_code": "B35", "source_database": "SAMMS-LexingtonV5"},
+  {"site_code": "B35A", "source_database": "SAMMS-BereaV5"},
+  {"site_code": "B36", "source_database": "SAMMS-AshevilleV5"},
+  {"site_code": "B37", "source_database": "SAMMS-ClydeV5"},
+  {"site_code": "B38", "source_database": "SAMMS-SpartanburgV5"},
+  {"site_code": "B39", "source_database": "SAMMS-AikenV5"},
+  {"site_code": "B41", "source_database": "SAMMS-ChesapeakeV5"},
+  {"site_code": "B42", "source_database": "SAMMS-VirginiaBeachV5"},
+  {"site_code": "B42A", "source_database": "SAMMS-NewportNewsV5"},
+  {"site_code": "B42B", "source_database": "SAMMS-FranklinV5"},
+  {"site_code": "B42C", "source_database": "SAMMS-GlenAllenV5"},
+  {"site_code": "B42D", "source_database": "SAMMS-ChesapeakeSouthV5"},
+  {"site_code": "B44", "source_database": "SAMMS-AlbanyV5"},
+  {"site_code": "B45", "source_database": "SAMMS-TiftonV5"},
+  {"site_code": "B46", "source_database": "SAMMS-WashingtonDCv5"},
+  {"site_code": "B47", "source_database": "SAMMS-MobileV5"},
+  {"site_code": "B48", "source_database": "SAMMS-TuscaloosaV5"},
+  {"site_code": "B51", "source_database": "SAMMS-NorthLittleRockV6"},
+  {"site_code": "B52", "source_database": "SAMMS-JacksonGAV5"},
+  {"site_code": "B54", "source_database": "SAMMS-GadsdenV5"},
+  {"site_code": "B55", "source_database": "SAMMS-ShoalsV5"},
+  {"site_code": "B57", "source_database": "SAMMS-Pawtucket"},
+  {"site_code": "B57A", "source_database": "SAMMS-Johnston"},
+  {"site_code": "B57B", "source_database": "SAMMS-Middletown"},
+  {"site_code": "B57C", "source_database": "SAMMS-Providence"},
+  {"site_code": "B57D", "source_database": "SAMMS-Westerly"},
+  {"site_code": "B66A", "source_database": "SAMMS-Bremen"},
+  {"site_code": "B72", "source_database": "SAMMS-Mobile-OBOT"},
+  {"site_code": "B73", "source_database": "SAMMS-Montgomery"},
+  {"site_code": "B75", "source_database": "SAMMS-LawrenceV6"},
+  {"site_code": "B76", "source_database": "SAMMS-Huntsville-OBOT"},
+  {"site_code": "BAT", "source_database": "SAMMS-Batesville"},
+  {"site_code": "BG", "source_database": "SAMMS-BowlingGreen"},
+  {"site_code": "BOI", "source_database": "SAMMS-Boise"},
+  {"site_code": "CBCO", "source_database": "SAMMS-CoeurdAleneV6"},
+  {"site_code": "CON", "source_database": "SAMMS-Conway"},
+  {"site_code": "D07", "source_database": "SAMMS-KnoxvilleV6"},
+  {"site_code": "D08", "source_database": "SAMMS-MadisonV6"},
+  {"site_code": "D09", "source_database": "SAMMS-MurfreesboroV6"},
+  {"site_code": "DA", "source_database": "SAMMS-Davenport"},
+  {"site_code": "DM", "source_database": "SAMMS-DesMoines"},
+  {"site_code": "DRD-CO", "source_database": "SAMMS-ColumbiaV5"},
+  {"site_code": "DRD-KC", "source_database": "SAMMS-KCv5"},
+  {"site_code": "DRD-KVB", "source_database": "SAMMS-KVBv5"},
+  {"site_code": "DRD-KVC", "source_database": "SAMMS-KVCv5"},
+  {"site_code": "DRD-NOLA", "source_database": "SAMMS-NOLAv5"},
+  {"site_code": "DRD-SF", "source_database": "SAMMS-SFv5"},
+  {"site_code": "ELC", "source_database": "SAMMS-ElizabethCity"},
+  {"site_code": "ET", "source_database": "SAMMS-Elizabethtown"},
+  {"site_code": "FAY", "source_database": "SAMMS-Fayetteville"},
+  {"site_code": "FR", "source_database": "SAMMS-Frankfort"},
+  {"site_code": "FS", "source_database": "SAMMS-FortSmith"},
+  {"site_code": "FW", "source_database": "SAMMS-FortWayne"},
+  {"site_code": "GAL", "source_database": "SAMMS-Gaylord"},
+  {"site_code": "HGT", "source_database": "SAMMS-Hagerstown"},
+  {"site_code": "HNT", "source_database": "SAMMS-Huntsville"},
+  {"site_code": "HS", "source_database": "SAMMS-HotSprings"},
+  {"site_code": "JON", "source_database": "SAMMS-Jonesboro"},
+  {"site_code": "LAN", "source_database": "SAMMS-Lansing"},
+  {"site_code": "LO", "source_database": "SAMMS-Louisville"},
+  {"site_code": "LV1", "source_database": "SAMMS-Cheyenne"},
+  {"site_code": "LV2", "source_database": "SAMMS-DesertInn"},
+  {"site_code": "LV3", "source_database": "SAMMS-McDaniel"},
+  {"site_code": "MNRE", "source_database": "SAMMS-Monroe"},
+  {"site_code": "MP", "source_database": "SAMMS-MtPleasant"},
+  {"site_code": "MRD", "source_database": "SAMMS-Meridian"},
+  {"site_code": "NC", "source_database": "SAMMS-NorthCharleston"},
+  {"site_code": "NLR", "source_database": "SAMMS-NLROBOT"},
+  {"site_code": "PH", "source_database": "SAMMS-Phoenix"},
+  {"site_code": "RE", "source_database": "SAMMS-Reno"},
+  {"site_code": "RMD", "source_database": "SAMMS-Richmond"},
+  {"site_code": "SFN", "source_database": "SAMMS-SFNv5"},
+  {"site_code": "SHP", "source_database": "SAMMS-Shreveport"},
+  {"site_code": "STN", "source_database": "SAMMS-Staunton"},
+  {"site_code": "STVN", "source_database": "SAMMS-Stevenson"},
+  {"site_code": "TE", "source_database": "SAMMS-Tempe"},
+  {"site_code": "TEX", "source_database": "SAMMS-Texarkana"},
+  {"site_code": "TTCA", "source_database": "SAMMS-BessemerV5"},
+  {"site_code": "TTCB", "source_database": "SAMMS-CullmanV5"},
+  {"site_code": "TTCC", "source_database": "SAMMS-GrandBay"},
+  {"site_code": "TU", "source_database": "SAMMS-Tucson"},
+  {"site_code": "V1", "source_database": "SAMMS-VCPHCS-I-MemphisV5"},
+  {"site_code": "V10", "source_database": "SAMMS-BoulderV5"},
+  {"site_code": "V10A", "source_database": "SAMMS-FortCollinsV5"},
+  {"site_code": "V11", "source_database": "SAMMS-VCPHCS-XI-NorthDenverV5"},
+  {"site_code": "V12", "source_database": "SAMMS-VCPHCS-XII-DowntownDenverV5"},
+  {"site_code": "V12A", "source_database": "SAMMS-CentennialV5"},
+  {"site_code": "V14", "source_database": "SAMMS-VCPHCS-XIV-BridgewayV5"},
+  {"site_code": "V15", "source_database": "SAMMS-JoplinV5"},
+  {"site_code": "V17", "source_database": "SAMMS-ColumbiaTNv5"},
+  {"site_code": "V19", "source_database": "SAMMS-JacksonV5"},
+  {"site_code": "V20", "source_database": "SAMMS-ParisV5"},
+  {"site_code": "V21", "source_database": "SAMMS-RaleighV5"},
+  {"site_code": "V5", "source_database": "SAMMS-NONTCv5"},
+  {"site_code": "V5B", "source_database": "SAMMS-HoumaV6"},
+  {"site_code": "V6", "source_database": "SAMMS-LCv5"},
+  {"site_code": "V8", "source_database": "SAMMS-VCPHCS-VIII-MemphisV5"},
+  {"site_code": "V9", "source_database": "SAMMS-NashvilleV5"},
+  {"site_code": "VBRA", "source_database": "SAMMS-BrainerdV6"},
+  {"site_code": "VBRP", "source_database": "SAMMS-BrooklynParkV6"},
+  {"site_code": "VMIN", "source_database": "SAMMS-MinneapolisV6"},
+  {"site_code": "VWBY", "source_database": "SAMMS-WoodburyV6"},
+  {"site_code": "WIL", "source_database": "SAMMS-Wilson"}
+]
+'''
+
+sites = json.loads(sites_json)
+
+sites_df = (
+    spark.createDataFrame(
+        [(x["site_code"], x["source_database"]) for x in sites],
+        ["SiteCode", "DataBaseName"]
+    )
+    .withColumn(
+        "SiteName",
+        F.trim(
+            F.regexp_replace(
+                F.regexp_replace(F.col("DataBaseName"), "^SAMMS-", ""),
+                "(?i)V[0-9]+$",
+                ""
+            )
+        )
+    )
+    .withColumn("rn", F.row_number().over(Window.orderBy("SiteCode")))
+    .withColumn("TaskConfigId", F.lit(91000) + F.col("rn"))
+)
+
+template_df = (
+    spark.table(taskconfig_table)
+    .where("TaskConfigId = 91 AND ConfigId = 28")
+    .limit(1)
+)
+
+if template_df.count() != 1:
+    raise Exception("Template Bronze taskconfig row TaskConfigId=91, ConfigId=28 was not found.")
+
+task_cols = spark.table(taskconfig_table).columns
+
+joined_df = sites_df.alias("s").crossJoin(template_df.alias("t"))
+
+bronze_task_df = joined_df.select([
+    F.col("s.TaskConfigId").cast("long").alias("TaskConfigId") if c == "TaskConfigId" else
+    F.lit(28).cast("long").alias("ConfigId") if c == "ConfigId" else
+    F.concat(F.lit("FormQuestionAnswers Bronze - "), F.col("s.SiteCode")).alias("TaskName") if c == "TaskName" else
+    F.col("s.SiteCode").alias("SiteCode") if c == "SiteCode" else
+    F.col("s.DataBaseName").alias("DataBaseName") if c == "DataBaseName" else
+    F.col("s.SiteName").alias("SiteName") if c == "SiteName" else
+    F.lit(None).cast("long").alias("DependencyTaskConfigId") if c == "DependencyTaskConfigId" else
+    F.lit(0).cast("int").alias("ExecutionOrder") if c == "ExecutionOrder" else
+    F.current_timestamp().alias("CreatedAt") if c == "CreatedAt" else
+    F.current_timestamp().alias("ModifiedAt") if c == "ModifiedAt" else
+    F.lit(created_by).alias("CreatedBy") if c == "CreatedBy" else
+    F.lit(created_by).alias("ModifiedBy") if c == "ModifiedBy" else
+    F.col(f"t.{c}").alias(c)
+    for c in task_cols
+])
+
+# Optional but recommended: deactivate old generic Bronze row 91.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId = 91 AND ConfigId = 28",
+    set={
+        "IsActive": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Optional: make Silver/Gold dependencies null and execution order 0 for now.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId IN (92, 93)",
+    set={
+        "DependencyTaskConfigId": F.lit(None).cast("long"),
+        "ExecutionOrder": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Remove existing Bronze site-level rows for the same ConfigId + SiteCode, then insert clean.
+# This keeps reruns idempotent without depending on a hardcoded TaskConfigId range.
+generated_sites_df = bronze_task_df.select("ConfigId", "SiteCode").distinct()
+
+DeltaTable.forName(spark, taskconfig_table).alias("t") \
+    .merge(
+        generated_sites_df.alias("s"),
+        "t.ConfigId = s.ConfigId AND t.SiteCode = s.SiteCode"
+    ) \
+    .whenMatchedDelete() \
+    .execute()
+
+bronze_task_df.write.format("delta").mode("append").saveAsTable(taskconfig_table)
+
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, SiteCode, DataBaseName, SiteName,
+       DependencyTaskConfigId, ExecutionOrder, IsActive,
+       TargetSchema, TargetTable, LoadType
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId = 28
+ORDER BY TaskConfigId
+"""))
+
+
+# =========================================================================
+# FormAnswerSignatures Bronze site-level taskconfig rows
+# -------------------------------------------------------------------------
+# New control model:
+#   - ConfigId 31 / BR has one active taskconfig row per active site.
+#   - ConfigId 32 / SL remains one taskconfig row.
+#   - ConfigId 33 / GL remains one taskconfig row.
+#
+# Uses TaskConfigId=94 / ConfigId=31 as the Bronze template row.
+# Generated AnswerSignature Bronze task IDs start at 94000 + row_number().
+# =========================================================================
+
+import json
+from pyspark.sql import functions as F
+from delta.tables import DeltaTable
+from pyspark.sql.window import Window
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+
+try:
+    created_by
+except NameError:
+    created_by = "Harsha"
+
+task_cols = spark.table(taskconfig_table).columns
+
+# Paste content from AllsiteCodesAndDatabses.txt here
+answersig_sites_json = r'''
+[
+  {"site_code": "AHK", "source_database": "SAMMS-Ahoskie"},
+  {"site_code": "B12B", "source_database": "SAMMS-ColoradoSpringsV5"},
+  {"site_code": "B24", "source_database": "SAMMS-PaintsvilleV5"},
+  {"site_code": "B25", "source_database": "SAMMS-PikevilleV5"},
+  {"site_code": "B26", "source_database": "SAMMS-HazardV5"},
+  {"site_code": "B27", "source_database": "SAMMS-SavannahV6"},
+  {"site_code": "B28", "source_database": "SAMMS-WestPlainesV5"},
+  {"site_code": "B29", "source_database": "SAMMS-PoplarBluffV5"},
+  {"site_code": "B30", "source_database": "SAMMS-KCNv5"},
+  {"site_code": "B31", "source_database": "SAMMS-DyersburgV5"},
+  {"site_code": "B33", "source_database": "SAMMS-Paducah"},
+  {"site_code": "B34", "source_database": "SAMMS-CorbinV5"},
+  {"site_code": "B35", "source_database": "SAMMS-LexingtonV5"},
+  {"site_code": "B35A", "source_database": "SAMMS-BereaV5"},
+  {"site_code": "B36", "source_database": "SAMMS-AshevilleV5"},
+  {"site_code": "B37", "source_database": "SAMMS-ClydeV5"},
+  {"site_code": "B38", "source_database": "SAMMS-SpartanburgV5"},
+  {"site_code": "B39", "source_database": "SAMMS-AikenV5"},
+  {"site_code": "B41", "source_database": "SAMMS-ChesapeakeV5"},
+  {"site_code": "B42", "source_database": "SAMMS-VirginiaBeachV5"},
+  {"site_code": "B42A", "source_database": "SAMMS-NewportNewsV5"},
+  {"site_code": "B42B", "source_database": "SAMMS-FranklinV5"},
+  {"site_code": "B42C", "source_database": "SAMMS-GlenAllenV5"},
+  {"site_code": "B42D", "source_database": "SAMMS-ChesapeakeSouthV5"},
+  {"site_code": "B44", "source_database": "SAMMS-AlbanyV5"},
+  {"site_code": "B45", "source_database": "SAMMS-TiftonV5"},
+  {"site_code": "B46", "source_database": "SAMMS-WashingtonDCv5"},
+  {"site_code": "B47", "source_database": "SAMMS-MobileV5"},
+  {"site_code": "B48", "source_database": "SAMMS-TuscaloosaV5"},
+  {"site_code": "B51", "source_database": "SAMMS-NorthLittleRockV6"},
+  {"site_code": "B52", "source_database": "SAMMS-JacksonGAV5"},
+  {"site_code": "B54", "source_database": "SAMMS-GadsdenV5"},
+  {"site_code": "B55", "source_database": "SAMMS-ShoalsV5"},
+  {"site_code": "B57", "source_database": "SAMMS-Pawtucket"},
+  {"site_code": "B57A", "source_database": "SAMMS-Johnston"},
+  {"site_code": "B57B", "source_database": "SAMMS-Middletown"},
+  {"site_code": "B57C", "source_database": "SAMMS-Providence"},
+  {"site_code": "B57D", "source_database": "SAMMS-Westerly"},
+  {"site_code": "B66A", "source_database": "SAMMS-Bremen"},
+  {"site_code": "B72", "source_database": "SAMMS-Mobile-OBOT"},
+  {"site_code": "B73", "source_database": "SAMMS-Montgomery"},
+  {"site_code": "B75", "source_database": "SAMMS-LawrenceV6"},
+  {"site_code": "B76", "source_database": "SAMMS-Huntsville-OBOT"},
+  {"site_code": "BAT", "source_database": "SAMMS-Batesville"},
+  {"site_code": "BG", "source_database": "SAMMS-BowlingGreen"},
+  {"site_code": "BOI", "source_database": "SAMMS-Boise"},
+  {"site_code": "CBCO", "source_database": "SAMMS-CoeurdAleneV6"},
+  {"site_code": "CON", "source_database": "SAMMS-Conway"},
+  {"site_code": "D07", "source_database": "SAMMS-KnoxvilleV6"},
+  {"site_code": "D08", "source_database": "SAMMS-MadisonV6"},
+  {"site_code": "D09", "source_database": "SAMMS-MurfreesboroV6"},
+  {"site_code": "DA", "source_database": "SAMMS-Davenport"},
+  {"site_code": "DM", "source_database": "SAMMS-DesMoines"},
+  {"site_code": "DRD-CO", "source_database": "SAMMS-ColumbiaV5"},
+  {"site_code": "DRD-KC", "source_database": "SAMMS-KCv5"},
+  {"site_code": "DRD-KVB", "source_database": "SAMMS-KVBv5"},
+  {"site_code": "DRD-KVC", "source_database": "SAMMS-KVCv5"},
+  {"site_code": "DRD-NOLA", "source_database": "SAMMS-NOLAv5"},
+  {"site_code": "DRD-SF", "source_database": "SAMMS-SFv5"},
+  {"site_code": "ELC", "source_database": "SAMMS-ElizabethCity"},
+  {"site_code": "ET", "source_database": "SAMMS-Elizabethtown"},
+  {"site_code": "FAY", "source_database": "SAMMS-Fayetteville"},
+  {"site_code": "FR", "source_database": "SAMMS-Frankfort"},
+  {"site_code": "FS", "source_database": "SAMMS-FortSmith"},
+  {"site_code": "FW", "source_database": "SAMMS-FortWayne"},
+  {"site_code": "GAL", "source_database": "SAMMS-Gaylord"},
+  {"site_code": "HGT", "source_database": "SAMMS-Hagerstown"},
+  {"site_code": "HNT", "source_database": "SAMMS-Huntsville"},
+  {"site_code": "HS", "source_database": "SAMMS-HotSprings"},
+  {"site_code": "JON", "source_database": "SAMMS-Jonesboro"},
+  {"site_code": "LAN", "source_database": "SAMMS-Lansing"},
+  {"site_code": "LO", "source_database": "SAMMS-Louisville"},
+  {"site_code": "LV1", "source_database": "SAMMS-Cheyenne"},
+  {"site_code": "LV2", "source_database": "SAMMS-DesertInn"},
+  {"site_code": "LV3", "source_database": "SAMMS-McDaniel"},
+  {"site_code": "MNRE", "source_database": "SAMMS-Monroe"},
+  {"site_code": "MP", "source_database": "SAMMS-MtPleasant"},
+  {"site_code": "MRD", "source_database": "SAMMS-Meridian"},
+  {"site_code": "NC", "source_database": "SAMMS-NorthCharleston"},
+  {"site_code": "NLR", "source_database": "SAMMS-NLROBOT"},
+  {"site_code": "PH", "source_database": "SAMMS-Phoenix"},
+  {"site_code": "RE", "source_database": "SAMMS-Reno"},
+  {"site_code": "RMD", "source_database": "SAMMS-Richmond"},
+  {"site_code": "SFN", "source_database": "SAMMS-SFNv5"},
+  {"site_code": "SHP", "source_database": "SAMMS-Shreveport"},
+  {"site_code": "STN", "source_database": "SAMMS-Staunton"},
+  {"site_code": "STVN", "source_database": "SAMMS-Stevenson"},
+  {"site_code": "TE", "source_database": "SAMMS-Tempe"},
+  {"site_code": "TEX", "source_database": "SAMMS-Texarkana"},
+  {"site_code": "TTCA", "source_database": "SAMMS-BessemerV5"},
+  {"site_code": "TTCB", "source_database": "SAMMS-CullmanV5"},
+  {"site_code": "TTCC", "source_database": "SAMMS-GrandBay"},
+  {"site_code": "TU", "source_database": "SAMMS-Tucson"},
+  {"site_code": "V1", "source_database": "SAMMS-VCPHCS-I-MemphisV5"},
+  {"site_code": "V10", "source_database": "SAMMS-BoulderV5"},
+  {"site_code": "V10A", "source_database": "SAMMS-FortCollinsV5"},
+  {"site_code": "V11", "source_database": "SAMMS-VCPHCS-XI-NorthDenverV5"},
+  {"site_code": "V12", "source_database": "SAMMS-VCPHCS-XII-DowntownDenverV5"},
+  {"site_code": "V12A", "source_database": "SAMMS-CentennialV5"},
+  {"site_code": "V14", "source_database": "SAMMS-VCPHCS-XIV-BridgewayV5"},
+  {"site_code": "V15", "source_database": "SAMMS-JoplinV5"},
+  {"site_code": "V17", "source_database": "SAMMS-ColumbiaTNv5"},
+  {"site_code": "V19", "source_database": "SAMMS-JacksonV5"},
+  {"site_code": "V20", "source_database": "SAMMS-ParisV5"},
+  {"site_code": "V21", "source_database": "SAMMS-RaleighV5"},
+  {"site_code": "V5", "source_database": "SAMMS-NONTCv5"},
+  {"site_code": "V5B", "source_database": "SAMMS-HoumaV6"},
+  {"site_code": "V6", "source_database": "SAMMS-LCv5"},
+  {"site_code": "V8", "source_database": "SAMMS-VCPHCS-VIII-MemphisV5"},
+  {"site_code": "V9", "source_database": "SAMMS-NashvilleV5"},
+  {"site_code": "VBRA", "source_database": "SAMMS-BrainerdV6"},
+  {"site_code": "VBRP", "source_database": "SAMMS-BrooklynParkV6"},
+  {"site_code": "VMIN", "source_database": "SAMMS-MinneapolisV6"},
+  {"site_code": "VWBY", "source_database": "SAMMS-WoodburyV6"},
+  {"site_code": "WIL", "source_database": "SAMMS-Wilson"}
+]
+'''
+
+answersig_sites = json.loads(answersig_sites_json)
+
+answersig_sites_df = (
+    spark.createDataFrame(
+        [(x["site_code"], x["source_database"]) for x in answersig_sites],
+        ["SiteCode", "DataBaseName"]
+    )
+    .withColumn(
+        "SiteName",
+        F.trim(
+            F.regexp_replace(
+                F.regexp_replace(F.col("DataBaseName"), "^SAMMS-", ""),
+                "(?i)V[0-9]+$",
+                ""
+            )
+        )
+    )
+    .withColumn("rn", F.row_number().over(Window.orderBy("SiteCode")))
+    .withColumn("TaskConfigId", F.lit(94000) + F.col("rn"))
+)
+
+answersig_template_df = (
+    spark.table(taskconfig_table)
+    .where("TaskConfigId = 94 AND ConfigId = 31")
+    .limit(1)
+)
+
+if answersig_template_df.count() != 1:
+    raise Exception("Template Bronze taskconfig row TaskConfigId=94, ConfigId=31 was not found.")
+
+answersig_joined_df = answersig_sites_df.alias("s").crossJoin(answersig_template_df.alias("t"))
+
+answersig_bronze_task_df = answersig_joined_df.select([
+    F.col("s.TaskConfigId").cast("long").alias("TaskConfigId") if c == "TaskConfigId" else
+    F.lit(31).cast("long").alias("ConfigId") if c == "ConfigId" else
+    F.concat(F.lit("FormAnswerSignatures Bronze - "), F.col("s.SiteCode")).alias("TaskName") if c == "TaskName" else
+    F.col("s.SiteCode").alias("SiteCode") if c == "SiteCode" else
+    F.col("s.DataBaseName").alias("DataBaseName") if c == "DataBaseName" else
+    F.col("s.SiteName").alias("SiteName") if c == "SiteName" else
+    F.lit(None).cast("long").alias("DependencyTaskConfigId") if c == "DependencyTaskConfigId" else
+    F.lit(0).cast("int").alias("ExecutionOrder") if c == "ExecutionOrder" else
+    F.current_timestamp().alias("CreatedAt") if c == "CreatedAt" else
+    F.current_timestamp().alias("ModifiedAt") if c == "ModifiedAt" else
+    F.lit(created_by).alias("CreatedBy") if c == "CreatedBy" else
+    F.lit(created_by).alias("ModifiedBy") if c == "ModifiedBy" else
+    F.col(f"t.{c}").alias(c)
+    for c in task_cols
+])
+
+# Deactivate the old generic AnswerSignature Bronze row; site-level rows are active instead.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId = 94 AND ConfigId = 31",
+    set={
+        "IsActive": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Keep Silver/Gold as one task each and independent for now.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId IN (95, 96)",
+    set={
+        "DependencyTaskConfigId": F.lit(None).cast("long"),
+        "ExecutionOrder": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Remove existing AnswerSignature Bronze site-level rows for the same ConfigId + SiteCode,
+# then insert clean. This keeps reruns idempotent without relying on a hardcoded ID range.
+answersig_generated_sites_df = answersig_bronze_task_df.select("ConfigId", "SiteCode").distinct()
+
+DeltaTable.forName(spark, taskconfig_table).alias("t") \
+    .merge(
+        answersig_generated_sites_df.alias("s"),
+        "t.ConfigId = s.ConfigId AND t.SiteCode = s.SiteCode"
+    ) \
+    .whenMatchedDelete() \
+    .execute()
+
+answersig_bronze_task_df.write.format("delta").mode("append").saveAsTable(taskconfig_table)
+
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, SiteCode, DataBaseName, SiteName,
+       DependencyTaskConfigId, ExecutionOrder, IsActive,
+       TargetSchema, TargetTable, LoadType
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId = 31
+ORDER BY TaskConfigId
+"""))
+
+
+# =========================================================================
+# DartsSrv Bronze site-level taskconfig rows
+# -------------------------------------------------------------------------
+# New control model:
+#   - ConfigId 25 / BR has one active taskconfig row per active site.
+#   - ConfigId 26 / SL remains one taskconfig row.
+#   - ConfigId 27 / GL remains one taskconfig row.
+#
+# Uses TaskConfigId=55 / ConfigId=25 as the Bronze template row.
+# Generated DartsSrv Bronze task IDs start at 55000 + row_number().
+# =========================================================================
+
+import json
+from pyspark.sql import functions as F
+from delta.tables import DeltaTable
+from pyspark.sql.window import Window
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+
+try:
+    created_by
+except NameError:
+    created_by = "Harsha"
+
+task_cols = spark.table(taskconfig_table).columns
+
+# Paste content from AllsiteCodesAndDatabses.txt here
+dart_sites_json = r'''
+[
+  {"site_code": "AHK", "source_database": "SAMMS-Ahoskie"},
+  {"site_code": "B12B", "source_database": "SAMMS-ColoradoSpringsV5"},
+  {"site_code": "B24", "source_database": "SAMMS-PaintsvilleV5"},
+  {"site_code": "B25", "source_database": "SAMMS-PikevilleV5"},
+  {"site_code": "B26", "source_database": "SAMMS-HazardV5"},
+  {"site_code": "B27", "source_database": "SAMMS-SavannahV6"},
+  {"site_code": "B28", "source_database": "SAMMS-WestPlainesV5"},
+  {"site_code": "B29", "source_database": "SAMMS-PoplarBluffV5"},
+  {"site_code": "B30", "source_database": "SAMMS-KCNv5"},
+  {"site_code": "B31", "source_database": "SAMMS-DyersburgV5"},
+  {"site_code": "B33", "source_database": "SAMMS-Paducah"},
+  {"site_code": "B34", "source_database": "SAMMS-CorbinV5"},
+  {"site_code": "B35", "source_database": "SAMMS-LexingtonV5"},
+  {"site_code": "B35A", "source_database": "SAMMS-BereaV5"},
+  {"site_code": "B36", "source_database": "SAMMS-AshevilleV5"},
+  {"site_code": "B37", "source_database": "SAMMS-ClydeV5"},
+  {"site_code": "B38", "source_database": "SAMMS-SpartanburgV5"},
+  {"site_code": "B39", "source_database": "SAMMS-AikenV5"},
+  {"site_code": "B41", "source_database": "SAMMS-ChesapeakeV5"},
+  {"site_code": "B42", "source_database": "SAMMS-VirginiaBeachV5"},
+  {"site_code": "B42A", "source_database": "SAMMS-NewportNewsV5"},
+  {"site_code": "B42B", "source_database": "SAMMS-FranklinV5"},
+  {"site_code": "B42C", "source_database": "SAMMS-GlenAllenV5"},
+  {"site_code": "B42D", "source_database": "SAMMS-ChesapeakeSouthV5"},
+  {"site_code": "B44", "source_database": "SAMMS-AlbanyV5"},
+  {"site_code": "B45", "source_database": "SAMMS-TiftonV5"},
+  {"site_code": "B46", "source_database": "SAMMS-WashingtonDCv5"},
+  {"site_code": "B47", "source_database": "SAMMS-MobileV5"},
+  {"site_code": "B48", "source_database": "SAMMS-TuscaloosaV5"},
+  {"site_code": "B51", "source_database": "SAMMS-NorthLittleRockV6"},
+  {"site_code": "B52", "source_database": "SAMMS-JacksonGAV5"},
+  {"site_code": "B54", "source_database": "SAMMS-GadsdenV5"},
+  {"site_code": "B55", "source_database": "SAMMS-ShoalsV5"},
+  {"site_code": "B57", "source_database": "SAMMS-Pawtucket"},
+  {"site_code": "B57A", "source_database": "SAMMS-Johnston"},
+  {"site_code": "B57B", "source_database": "SAMMS-Middletown"},
+  {"site_code": "B57C", "source_database": "SAMMS-Providence"},
+  {"site_code": "B57D", "source_database": "SAMMS-Westerly"},
+  {"site_code": "B66A", "source_database": "SAMMS-Bremen"},
+  {"site_code": "B72", "source_database": "SAMMS-Mobile-OBOT"},
+  {"site_code": "B73", "source_database": "SAMMS-Montgomery"},
+  {"site_code": "B75", "source_database": "SAMMS-LawrenceV6"},
+  {"site_code": "B76", "source_database": "SAMMS-Huntsville-OBOT"},
+  {"site_code": "BAT", "source_database": "SAMMS-Batesville"},
+  {"site_code": "BG", "source_database": "SAMMS-BowlingGreen"},
+  {"site_code": "BOI", "source_database": "SAMMS-Boise"},
+  {"site_code": "CBCO", "source_database": "SAMMS-CoeurdAleneV6"},
+  {"site_code": "CON", "source_database": "SAMMS-Conway"},
+  {"site_code": "D07", "source_database": "SAMMS-KnoxvilleV6"},
+  {"site_code": "D08", "source_database": "SAMMS-MadisonV6"},
+  {"site_code": "D09", "source_database": "SAMMS-MurfreesboroV6"},
+  {"site_code": "DA", "source_database": "SAMMS-Davenport"},
+  {"site_code": "DM", "source_database": "SAMMS-DesMoines"},
+  {"site_code": "DRD-CO", "source_database": "SAMMS-ColumbiaV5"},
+  {"site_code": "DRD-KC", "source_database": "SAMMS-KCv5"},
+  {"site_code": "DRD-KVB", "source_database": "SAMMS-KVBv5"},
+  {"site_code": "DRD-KVC", "source_database": "SAMMS-KVCv5"},
+  {"site_code": "DRD-NOLA", "source_database": "SAMMS-NOLAv5"},
+  {"site_code": "DRD-SF", "source_database": "SAMMS-SFv5"},
+  {"site_code": "ELC", "source_database": "SAMMS-ElizabethCity"},
+  {"site_code": "ET", "source_database": "SAMMS-Elizabethtown"},
+  {"site_code": "FAY", "source_database": "SAMMS-Fayetteville"},
+  {"site_code": "FR", "source_database": "SAMMS-Frankfort"},
+  {"site_code": "FS", "source_database": "SAMMS-FortSmith"},
+  {"site_code": "FW", "source_database": "SAMMS-FortWayne"},
+  {"site_code": "GAL", "source_database": "SAMMS-Gaylord"},
+  {"site_code": "HGT", "source_database": "SAMMS-Hagerstown"},
+  {"site_code": "HNT", "source_database": "SAMMS-Huntsville"},
+  {"site_code": "HS", "source_database": "SAMMS-HotSprings"},
+  {"site_code": "JON", "source_database": "SAMMS-Jonesboro"},
+  {"site_code": "LAN", "source_database": "SAMMS-Lansing"},
+  {"site_code": "LO", "source_database": "SAMMS-Louisville"},
+  {"site_code": "LV1", "source_database": "SAMMS-Cheyenne"},
+  {"site_code": "LV2", "source_database": "SAMMS-DesertInn"},
+  {"site_code": "LV3", "source_database": "SAMMS-McDaniel"},
+  {"site_code": "MNRE", "source_database": "SAMMS-Monroe"},
+  {"site_code": "MP", "source_database": "SAMMS-MtPleasant"},
+  {"site_code": "MRD", "source_database": "SAMMS-Meridian"},
+  {"site_code": "NC", "source_database": "SAMMS-NorthCharleston"},
+  {"site_code": "NLR", "source_database": "SAMMS-NLROBOT"},
+  {"site_code": "PH", "source_database": "SAMMS-Phoenix"},
+  {"site_code": "RE", "source_database": "SAMMS-Reno"},
+  {"site_code": "RMD", "source_database": "SAMMS-Richmond"},
+  {"site_code": "SFN", "source_database": "SAMMS-SFNv5"},
+  {"site_code": "SHP", "source_database": "SAMMS-Shreveport"},
+  {"site_code": "STN", "source_database": "SAMMS-Staunton"},
+  {"site_code": "STVN", "source_database": "SAMMS-Stevenson"},
+  {"site_code": "TE", "source_database": "SAMMS-Tempe"},
+  {"site_code": "TEX", "source_database": "SAMMS-Texarkana"},
+  {"site_code": "TTCA", "source_database": "SAMMS-BessemerV5"},
+  {"site_code": "TTCB", "source_database": "SAMMS-CullmanV5"},
+  {"site_code": "TTCC", "source_database": "SAMMS-GrandBay"},
+  {"site_code": "TU", "source_database": "SAMMS-Tucson"},
+  {"site_code": "V1", "source_database": "SAMMS-VCPHCS-I-MemphisV5"},
+  {"site_code": "V10", "source_database": "SAMMS-BoulderV5"},
+  {"site_code": "V10A", "source_database": "SAMMS-FortCollinsV5"},
+  {"site_code": "V11", "source_database": "SAMMS-VCPHCS-XI-NorthDenverV5"},
+  {"site_code": "V12", "source_database": "SAMMS-VCPHCS-XII-DowntownDenverV5"},
+  {"site_code": "V12A", "source_database": "SAMMS-CentennialV5"},
+  {"site_code": "V14", "source_database": "SAMMS-VCPHCS-XIV-BridgewayV5"},
+  {"site_code": "V15", "source_database": "SAMMS-JoplinV5"},
+  {"site_code": "V17", "source_database": "SAMMS-ColumbiaTNv5"},
+  {"site_code": "V19", "source_database": "SAMMS-JacksonV5"},
+  {"site_code": "V20", "source_database": "SAMMS-ParisV5"},
+  {"site_code": "V21", "source_database": "SAMMS-RaleighV5"},
+  {"site_code": "V5", "source_database": "SAMMS-NONTCv5"},
+  {"site_code": "V5B", "source_database": "SAMMS-HoumaV6"},
+  {"site_code": "V6", "source_database": "SAMMS-LCv5"},
+  {"site_code": "V8", "source_database": "SAMMS-VCPHCS-VIII-MemphisV5"},
+  {"site_code": "V9", "source_database": "SAMMS-NashvilleV5"},
+  {"site_code": "VBRA", "source_database": "SAMMS-BrainerdV6"},
+  {"site_code": "VBRP", "source_database": "SAMMS-BrooklynParkV6"},
+  {"site_code": "VMIN", "source_database": "SAMMS-MinneapolisV6"},
+  {"site_code": "VWBY", "source_database": "SAMMS-WoodburyV6"},
+  {"site_code": "WIL", "source_database": "SAMMS-Wilson"}
+]
+'''
+
+dart_sites = json.loads(dart_sites_json)
+
+dart_sites_df = (
+    spark.createDataFrame(
+        [(x["site_code"], x["source_database"]) for x in dart_sites],
+        ["SiteCode", "DataBaseName"]
+    )
+    .withColumn(
+        "SiteName",
+        F.trim(
+            F.regexp_replace(
+                F.regexp_replace(F.col("DataBaseName"), "^SAMMS-", ""),
+                "(?i)V[0-9]+$",
+                ""
+            )
+        )
+    )
+    .withColumn("rn", F.row_number().over(Window.orderBy("SiteCode")))
+    .withColumn("TaskConfigId", F.lit(55000) + F.col("rn"))
+)
+
+dart_template_df = (
+    spark.table(taskconfig_table)
+    .where("TaskConfigId = 55 AND ConfigId = 25")
+    .limit(1)
+)
+
+if dart_template_df.count() != 1:
+    raise Exception("Template Bronze taskconfig row TaskConfigId=55, ConfigId=25 was not found.")
+
+dart_joined_df = dart_sites_df.alias("s").crossJoin(dart_template_df.alias("t"))
+
+dart_bronze_task_df = dart_joined_df.select([
+    F.col("s.TaskConfigId").cast("long").alias("TaskConfigId") if c == "TaskConfigId" else
+    F.lit(25).cast("long").alias("ConfigId") if c == "ConfigId" else
+    F.concat(F.lit("DartsSrv Bronze - "), F.col("s.SiteCode")).alias("TaskName") if c == "TaskName" else
+    F.col("s.SiteCode").alias("SiteCode") if c == "SiteCode" else
+    F.col("s.DataBaseName").alias("DataBaseName") if c == "DataBaseName" else
+    F.col("s.SiteName").alias("SiteName") if c == "SiteName" else
+    F.lit(None).cast("long").alias("DependencyTaskConfigId") if c == "DependencyTaskConfigId" else
+    F.lit(0).cast("int").alias("ExecutionOrder") if c == "ExecutionOrder" else
+    F.current_timestamp().alias("CreatedAt") if c == "CreatedAt" else
+    F.current_timestamp().alias("ModifiedAt") if c == "ModifiedAt" else
+    F.lit(created_by).alias("CreatedBy") if c == "CreatedBy" else
+    F.lit(created_by).alias("ModifiedBy") if c == "ModifiedBy" else
+    F.col(f"t.{c}").alias(c)
+    for c in task_cols
+])
+
+# Deactivate the old generic DartsSrv Bronze row; site-level rows are active instead.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId = 55 AND ConfigId = 25",
+    set={
+        "IsActive": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Keep Silver/Gold as one task each and independent for now.
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId IN (56, 57)",
+    set={
+        "DependencyTaskConfigId": F.lit(None).cast("long"),
+        "ExecutionOrder": F.lit(0),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Remove existing DartsSrv Bronze site-level rows for the same ConfigId + SiteCode,
+# then insert clean. This keeps reruns idempotent without relying on a hardcoded ID range.
+dart_generated_sites_df = dart_bronze_task_df.select("ConfigId", "SiteCode").distinct()
+
+DeltaTable.forName(spark, taskconfig_table).alias("t") \
+    .merge(
+        dart_generated_sites_df.alias("s"),
+        "t.ConfigId = s.ConfigId AND t.SiteCode = s.SiteCode"
+    ) \
+    .whenMatchedDelete() \
+    .execute()
+
+dart_bronze_task_df.write.format("delta").mode("append").saveAsTable(taskconfig_table)
+
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, SiteCode, DataBaseName, SiteName,
+       DependencyTaskConfigId, ExecutionOrder, IsActive,
+       TargetSchema, TargetTable, LoadType
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId = 25
+ORDER BY TaskConfigId
+"""))
