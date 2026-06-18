@@ -1,0 +1,548 @@
+{
+    "name": "nb_ukg_api",
+    "objectId": "ce68c9cb-844e-4dd7-bdec-e97760611d60",
+    "properties": {
+        "activities": [
+            {
+                "name": "Src_to_Bronze",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "23fc7282-8e18-4ff5-aa7c-cd2ee5ef8cca",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                }
+            },
+            {
+                "name": "Bronze_to_Silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Src_to_Bronze",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "d00c8bcc-60c5-415f-a40f-b295b807c5ce",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                }
+            },
+            {
+                "name": "Silver_to_Gold",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Bronze_to_Silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "ecdd284e-f283-4dfb-8e0b-53483d2c9327",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                }
+            },
+            {
+                "name": "Error_message",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Silver_to_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "Error_Msg",
+                    "value": {
+                        "value": "@concat(\n\nactivity('Src_to_Bronze')?.error?.message,\n\n' | ',\n\nactivity('Bronze_to_Silver')?.error?.message,\n\n' | ',\n\nactivity('Silver_to_Gold')?.error?.message\n\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Status",
+                "description": "Failed",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Error_message",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "Status",
+                    "value": {
+                        "value": "@if(\nor(\nor(\nequals(activity('Src_to_Bronze').Status,'Failed'),\nequals(activity('Bronze_to_Silver').Status,'Failed')\n),\nequals(activity('Silver_to_Gold').Status,'Failed')\n),\n'Failed',\n'Succeeded'\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Description",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Status",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "Description",
+                    "value": {
+                        "value": "@if(\n    equals(variables('Status'), 'Succeeded'),\n\n    'All Activities Succeeded',\n\n    concat(\n        if(\n            equals(activity('Src_to_Bronze').Status, 'Failed'),\n            'Src_to_Bronze Failed | ',\n            ''\n        ),\n\n        if(\n            equals(activity('Bronze_to_Silver').Status, 'Failed'),\n            'Bronze_to_Silver Failed | ',\n            ''\n        ),\n\n        if(\n            equals(activity('Silver_to_Gold').Status, 'Failed'),\n            'Silver_to_Gold Failed',\n            ''\n        )\n    )\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Wait",
+                "type": "Wait",
+                "dependsOn": [
+                    {
+                        "activity": "Description",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "Silver_to_Gold",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "waitTimeInSeconds": 1
+                }
+            },
+            {
+                "name": "Status Log",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Wait",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "5432a1e2-665a-4718-8dae-50bd4fbfcf25",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": {
+                                "value": "@pipeline().PipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@pipeline().TriggerTime",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@utcNow()\n",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "status": {
+                            "value": {
+                                "value": "@variables('Status')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": {
+                                "value": "@variables('Description')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@variables('Error_Msg')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Date": {
+                            "value": {
+                                "value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')\n",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Notification",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Status Log",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "8fb3a119-2587-4983-a4a1-7bd4716e57ab",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": {
+                                "value": "@pipeline().PipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": {
+                                "value": "@variables('Status')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": {
+                                "value": "@variables('Description')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@variables('Error_Msg')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "variables": {
+            "Error_Msg": {
+                "type": "String"
+            },
+            "Status": {
+                "type": "String",
+                "defaultValue": "Succeeded"
+            },
+            "Description": {
+                "type": "String",
+                "defaultValue": "Executed successfully."
+            }
+        },
+        "lastModifiedByObjectId": "b79d8bac-6b91-4f32-ad77-e2c3649b02a6",
+        "lastPublishTime": "2026-05-27T07:40:34Z"
+    }
+}
+
+
+
+StatusLog notebook:
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import regexp_replace
+from datetime import datetime
+
+# ==========================================
+# INITIALIZE SPARK SESSION
+# ==========================================
+
+spark = SparkSession.builder.getOrCreate()
+
+# ==========================================
+# INPUT PARAMETERS FROM PIPELINE
+# ==========================================
+
+p_name = Pipeline_Name
+p_id = Pipeline_Id
+p_start = Pipeline_StartTime
+p_end = Pipeline_EndTime
+p_status = status
+p_description = Description
+p_error_msg = Error_Msg
+p_date = Date
+
+# ==========================================
+# HANDLE NULL VALUES
+# ==========================================
+
+if p_status is None:
+    p_status = "Failed"
+
+if p_description is None:
+    p_description = ""
+
+if p_error_msg is None:
+    p_error_msg = ""
+
+if p_date is None:
+    p_date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+# ==========================================
+# HELPER FUNCTION
+# FIX TIMESTAMP FORMAT
+# ==========================================
+
+def fix_timestamp(ts):
+
+    try:
+
+        if ts and "." in ts:
+
+            date_part, frac = ts.split(".")
+
+            frac = frac.rstrip("Z")[:6]
+
+            return f"{date_part}.{frac}Z"
+
+        return ts
+
+    except Exception:
+
+        return ts
+
+# ==========================================
+# CALCULATE PIPELINE RUNTIME
+# ==========================================
+
+try:
+
+    fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+    start_dt = datetime.strptime(
+        fix_timestamp(p_start),
+        fmt
+    )
+
+    end_dt = datetime.strptime(
+        fix_timestamp(p_end),
+        fmt
+    )
+
+    runtime_str = str(end_dt - start_dt)
+
+except Exception as e:
+
+    runtime_str = f"Runtime Calculation Failed : {str(e)}"
+
+# ==========================================
+# CLEAN ERROR MESSAGE
+# ==========================================
+
+p_error_msg = str(p_error_msg)
+
+# REMOVE STACK TRACE
+if "at com.microsoft" in p_error_msg:
+
+    p_error_msg = p_error_msg.split(
+        "at com.microsoft"
+    )[0]
+
+# REMOVE PY4J STACK
+if "at py4j" in p_error_msg:
+
+    p_error_msg = p_error_msg.split(
+        "at py4j"
+    )[0]
+
+# REMOVE EXTRA CHARACTERS
+p_error_msg = (
+
+    p_error_msg
+
+    .replace("|", " ")
+
+    .replace("\n", " ")
+
+    .replace("\r", " ")
+
+    .replace("↵", " ")
+
+    .replace("java.base", " ")
+
+)
+
+# REMOVE EXTRA SPACES
+p_error_msg = " ".join(
+    p_error_msg.split()
+)
+
+# ==========================================
+# CREATE LOG DATA
+# ==========================================
+
+data = [(
+    p_name,
+    p_id,
+    p_start,
+    p_end,
+    runtime_str,
+    p_status,
+    p_description,
+    p_error_msg,
+    p_date
+)]
+
+# ==========================================
+# DEFINE SCHEMA
+# ==========================================
+
+schema = [
+
+    "Pipeline_Name",
+    "Pipeline_Id",
+    "Pipeline_StartTime",
+    "Pipeline_EndTime",
+    "Pipeline_Runtime",
+    "Status",
+    "Description",
+    "Error_Message",
+    "Date"
+
+]
+
+# ==========================================
+# CREATE DATAFRAME
+# ==========================================
+
+log_df = spark.createDataFrame(
+    data,
+    schema=schema
+)
+
+# ==========================================
+# FINAL COLUMN CLEANUP
+# ==========================================
+
+log_df = (
+    log_df
+    .withColumn(
+        "Description",
+        regexp_replace(
+            "Description",
+            "\\|",
+            " "
+        )
+    )
+    .withColumn(
+        "Error_Message",
+        regexp_replace(
+            "Error_Message",
+            "\\|",
+            " "
+        )
+    )
+)
+
+# ==========================================
+# OPTIONAL DEBUG DISPLAY
+# ==========================================
+
+print("===================================")
+print("PIPELINE EXECUTION LOG")
+print("===================================")
+
+log_df.show(truncate=False)
+
+# ==========================================
+# WRITE TO DELTA TABLE
+# ==========================================
+
+(
+    log_df.write
+    .format("delta")
+    .mode("append")
+    .saveAsTable("PipelineExecutionStatusLog")
+)
+
+print("===================================")
+print("LOG INSERTED SUCCESSFULLY")
+print("===================================")
+
+
+
+notebook ukg Gold
+%run nb_execute_pipeline_f
+
+
+PIPELINE_NAME = "nb_ukg_silver_f"
+
+%run nb_execute_pipeline_f

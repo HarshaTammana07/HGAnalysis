@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BHG_DR_LIB</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Models2\**" />
+    <EmbeddedResource Remove="Models2\**" />
+    <None Remove="Models2\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Models\TblAssessmentASAMDimension5.cs" />
+    <Compile Remove="SaveDartsSrvs-old.cs" />
+    <Compile Remove="SaveGlobal-old.cs" />
+    <Compile Remove="SaveGlobalorg.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

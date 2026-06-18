@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = BHG_DR_LIB
+build_property.ProjectDir = C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

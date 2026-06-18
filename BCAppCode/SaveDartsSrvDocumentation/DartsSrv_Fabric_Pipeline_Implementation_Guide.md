@@ -1,9 +1,10 @@
 # DartsSrv — Microsoft Fabric ETL Pipeline Implementation Guide
 
-**Pipeline Name:** DartsSrv Bronze → Silver ETL  
+**Parent Pipeline:** `Execute_DartSrv`  
+**Child Pipeline:** `dartSRV_Pipeline` (Bronze extraction)  
 **Data:** Counseling session records (`tblDartsSrv`) from SAMMS SQL Server clinic databases  
-**Destination:** Microsoft Fabric Lakehouse (Bronze + Silver layers)  
-**Author Reference:** `FabricPipelineImplementation.txt`
+**Destination:** Bronze Lakehouse → Silver Lakehouse → Gold Warehouse  
+**Author Reference:** `dartdefintion.txt`
 
 ---
 
@@ -13,68 +14,77 @@
 2. [What This Pipeline Does — Plain English](#2-what-this-pipeline-does--plain-english)
 3. [Prerequisites — What You Need Before Starting](#3-prerequisites--what-you-need-before-starting)
 4. [Pipeline Parameters — Define These First](#4-pipeline-parameters--define-these-first)
-5. [Step 1 — Create the Data Pipeline in Fabric](#5-step-1--create-the-data-pipeline-in-fabric)
-6. [Step 2 — Add the ForEach Activity](#6-step-2--add-the-foreach-activity)
-7. [Step 3 — Inside ForEach: Add the Lookup Activity (ServiceType Check)](#7-step-3--inside-foreach-add-the-lookup-activity-servicetype-check)
-8. [Step 4 — Inside ForEach: Add the Copy Activity (Bronze Extraction)](#8-step-4--inside-foreach-add-the-copy-activity-bronze-extraction)
-9. [Step 5 — Add the Notebook Activity (Bronze → Silver)](#9-step-5--add-the-notebook-activity-bronze--silver)
-10. [Step 6 — Create the Notebook: nb_darts_bronze_to_silver](#10-step-6--create-the-notebook-nb_darts_bronze_to_silver)
-11. [Step 7 — Notebook Cell 1: Load Bronze and Prepare Silver Source](#11-step-7--notebook-cell-1-load-bronze-and-prepare-silver-source)
-12. [Step 8 — Notebook Cell 2: Merge Into Silver Delta Table](#12-step-8--notebook-cell-2-merge-into-silver-delta-table)
-13. [End-to-End Flow Summary](#13-end-to-end-flow-summary)
-14. [How Change Detection Works (RowChkSum)](#14-how-change-detection-works-rowchksum)
-15. [RowChkSum Column Alignment — Old ETL vs Fabric (Verified)](#15-rowchksum-column-alignment--old-etl-vs-fabric-verified)
-16. [RowState — Does It Exist for DartsSrv?](#16-rowstate--does-it-exist-for-dartssrv)
-17. [Architectural Decisions — Lookback and Single Silver Table](#17-architectural-decisions--lookback-and-single-silver-table)
-18. [Why Five Date Columns in the WHERE Clause](#18-why-five-date-columns-in-the-where-clause)
-19. [Troubleshooting Guide](#19-troubleshooting-guide)
+5. [Step 1 — Create the Child Pipeline: dartSRV_Pipeline](#5-step-1--create-the-child-pipeline-dartsrv_pipeline)
+6. [Step 2 — Add the ForEach Activity (Child)](#6-step-2--add-the-foreach-activity-child)
+7. [Step 3 — Inside ForEach: Lookup for Optional Columns](#7-step-3--inside-foreach-lookup-for-optional-columns)
+8. [Step 4 — Inside ForEach: Copy Activity (Bronze Extraction)](#8-step-4--inside-foreach-copy-activity-bronze-extraction)
+9. [Step 5 — Create the Parent Pipeline: Execute_DartSrv](#9-step-5--create-the-parent-pipeline-execute_dartsrv)
+10. [Step 6 — Parent: ExecutePipeline (Invoke Child)](#10-step-6--parent-executepipeline-invoke-child)
+11. [Step 7 — Parent: Notebook Bronze → Silver](#11-step-7--parent-notebook-bronze--silver)
+12. [Step 8 — Parent: Truncate Gold Table](#12-step-8--parent-truncate-gold-table)
+13. [Step 9 — Parent: Copy Silver → Gold](#13-step-9--parent-copy-silver--gold)
+14. [Step 10 — Notebook: nb_darts_bronze_to_silver](#14-step-10--notebook-nb_darts_bronze_to_silver)
+15. [Step 11 — Notebook Cell 1: Load Bronze and Prepare Silver](#15-step-11--notebook-cell-1-load-bronze-and-prepare-silver)
+16. [Step 12 — Notebook Cell 2: Merge Into Silver](#16-step-12--notebook-cell-2-merge-into-silver)
+17. [End-to-End Flow Summary](#17-end-to-end-flow-summary)
+18. [How Change Detection Works (RowChkSum)](#18-how-change-detection-works-rowchksum)
+19. [RowChkSum — Fabric vs Old C# ETL](#19-rowchksum--fabric-vs-old-c-etl)
+20. [RowState in Fabric Silver and Gold](#20-rowstate-in-fabric-silver-and-gold)
+21. [Architectural Decisions — Lookback and Single Silver Table](#21-architectural-decisions--lookback-and-single-silver-table)
+22. [Why Five Date Columns in the WHERE Clause](#22-why-five-date-columns-in-the-where-clause)
+23. [Troubleshooting Guide](#23-troubleshooting-guide)
 
 ---
 
 ## 1. Architecture Overview
 
+The implementation uses **two pipelines**: a child pipeline for SAMMS → Bronze extraction, and a parent pipeline that orchestrates Bronze → Silver → Gold.
+
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Microsoft Fabric Data Pipeline                    │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  ForEach Site (fe_each_samms_database_copy1)                │   │
-│  │  Iterates over every clinic in p_sites parameter            │   │
-│  │                                                             │   │
-│  │  ┌─────────────────────────┐                               │   │
-│  │  │ Activity 1              │                               │   │
-│  │  │ lkp_check_servicetype   │  ← Query SAMMS sys.columns   │   │
-│  │  │ _column_exists (Lookup) │    Does ServiceType exist?   │   │
-│  │  └────────────┬────────────┘                               │   │
-│  │               │ Succeeded                                   │   │
-│  │               ▼                                             │   │
-│  │  ┌─────────────────────────┐                               │   │
-│  │  │ Activity 2              │                               │   │
-│  │  │ Copy data2 (Copy)       │  ← SELECT all DartsSrv cols  │   │
-│  │  │                         │    WHERE date lookback        │   │
-│  │  │  Source: SAMMS SQL Srv  │    APPEND → Bronze Lakehouse  │   │
-│  │  │  Sink:   bhg_bronze     │                               │   │
-│  │  │          Dart.br_tbl    │                               │   │
-│  │  │          DartSrv        │                               │   │
-│  │  └─────────────────────────┘                               │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                         │ ForEach Succeeded                        │
-│                         ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  nb_darts_bronze_to_silver (Notebook)                       │   │
-│  │                                                             │   │
-│  │  Cell 1: Read Bronze → Deduplicate → Prepare src_df        │   │
-│  │  Cell 2: Delta MERGE src_df → bhg_silver.pats.sl_tblDart   │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  PARENT: Execute_DartSrv                                                   │
+│                                                                          │
+│  1) Exected_AfterBronz (ExecutePipeline)                                 │
+│     └─ invokes child dartSRV_Pipeline → loads Bronze                     │
+│                         │ Succeeded                                      │
+│                         ▼                                                │
+│  2) nb_darts_bronze_to_silver (Notebook)                                │
+│     └─ Bronze → Silver MERGE (Delta upsert)                              │
+│                         │ Succeeded                                      │
+│                         ▼                                                │
+│  3) Truncate_GoldTable_DartSrv (Script)                                  │
+│     └─ TRUNCATE TABLE pats.gd_darts_srv                                  │
+│                         │ Succeeded                                      │
+│                         ▼                                                │
+│  4) copy_darts_silver_to_gold (Copy)                                    │
+│     └─ bhg_silver.pats.sl_tbldartsrv → bhg_gold.pats.gd_darts_srv        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  CHILD: dartSRV_Pipeline                                                 │
+│                                                                          │
+│  ForEach Site (fe_each_samms_database_copy1)                             │
+│    1) lkp_check_optional_columns_exist (Lookup)                          │
+│       Checks: ServiceType, dsTelehealthSession, HoldId, upsize_ts        │
+│    2) Copy data2 (Copy)                                                  │
+│       SAMMS → APPEND bhg_bronze.Dart.br_tblDartSrv                       │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Lakehouse Targets:**
+**Layer Targets:**
 
-| Layer | Lakehouse Name | Schema | Table |
+| Layer | Artifact | Schema | Table |
 |---|---|---|---|
-| Bronze | `bhg_bronze` | `Dart` | `br_tblDartSrv` |
-| Silver | `bhg_silver` | `pats` | `sl_tblDartSrv` |
+| Bronze | `bhg_bronze` Lakehouse | `Dart` | `br_tblDartSrv` |
+| Silver | `bhg_silver` Lakehouse | `pats` | `sl_tblDartSrv` |
+| Gold | `bhg_gold` Warehouse | `pats` | `gd_darts_srv` |
+
+**Pipeline IDs (from definition):**
+
+| Pipeline | Object ID |
+|---|---|
+| Child `dartSRV_Pipeline` | `b2101370-34a9-4695-bf4a-eebdb3ced50b` |
+| Parent `Execute_DartSrv` | `12ad712f-3d73-48e9-b4b0-826ab69e388c` |
 
 ---
 
@@ -82,12 +92,19 @@
 
 The SAMMS system is an on-premise SQL Server database installed at each BHG clinic. Every counseling session a patient has is recorded in a table called `tblDartsSrv` inside that clinic's SAMMS database. There are 80+ clinics, each with their own SAMMS database.
 
-This pipeline:
-1. **Visits each clinic's SAMMS database** one at a time (ForEach loop)
-2. **Checks** whether that specific clinic's SAMMS version has a column called `ServiceType` — not all clinic versions do
-3. **Extracts** all DartsSrv records that were created, updated, signed, or billed within the last N days (default 15)
-4. **Appends** the extracted rows to a Bronze Lakehouse table, tagging them with a run ID and extraction timestamp
-5. After all clinics are processed, runs a **notebook** that reads those Bronze rows and performs a smart MERGE into the Silver table — only updating a row if its content actually changed (using a CHECKSUM comparison)
+This pipeline runs in two stages:
+
+**Child pipeline (`dartSRV_Pipeline`):**
+1. Visits each clinic's SAMMS database one at a time (ForEach loop)
+2. Checks whether optional columns exist (`ServiceType`, `dsTelehealthSession`, `HoldId`, `upsize_ts`)
+3. Extracts DartsSrv records touched within the lookback window (default 15 days)
+4. Appends rows to Bronze with run metadata (`_ingest_run_id`, `_extracted_at`, etc.)
+
+**Parent pipeline (`Execute_DartSrv`):**
+5. Invokes the child pipeline and waits for Bronze load to finish
+6. Runs notebook `nb_darts_bronze_to_silver` — MERGE Bronze into Silver using RowChkSum
+7. Truncates Gold table `pats.gd_darts_srv`
+8. Copies full Silver table into Gold warehouse with column renaming (`_site_code` → `SiteCode`, `silver_updated_at` → `LastModAt`, etc.)
 
 ---
 
@@ -100,8 +117,10 @@ Before you build this pipeline, the following must already exist in your Fabric 
 | SAMMS SQL Server connection | A Fabric connection to the on-premise SAMMS SQL Server gateway | Fabric workspace → Connections |
 | `bhg_bronze` Lakehouse | Bronze layer Lakehouse | Fabric workspace |
 | `bhg_silver` Lakehouse | Silver layer Lakehouse | Fabric workspace |
+| `bhg_gold` Warehouse | Gold layer (Fabric Data Warehouse) | Fabric workspace |
 | `Dart` schema in `bhg_bronze` | Schema for DartsSrv Bronze tables | `bhg_bronze` Lakehouse |
 | `pats` schema in `bhg_silver` | Schema for Silver patient tables | `bhg_silver` Lakehouse |
+| `pats.gd_darts_srv` in Gold | Final reporting/analytics table | `bhg_gold` Warehouse |
 | On-premise data gateway | Configured to reach SAMMS SQL Servers | Fabric settings |
 
 **Connection ID to note down:** When you create the SAMMS SQL Server connection in Fabric, it gets a GUID. In this implementation the connection ID is:
@@ -118,6 +137,16 @@ c5097ffb-b78e-441d-9575-a82bac23cac8
 **Bronze Lakehouse Artifact ID:**
 ```
 77d24027-6a1c-43a8-a998-1a14dd3c0d52
+```
+
+**Silver Lakehouse Artifact ID:**
+```
+dd09d8b6-d862-4954-a0b2-fcf7372c6595
+```
+
+**Gold Warehouse Artifact ID:**
+```
+d29ef036-8c2c-40b0-a8e0-3279f9a906e7
 ```
 
 ---
@@ -164,39 +193,45 @@ Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
 ```json
 [
   {
-    "site_code": "ColoradoSpringsV5",
-    "source_database": "SAMMS-ColoradoSpringsV5",
+    "site_code": "AHK",
+    "source_database": "SAMMS-Ahoskie",
     "source_schema": "dbo",
     "source_table": "tblDartsSrv"
   }
 ]
 ```
 
-**Why:** This array tells the ForEach loop which clinics to process. Each object in the array represents one SAMMS clinic database. In production you add all 80+ clinics to this array. Each object has four properties:
+**Why:** Each object in `p_sites` represents one SAMMS clinic database. The ForEach loop and Lookup query read all four properties from each item.
 
 | Property | Meaning | Example |
 |---|---|---|
-| `site_code` | Human-readable clinic code used as a data tag | `ColoradoSpringsV5` |
-| `source_database` | The exact database name on the SAMMS SQL Server | `SAMMS-ColoradoSpringsV5` |
-| `source_schema` | Schema where `tblDartsSrv` lives (always `dbo`) | `dbo` |
-| `source_table` | Source table name | `tblDartsSrv` |
+| `site_code` | Clinic code written to `_site_code` in Bronze | `AHK` |
+| `source_database` | SAMMS database name on SQL Server | `SAMMS-Ahoskie` |
+| `source_schema` | Schema (always `dbo` for DartsSrv) | `dbo` |
+| `source_table` | Source table (always `tblDartsSrv`) | `tblDartsSrv` |
 
-> **To add more clinics:** Add more objects to this JSON array. Each clinic gets its own object with the four properties above.
+> **Important:** All four properties must be present in every `p_sites` object. The Lookup and Copy queries use `item().source_schema` and `item().source_table`.
+
+> **Parent vs child:** Child pipeline `dartSRV_Pipeline` defines `p_lookback_days` as **Int**. Parent pipeline `Execute_DartSrv` defines it as **String** — both default to `15`. When invoking the child from the parent, pass the integer value explicitly.
+
+> **To add more clinics:** Add more objects to the JSON array with the same four properties.
 
 ---
 
-## 5. Step 1 — Create the Data Pipeline in Fabric
+## 5. Step 1 — Create the Child Pipeline: dartSRV_Pipeline
 
 1. Open your Fabric workspace
 2. Click **+ New** → **Data pipeline**
-3. Name it: `pl_darts_samms_to_lakehouse` (or your preferred naming convention)
+3. Name it: `dartSRV_Pipeline`
 4. Click **Create**
-5. On the pipeline canvas, click an empty area and go to the **Parameters** tab on the right panel
-6. Add all three parameters from Section 4 above
+5. Add all three parameters from Section 4 (`p_ingest_run_id`, `p_lookback_days` as **Int**, `p_sites`)
+6. Build the ForEach + Lookup + Copy activities (Steps 2–4 below)
+
+This child pipeline only handles **SAMMS → Bronze**. The parent pipeline `Execute_DartSrv` (Step 5) invokes it.
 
 ---
 
-## 6. Step 2 — Add the ForEach Activity
+## 6. Step 2 — Add the ForEach Activity (Child)
 
 The ForEach activity is the outer loop. It runs the inner activities once for each clinic in the `p_sites` array.
 
@@ -236,19 +271,16 @@ The ForEach activity is the outer loop. It runs the inner activities once for ea
 
 ---
 
-## 7. Step 3 — Inside ForEach: Add the Lookup Activity (Optional Columns Check)
+## 7. Step 3 — Inside ForEach: Lookup for Optional Columns
 
-This is the first activity that runs inside the ForEach loop for each clinic.
-
-### Why this activity exists
-
-Three columns in `tblDartsSrv` do not exist in all SAMMS versions — they were added in newer releases. If you try to SELECT a column that does not exist in a clinic's database, the Copy activity fails immediately with a "column not found" error. This single Lookup checks for all three optional columns in one round-trip and returns a flag (1 or 0) for each. The Copy activity then uses those flags to decide whether to select the real column or substitute a NULL placeholder.
+Four columns in `tblDartsSrv` do not exist in all SAMMS versions. This Lookup checks all four in one query and returns a flag (1 or 0) for each. The Copy activity uses those flags to select the real column or a NULL placeholder.
 
 | Optional Column | Type | Why optional |
 |---|---|---|
 | `ServiceType` | varchar(100) | Added in a later SAMMS version |
-| `dsTelehealthSession` | bit | Added for telehealth tracking — newer SAMMS only |
-| `HoldId` | int | Added for hold management — newer SAMMS only |
+| `dsTelehealthSession` | bit | Telehealth tracking — newer SAMMS only |
+| `HoldId` | int | Hold management — newer SAMMS only |
+| `upsize_ts` | varbinary(8) | SQL Server replication timestamp — not in all clinics |
 
 ### Add the activity
 1. Click **Edit** on the ForEach activity to open its inner canvas
@@ -270,7 +302,8 @@ Three columns in `tblDartsSrv` do not exist in all SAMMS versions — they were 
 'SELECT
     COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,
     COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,
-    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists
+    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists,
+    COUNT(CASE WHEN c.name = ''upsize_ts''           THEN 1 END) AS upsize_ts_exists
 FROM [', item().source_database, '].sys.columns c
 INNER JOIN [', item().source_database, '].sys.tables t
     ON c.object_id = t.object_id
@@ -278,41 +311,38 @@ INNER JOIN [', item().source_database, '].sys.schemas s
     ON t.schema_id = s.schema_id
 WHERE s.name = ''', item().source_schema, '''
   AND t.name = ''', item().source_table, '''
-  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'');'
+  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'', ''upsize_ts'');'
 )
 ```
 
-**How to read this expression:**
-
-One query, one round-trip to SAMMS. The `COUNT(CASE WHEN ...)` pattern counts how many times each column name appears in `sys.columns`. Since a column either exists once or not at all, the result is always `1` (exists) or `0` (does not exist).
-
-The SQL it builds looks like this for `ColoradoSpringsV5`:
+**Example SQL built for AHK:**
 ```sql
 SELECT
     COUNT(CASE WHEN c.name = 'ServiceType'         THEN 1 END) AS service_type_exists,
     COUNT(CASE WHEN c.name = 'dsTelehealthSession' THEN 1 END) AS telehealth_exists,
-    COUNT(CASE WHEN c.name = 'HoldId'              THEN 1 END) AS holdid_exists
-FROM [SAMMS-ColoradoSpringsV5].sys.columns c
-INNER JOIN [SAMMS-ColoradoSpringsV5].sys.tables t ON c.object_id = t.object_id
-INNER JOIN [SAMMS-ColoradoSpringsV5].sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = 'dbo'
-  AND t.name = 'tblDartsSrv'
-  AND c.name IN ('ServiceType', 'dsTelehealthSession', 'HoldId');
+    COUNT(CASE WHEN c.name = 'HoldId'              THEN 1 END) AS holdid_exists,
+    COUNT(CASE WHEN c.name = 'upsize_ts'           THEN 1 END) AS upsize_ts_exists
+FROM [SAMMS-Ahoskie].sys.columns c
+...
+WHERE s.name = 'dbo' AND t.name = 'tblDartsSrv'
+  AND c.name IN ('ServiceType', 'dsTelehealthSession', 'HoldId', 'upsize_ts');
 ```
 
-**What it returns:** A single row with three columns:
+**What it returns:** A single row with four columns:
 
 | Output column | Value if exists | Value if absent |
 |---|---|---|
 | `service_type_exists` | `1` | `0` |
 | `telehealth_exists` | `1` | `0` |
 | `holdid_exists` | `1` | `0` |
+| `upsize_ts_exists` | `1` | `0` |
 
-**How to access the results later:** In the Copy activity you reference them as:
+**How to access in Copy activity:**
 ```
 activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists
 activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists
 activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists
+activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists
 ```
 
 ### Configure Policy tab
@@ -340,7 +370,7 @@ activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists
         "source": {
             "type": "SqlServerSource",
             "sqlReaderQuery": {
-                "value": "@concat(\n'SELECT\n    COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,\n    COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,\n    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists\nFROM [', item().source_database, '].sys.columns c\nINNER JOIN [', item().source_database, '].sys.tables t\n    ON c.object_id = t.object_id\nINNER JOIN [', item().source_database, '].sys.schemas s\n    ON t.schema_id = s.schema_id\nWHERE s.name = ''', item().source_schema, '''\n  AND t.name = ''', item().source_table, '''\n  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'');'\n)",
+                "value": "@concat(\n'SELECT\n    COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,\n    COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,\n    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists,\n    COUNT(CASE WHEN c.name = ''upsize_ts''           THEN 1 END) AS upsize_ts_exists\nFROM [', item().source_database, '].sys.columns c\nINNER JOIN [', item().source_database, '].sys.tables t\n    ON c.object_id = t.object_id\nINNER JOIN [', item().source_database, '].sys.schemas s\n    ON t.schema_id = s.schema_id\nWHERE s.name = ''', item().source_schema, '''\n  AND t.name = ''', item().source_table, '''\n  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'', ''upsize_ts'');'\n)",
                 "type": "Expression"
             },
             "queryTimeout": "02:00:00",
@@ -360,7 +390,7 @@ activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists
 
 ---
 
-## 8. Step 4 — Inside ForEach: Add the Copy Activity (Bronze Extraction)
+## 8. Step 4 — Inside ForEach: Copy Activity (Bronze Extraction)
 
 This is the main data extraction activity. It runs after the Lookup succeeds.
 
@@ -425,6 +455,13 @@ Switch the Query field to **Expression mode** and paste this entire block:
     dsPROGRAM,
     dsUpdate,
     dsUPDATEStaff,
+    ',
+if(
+    equals(activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists, 1),
+    'upsize_ts',
+    'CAST(NULL AS varbinary(8)) AS upsize_ts'
+),
+',
     dsInvalidatedOn,
     dsError,
     dsTxtHIV,
@@ -514,6 +551,7 @@ if(
         dsSigUser,
         dsSigUserCosign,
         dsSIGCLTDATE,
+        dsSIGCLTUSER,
         dsAPTID,
         dsuncharted,
         dsTxDim1,
@@ -531,7 +569,28 @@ if(
         dsDIAG10,
         SiteID,
         dsDBnotes,
-        MG
+        MG,
+        ',
+if(
+    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),
+    'ServiceType',
+    'CAST(NULL AS varchar(100))'
+),
+',
+        ',
+if(
+    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),
+    'dsTelehealthSession',
+    'CAST(NULL AS bit)'
+),
+',
+        ',
+if(
+    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),
+    'HoldId',
+    'CAST(NULL AS int)'
+),
+'
     )
 
 FROM [', item().source_database, '].', item().source_schema, '.', item().source_table, '
@@ -553,9 +612,9 @@ ORDER BY 1, 2'
 #### Metadata columns (first 6 columns)
 
 ```sql
-'ColoradoSpringsV5'           AS _site_code,           -- which clinic this row came from
-'SAMMS-ColoradoSpringsV5'     AS _source_database,      -- which SAMMS database
-'DARTS-2026-05-07-001'        AS _ingest_run_id,         -- which pipeline run
+'AHK'                         AS _site_code,
+'SAMMS-Ahoskie'               AS _source_database,
+'test-run-001'                AS _ingest_run_id,
 GETDATE()                     AS _extracted_at,          -- exact extraction timestamp
 CONVERT(date, DATEADD(day,-15,GETDATE())) AS _source_query_start_date,  -- lookback start
 CONVERT(date, GETDATE())      AS _source_query_end_date  -- lookback end (today)
@@ -563,50 +622,25 @@ CONVERT(date, GETDATE())      AS _source_query_end_date  -- lookback end (today)
 
 These columns are added by the pipeline (not from SAMMS). They are metadata that lets you trace every row back to exactly when and where it was extracted.
 
-#### Data columns (next 55 columns)
+#### Data columns
 
-All clinical data columns from `tblDartsSrv` — see [Section 14](#14-how-change-detection-works-rowchksum) for the full column reference.
+All clinical data columns from `tblDartsSrv`, including conditional `upsize_ts`. See [Section 18](#18-how-change-detection-works-rowchksum).
 
-#### Optional columns — three conditional columns
+#### Optional columns — four conditional columns
 
-After the `MG` column, the query conditionally adds three columns based on the Lookup result:
+After `dsUPDATEStaff`, `upsize_ts` is conditional. After `MG`, `ServiceType`, `dsTelehealthSession`, and `HoldId` are conditional based on Lookup flags.
 
-```
--- ServiceType
-if(
-    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),
-    'ServiceType',
-    'CAST(NULL AS varchar(100)) AS ServiceType'
-),
-
--- dsTelehealthSession
-if(
-    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),
-    'dsTelehealthSession',
-    'CAST(NULL AS bit) AS dsTelehealthSession'
-),
-
--- HoldId
-if(
-    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),
-    'HoldId',
-    'CAST(NULL AS int) AS HoldId'
-)
-```
-
-**What this does for each column:** If the Lookup returned `1` (column exists in this clinic's SAMMS), it selects the real column. If it returned `0` (column does not exist), it inserts a typed NULL placeholder with the same column name. Either way, every clinic's Bronze rows have the same schema — consistent columns across all 80+ clinics regardless of SAMMS version.
-
-**Why these three are NOT in the CHECKSUM:** Same reason as `ServiceType` — they don't exist in all clinic versions. Including an optional column in the CHECKSUM would produce different hash values between clinics that have it and clinics that don't, making cross-clinic change detection unreliable.
+**CHECKSUM:** `ServiceType`, `dsTelehealthSession`, and `HoldId` are included in RowChkSum (NULL cast when absent). `upsize_ts` is extracted but excluded from CHECKSUM.
 
 #### RowChkSum — change detection fingerprint
 
 ```sql
-RowChkSum = CHECKSUM(dsID, dsClt, dsDIM1, ..., MG)
+RowChkSum = CHECKSUM(dsID, dsClt, dsDIM1, ..., MG, ServiceType?, dsTelehealthSession?, HoldId?)
 ```
 
-SQL Server's `CHECKSUM()` function produces a single integer that acts as a fingerprint for the entire row. If even one column changes, the CHECKSUM changes. In the Silver notebook, we compare the CHECKSUM from this extraction against what is already in Silver. If they match, the row has not changed and we skip the update. See [Section 14](#14-how-change-detection-works-rowchksum) for more detail.
+SQL Server's `CHECKSUM()` produces a row fingerprint. The Silver notebook compares Bronze vs Silver RowChkSum. See [Section 18](#18-how-change-detection-works-rowchksum).
 
-> **Important:** `ServiceType`, `dsTelehealthSession`, and `HoldId` are intentionally NOT included in the CHECKSUM. Binary image columns (`dsSigCltImg`, `dsSignatureCoSignImg`, `dsSignatureIMG`) and text columns (`dstxtNote`, `dsRTBNOTE`, `dsSignature`, `dssignatureCOSIGN`, `dsSigClt`) are also excluded because `CHECKSUM()` does not work reliably on those data types.
+> **Excluded from CHECKSUM:** `dstxtNote`, `dsRTBNOTE`, signature text/image columns, and `upsize_ts`.
 
 #### WHERE clause — lookback filter
 
@@ -623,7 +657,7 @@ WHERE dsClt IS NOT NULL
 ORDER BY 1, 2
 ```
 
-See [Section 15](#15-why-five-date-columns-in-the-where-clause) for a detailed explanation of why five date columns are used.
+See [Section 22](#22-why-five-date-columns-in-the-where-clause) for a detailed explanation of why five date columns are used.
 
 ### Configure Sink tab
 
@@ -735,82 +769,193 @@ See [Section 15](#15-why-five-date-columns-in-the-where-clause) for a detailed e
 
 ---
 
-## 9. Step 5 — Add the Notebook Activity (Bronze → Silver)
+## 9. Step 5 — Create the Parent Pipeline: Execute_DartSrv
 
-After the ForEach finishes (all clinics extracted to Bronze), the pipeline runs a Spark notebook to process those Bronze rows and merge them into Silver.
+1. Click **+ New** → **Data pipeline**
+2. Name it: `Execute_DartSrv`
+3. Add parameters:
+   - `p_ingest_run_id` (String, default `test-run-001`)
+   - `p_sites` (Array — same JSON as child)
+   - `p_lookback_days` (String, default `15`) — note: parent uses String type
+4. Add four activities in order (Steps 6–9)
+
+The parent pipeline owns Bronze → Silver → Gold. It does **not** contain the ForEach — that lives in the child.
+
+---
+
+## 10. Step 6 — Parent: ExecutePipeline (Invoke Child)
 
 ### Add the activity
-1. Go back to the **main pipeline canvas** (outside the ForEach)
-2. Drag a **Notebook** activity onto the canvas
-3. Rename it: `nb_darts_bronze_to_silver`
-4. Draw a dependency arrow: from `fe_each_samms_database_copy1` → `nb_darts_bronze_to_silver` with condition **Succeeded**
-
-This means: only run the notebook if ALL sites in the ForEach loop completed without error.
+1. Drag **Execute Pipeline** onto the parent canvas
+2. Rename: `Exected_AfterBronz`
+3. No upstream dependency (runs first)
 
 ### Configure Settings tab
 
 | Setting | Value |
 |---|---|
-| Notebook | Select the notebook `nb_darts_bronze_to_silver` (create it in Step 6 first) |
-| Workspace | `c5097ffb-b78e-441d-9575-a82bac23cac8` |
+| Invoked pipeline | `dartSRV_Pipeline` |
+| Wait on completion | **True** |
 
-### Configure Parameters (inside the Notebook activity)
+### Parameters passed to child
 
-Add one parameter to pass to the notebook:
-
-| Parameter Name | Type | Value |
-|---|---|---|
-| `p_ingest_run_id` | String | `@pipeline().parameters.p_ingest_run_id` (Expression) |
-
-**Why:** The notebook needs to know which pipeline run to process. The `_ingest_run_id` value is passed from the pipeline into the notebook as a parameter, so the notebook only reads the Bronze rows from this specific run.
-
-### Configure Policy tab
-
-| Setting | Value |
+| Child parameter | Value |
 |---|---|
-| Timeout | `0.12:00:00` (12 hours) |
-| Retry | `0` |
-| Retry interval | `30` seconds |
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` |
+| `p_lookback_days` | `15` (or pass from parent parameter) |
+| `p_sites` | `@pipeline().parameters.p_sites` |
 
-### The JSON for this activity
+### JSON reference
 ```json
 {
-    "name": "nb_darts_bronze_to_silver",
-    "type": "TridentNotebook",
-    "dependsOn": [
-        {
-            "activity": "fe_each_samms_database_copy1",
-            "dependencyConditions": ["Succeeded"]
-        }
-    ],
-    "policy": {
-        "timeout": "0.12:00:00",
-        "retry": 0,
-        "retryIntervalInSeconds": 30,
-        "secureOutput": false,
-        "secureInput": false
-    },
+    "name": "Exected_AfterBronz",
+    "type": "ExecutePipeline",
+    "dependsOn": [],
     "typeProperties": {
-        "notebookId": "89769158-4ba9-4e86-9b6d-ff22852dddd5",
-        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+        "pipeline": {
+            "referenceName": "b2101370-34a9-4695-bf4a-eebdb3ced50b",
+            "type": "PipelineReference"
+        },
+        "waitOnCompletion": true,
         "parameters": {
-            "p_ingest_run_id": {
-                "value": {
-                    "value": "@pipeline().parameters.p_ingest_run_id",
-                    "type": "Expression"
-                },
-                "type": "string"
+            "p_ingest_run_id": "test-run-001",
+            "p_lookback_days": 15,
+            "p_sites": {
+                "value": "@pipeline().parameters.p_sites",
+                "type": "Expression"
             }
         }
     }
 }
 ```
 
-> **Note:** Replace `notebookId` with the actual GUID of your notebook after you create it in Step 6.
+---
+
+## 11. Step 7 — Parent: Notebook Bronze → Silver
+
+### Add the activity
+1. Drag **Notebook** onto the parent canvas
+2. Rename: `nb_darts_bronze_to_silver`
+3. Dependency: `Exected_AfterBronz` → **Succeeded**
+
+### Configure Settings tab
+
+| Setting | Value |
+|---|---|
+| Notebook | `nb_darts_bronze_to_silver` |
+| Workspace | `c5097ffb-b78e-441d-9575-a82bac23cac8` |
+| Notebook ID | `89769158-4ba9-4e86-9b6d-ff22852dddd5` |
+
+### Notebook parameter
+
+| Parameter | Value |
+|---|---|
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+
+> **Note:** The notebook runs on the **parent** canvas, not inside the child. The child pipeline has an inactive `nb_darts_silver_to_gold` notebook — ignore it; Gold is loaded via Copy in the parent.
 
 ---
 
-## 10. Step 6 — Create the Notebook: nb_darts_bronze_to_silver
+## 12. Step 8 — Parent: Truncate Gold Table
+
+After Silver MERGE completes, Gold is fully refreshed (truncate + reload, not incremental merge).
+
+### Add the activity
+1. Drag **Script** activity onto parent canvas
+2. Rename: `Truncate_GoldTable_DartSrv`
+3. Dependency: `nb_darts_bronze_to_silver` → **Succeeded**
+
+### Configure Settings tab
+
+| Setting | Value |
+|---|---|
+| Connection | `bhg_gold` (Fabric Data Warehouse) |
+| Script | `TRUNCATE TABLE pats.gd_darts_srv` |
+
+### JSON reference
+```json
+{
+    "name": "Truncate_GoldTable_DartSrv",
+    "type": "Script",
+    "dependsOn": [
+        {
+            "activity": "nb_darts_bronze_to_silver",
+            "dependencyConditions": ["Succeeded"]
+        }
+    ],
+    "linkedService": {
+        "name": "bhg_gold"
+    },
+    "typeProperties": {
+        "scripts": [
+            {
+                "type": "Query",
+                "text": {
+                    "value": "TRUNCATE TABLE pats.gd_darts_srv",
+                    "type": "Expression"
+                }
+            }
+        ],
+        "scriptBlockExecutionTimeout": "02:00:00"
+    }
+}
+```
+
+---
+
+## 13. Step 9 — Parent: Copy Silver → Gold
+
+### Add the activity
+1. Drag **Copy** onto parent canvas
+2. Rename: `copy_darts_silver_to_gold`
+3. Dependency: `Truncate_GoldTable_DartSrv` → **Succeeded**
+
+### Configure Source tab
+
+| Setting | Value |
+|---|---|
+| Source | Lakehouse table |
+| Lakehouse | `bhg_silver` |
+| Schema | `pats` |
+| Table | `sl_tbldartsrv` |
+
+### Configure Sink tab
+
+| Setting | Value |
+|---|---|
+| Sink | Data Warehouse table |
+| Warehouse | `bhg_gold` |
+| Schema | `pats` |
+| Table | `gd_darts_srv` |
+| Write behavior | Insert |
+| Allow COPY command | **True** |
+| Enable staging | **True** |
+
+### Column mappings (Silver → Gold)
+
+The Copy activity uses explicit mappings. Key renames:
+
+| Silver source | Gold sink |
+|---|---|
+| `_site_code` | `SiteCode` |
+| `silver_updated_at` | `LastModAt` |
+| `dsID` | `DsId` |
+| `dsClt` | `DsClt` |
+| `dsDtStartYear` | `DsDtStartYear` |
+| `RowState` | `RowState` |
+| `RowChkSum` | `RowChkSum` |
+| `upsize_ts` | `upsize_ts` |
+| `ServiceType` | `ServiceType` |
+| `dsTelehealthSession` | `dsTelehealthSession` |
+| `HoldId` | `HoldId` |
+
+All other columns follow PascalCase in Gold (e.g. `dsTxtSrv` → `DsTxtSrv`, `dsDtStart` → `DsDtStart`). See `dartdefintion.txt` for the full mapping list (50+ columns).
+
+> **Gold load strategy:** Truncate + full copy from Silver every run. Silver holds the merged current state; Gold is a reporting snapshot refreshed after each pipeline run.
+
+---
+
+## 14. Step 10 — Notebook: nb_darts_bronze_to_silver
 
 1. In your Fabric workspace, click **+ New** → **Notebook**
 2. Name it: `nb_darts_bronze_to_silver`
@@ -821,15 +966,15 @@ Add one parameter to pass to the notebook:
 
 ---
 
-## 11. Step 7 — Notebook Cell 1: Load Bronze and Prepare Silver Source
+## 15. Step 11 — Notebook Cell 1: Load Bronze and Prepare Silver
 
 ### What Cell 1 does
-1. Receives the `p_ingest_run_id` parameter from the pipeline
-2. Reads the Bronze table filtered to only this run's rows
-3. Deduplicates: if the same `_site_code + dsID` appears more than once in Bronze for this run, keep only the most recently extracted one
-4. Adds computed columns: `dsDtStartYear`, `silver_updated_at`, `last_seen_at`, `is_current`
-5. Checks if the Silver table exists — if not, creates it from scratch with the current data
-6. Stores the prepared DataFrame as `src_df` for Cell 2 to use
+1. Receives `p_ingest_run_id` from the parent pipeline
+2. Reads Bronze filtered to this run only
+3. Deduplicates on `_site_code + dsID` (keep latest `_extracted_at`)
+4. Adds: `dsDtStartYear`, `silver_updated_at`, `last_seen_at`, `RowState`
+5. Creates Silver table on first run, or adds `upsize_ts` column if missing on existing table
+6. Stores `src_df` for Cell 2
 
 ### Cell 1 Code — paste this exactly
 
@@ -908,6 +1053,10 @@ if not spark.catalog.tableExists(silver_table):
     print(f"Created Silver table and inserted rows: {src_count}")
 else:
     print(f"Silver table already exists: {silver_table}")
+    silver_columns = {field.name for field in spark.table(silver_table).schema.fields}
+    if "upsize_ts" not in silver_columns:
+        spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (upsize_ts BINARY)")
+        print("Added missing Silver column: upsize_ts")
 ```
 
 ### Explanation of each section
@@ -922,10 +1071,11 @@ else:
 | `.withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))` | Mirrors the stored procedure logic exactly: `1` = active/valid patient record (`dsClt >= 0`), `0` = placeholder/test record (`dsClt < 0`). Auto-included in Cell 2 merge since it is part of `src_df.columns`. |
 | `silver_created_at` in the initial write | This timestamp marks when the record was FIRST ever loaded into Silver. It is set once here and never overwritten in Cell 2's merge logic. |
 | `if not spark.catalog.tableExists(silver_table)` | First time ever: create the Silver table. Subsequent runs: skip this block and go to Cell 2's merge. |
+| `ALTER TABLE ... ADD COLUMNS (upsize_ts BINARY)` | If Silver was created before `upsize_ts` was added to Bronze extraction, this adds the column without rebuilding the table. |
 
 ---
 
-## 12. Step 8 — Notebook Cell 2: Merge Into Silver Delta Table
+## 16. Step 12 — Notebook Cell 2: Merge Into Silver
 
 ### What Cell 2 does
 1. Opens the Silver Delta table
@@ -1044,54 +1194,49 @@ tgt.RowChkSum = src.RowChkSum
 
 ---
 
-## 13. End-to-End Flow Summary
-
-Here is the complete flow in order, from pipeline trigger to Silver table update:
+## 17. End-to-End Flow Summary
 
 ```
-TRIGGER: Pipeline runs with parameters:
-  p_ingest_run_id  = "DARTS-2026-05-07-001"
+TRIGGER: Execute_DartSrv runs with:
+  p_ingest_run_id  = "test-run-001"
   p_lookback_days  = 15
-  p_sites          = [ {ColoradoSpringsV5}, {B01}, {B02}, ... ]
+  p_sites          = [ { site_code: "AHK", source_database: "SAMMS-Ahoskie", ... }, ... ]
 
-STEP 1 — ForEach begins iterating over p_sites
-  ↓ Current item: { site_code: "ColoradoSpringsV5", source_database: "SAMMS-ColoradoSpringsV5", ... }
+STEP 1 — Exected_AfterBronz invokes child dartSRV_Pipeline
+  ↓ ForEach over p_sites (sequential)
 
-STEP 2 — lkp_check_optional_columns_exist (Lookup)
-  → Runs one query against SAMMS-ColoradoSpringsV5 sys.columns
-  → Returns: { service_type_exists: 1, telehealth_exists: 0, holdid_exists: 0 }   (1 = exists, 0 = absent)
+STEP 2 — lkp_check_optional_columns_exist (per site)
+  → Returns: service_type_exists, telehealth_exists, holdid_exists, upsize_ts_exists
 
-STEP 3 — Copy data2 (Copy Activity)
-  → Builds dynamic SELECT query using item() values + Lookup result
-  → Runs SELECT with lookback WHERE clause against SAMMS-ColoradoSpringsV5.dbo.tblDartsSrv
-  → Gets N rows of DartsSrv data touched in last 15 days
-  → APPENDs those rows (tagged with _ingest_run_id="DARTS-2026-05-07-001") to:
-     bhg_bronze.Dart.br_tblDartSrv
+STEP 3 — Copy data2 (per site)
+  → Dynamic SELECT with optional columns + RowChkSum
+  → APPEND to bhg_bronze.Dart.br_tblDartSrv
 
-STEP 4 — ForEach moves to next site (B01) and repeats Steps 2-3
-  ... continues for all clinics in p_sites ...
+STEP 4 — Child pipeline completes (all sites in Bronze)
 
-STEP 5 — ForEach completes (all clinics done)
+STEP 5 — nb_darts_bronze_to_silver (Cell 1)
+  → Read Bronze WHERE _ingest_run_id = current run
+  → Deduplicate, add dsDtStartYear, RowState, timestamps
+  → Add upsize_ts column to Silver if missing
 
-STEP 6 — nb_darts_bronze_to_silver Notebook (Cell 1)
-  → Reads bhg_bronze.Dart.br_tblDartSrv WHERE _ingest_run_id = "DARTS-2026-05-07-001"
-  → Gets all rows from ALL clinics for this run
-  → Deduplicates on _site_code + dsID (keep latest)
-  → Adds: dsDtStartYear, silver_updated_at, last_seen_at, is_current
-  → If Silver table does not exist: creates it (first run only)
+STEP 6 — nb_darts_bronze_to_silver (Cell 2)
+  → Delta MERGE into bhg_silver.pats.sl_tblDartSrv
+     RowChkSum changed  → full update
+     RowChkSum same     → metadata-only update
+     New record         → insert
 
-STEP 7 — nb_darts_bronze_to_silver Notebook (Cell 2)
-  → Runs Delta MERGE into bhg_silver.pats.sl_tblDartSrv
-     RowChkSum changed   → FULL UPDATE of all data columns
-     RowChkSum same      → lightweight update (last_seen_at, run metadata only)
-     New record          → INSERT all columns
+STEP 7 — Truncate_GoldTable_DartSrv
+  → TRUNCATE TABLE pats.gd_darts_srv
 
-DONE: Silver table is current with all changes from last 15 days across all clinics.
+STEP 8 — copy_darts_silver_to_gold
+  → Full reload Silver → Gold with column renames
+
+DONE: Silver is merged current state; Gold is full reporting snapshot.
 ```
 
 ---
 
-## 14. How Change Detection Works (RowChkSum)
+## 18. How Change Detection Works (RowChkSum)
 
 The CHECKSUM concept is the most important part of this pipeline to understand. Without it, every run would rewrite millions of rows even when nothing changed.
 
@@ -1117,36 +1262,35 @@ dsID=12345, dsClt=678, dsDtStart='2026-05-01', ..., RowChkSum=1482937461
 ### During the Silver MERGE (in the notebook)
 
 ```
-Row from Bronze:  dsID=12345, _site_code='ColoradoSpringsV5', RowChkSum=1482937461
-Row in Silver:    dsID=12345, _site_code='ColoradoSpringsV5', RowChkSum=1482937461
+Row from Bronze:  dsID=12345, _site_code='AHK', RowChkSum=1482937461
+Row in Silver:    dsID=12345, _site_code='AHK', RowChkSum=1482937461
 
 → Checksums are EQUAL → only touch metadata (last_seen_at etc.)
 → No full row rewrite. Record is considered UNCHANGED.
 ```
 
 ```
-Row from Bronze:  dsID=12345, _site_code='ColoradoSpringsV5', RowChkSum=9876543210
-Row in Silver:    dsID=12345, _site_code='ColoradoSpringsV5', RowChkSum=1482937461
+Row from Bronze:  dsID=12345, _site_code='AHK', RowChkSum=9876543210
+Row in Silver:    dsID=12345, _site_code='AHK', RowChkSum=1482937461
 
 → Checksums DIFFER → full update of all data columns
 → Something changed in SAMMS since last run.
 ```
 
-### What columns are included in RowChkSum
+### What columns are included in RowChkSum (Fabric definition)
 
 | Included | Excluded | Reason for exclusion |
 |---|---|---|
-| All numeric + date + varchar columns | `dstxtNote`, `dsRTBNOTE` | `ntext` type — CHECKSUM unreliable on large text |
-| `dsID`, `dsClt`, all `dsDIM*`, `dsTxtSrv` | `dsSignature`, `dssignatureCOSIGN`, `dsSigClt` | `ntext` / signature text fields |
-| `dsDtStart`, `dsDtEnd`, `dsDtAdded`, `dsUpdate` | `dsSigCltImg`, `dsSignatureCoSignImg`, `dsSignatureIMG` | `varbinary` image data |
-| `DSbilled`, `dsGROUPNUM`, `dsPROGRAM`, etc. | `ServiceType` | Optional column — not in all clinics |
-| All `dsTxDim*`, `dsDIAG`, `dsDIAG10`, `SiteID`, `MG` | | |
+| All numeric + date + varchar business columns | `dstxtNote`, `dsRTBNOTE` | `ntext` — CHECKSUM unreliable on large text |
+| `dsSIGCLTUSER`, `dsDBnotes`, `MG` | `dsSignature`, `dssignatureCOSIGN`, `dsSIGCLT` | Signature text fields |
+| `ServiceType`, `dsTelehealthSession`, `HoldId` (conditional) | `dsSigCltImg`, `dsSignatureCoSignImg`, `dsSignatureIMG` | `varbinary` image data |
+| | `upsize_ts` | `timestamp`/`varbinary` — extracted but not fingerprinted |
+
+**Optional columns in CHECKSUM:** When a clinic lacks `ServiceType`, `dsTelehealthSession`, or `HoldId`, the Copy query uses `CAST(NULL AS ...)` inside CHECKSUM so all clinics produce comparable fingerprints.
 
 ---
 
-## 15. RowChkSum Column Alignment — Old ETL vs Fabric (Verified)
-
-This section provides a definitive side-by-side comparison of which columns go into the `CHECKSUM()` in the old C# ETL versus your Fabric implementation. **They are identical.**
+## 19. RowChkSum — Fabric vs Old C# ETL
 
 ### Side-by-side column list
 
@@ -1183,50 +1327,37 @@ This section provides a definitive side-by-side comparison of which columns go i
 | 29 | `dsSigUser` | Yes | Yes | varchar(50) | Signing counselor username |
 | 30 | `dsSigUserCosign` | Yes | Yes | varchar(50) | Co-signing username |
 | 31 | `dsSIGCLTDATE` | Yes | Yes | datetime | Client sign date |
-| 32 | `dsAPTID` | Yes | Yes | int | Linked appointment ID |
-| 33 | `dsuncharted` | Yes | Yes | bit | Uncharted session flag |
-| 34 | `dsTxDim1` | Yes | Yes | int | Treatment dimension score 1 |
-| 35 | `dsTxDim2` | Yes | Yes | int | Treatment dimension score 2 |
-| 36 | `dsTxDim3` | Yes | Yes | int | Treatment dimension score 3 |
-| 37 | `dsTxDim4` | Yes | Yes | int | Treatment dimension score 4 |
-| 38 | `dsTxDim5` | Yes | Yes | int | Treatment dimension score 5 |
-| 39 | `dsTxDim6` | Yes | Yes | int | Treatment dimension score 6 |
-| 40 | `dsDIAG` | Yes | Yes | varchar(100) | ICD-9 diagnosis code |
-| 41 | `dsArea` | Yes | Yes | varchar(100) | Treatment area |
-| 42 | `dsGroupDefaultNote` | Yes | Yes | bit | Group default note flag |
-| 43 | `dsGroupEnd` | Yes | Yes | datetime | Group session end |
-| 44 | `dsGroupIdentity` | Yes | Yes | int | Group identity key |
-| 45 | `dsGroupStart` | Yes | Yes | datetime | Group session start |
-| 46 | `dsDIAG10` | Yes | Yes | varchar(100) | ICD-10 diagnosis code |
-| 47 | `SiteID` | Yes | Yes | int | SAMMS internal site numeric ID |
-| 48 | `dsDBnotes` | Yes | Yes | varchar(250) | Admin/DB notes |
-| 49 | `MG` | Yes | Yes | float | Milligrams (MAT programs) |
+| 32 | `dsSIGCLTUSER` | No | Yes | varchar(50) | Fabric includes; old C# SelectConstructor omitted from CHECKSUM |
+| 33 | `dsAPTID` | Yes | Yes | int | Linked appointment ID |
+| 34 | `dsuncharted` | Yes | Yes | bit | Uncharted session flag |
+| 35–41 | `dsTxDim1`–`dsTxDim6`, `dsDIAG`, `dsArea`, `dsGroupDefaultNote`, `dsGroupEnd` | Yes | Yes | mixed | Treatment/group fields |
+| 42 | `dsGroupIdentity` | Yes | Yes | int | Group identity key |
+| 43 | `dsGroupStart` | Yes | Yes | datetime | Group session start |
+| 44 | `dsDIAG10` | Yes | Yes | varchar(100) | ICD-10 diagnosis code |
+| 45 | `SiteID` | Yes | Yes | int | SAMMS internal site numeric ID |
+| 46 | `dsDBnotes` | Yes | Yes | varchar(250) | Admin/DB notes |
+| 47 | `MG` | Yes | Yes | float | Milligrams (MAT programs) |
+| 48 | `ServiceType` | No | Yes (conditional) | varchar(100) | Fabric includes via NULL cast when column absent |
+| 49 | `dsTelehealthSession` | No | Yes (conditional) | bit | Same |
+| 50 | `HoldId` | No | Yes (conditional) | int | Same |
 
-**Total: 49 columns — same in both old ETL and Fabric.** ✓
+**Fabric CHECKSUM: up to 52 columns** (49 base + 3 optional). Old C# ETL used 49 base columns without optional fields.
 
-### Columns intentionally excluded from CHECKSUM (same exclusions in both)
+### Columns excluded from CHECKSUM (both)
 
 | Column | Type | Why Excluded |
 |---|---|---|
-| `dstxtNote` | ntext | SQL Server `CHECKSUM()` is unreliable on `ntext` — produces inconsistent results |
-| `dsRTBNOTE` | ntext | Same reason |
-| `dsSignature` | ntext | Same reason |
-| `dssignatureCOSIGN` | ntext | Same reason |
-| `dsSIGCLT` | ntext | Same reason |
-| `dsSigCltImg` | varbinary(max) | `CHECKSUM()` does not work on binary data |
-| `dsSignatureCoSignImg` | varbinary(max) | Same reason |
-| `dsSignatureIMG` | varbinary(max) | Same reason |
-| `ServiceType` | varchar (optional) | Optional column — does not exist in all SAMMS versions |
-| `dsTelehealthSession` | bit (optional) | Optional column — does not exist in all SAMMS versions |
-| `HoldId` | int (optional) | Optional column — does not exist in all SAMMS versions |
-| `SiteCode` / `_site_code` | varchar | ETL-injected metadata — same value for every row from the same site, adds no change signal |
-| `LastModAt` / `silver_updated_at` | datetime | ETL-managed timestamp — changes on every write even when data is unchanged |
+| `dstxtNote`, `dsRTBNOTE` | ntext | CHECKSUM unreliable on large text |
+| `dsSignature`, `dssignatureCOSIGN`, `dsSIGCLT` | ntext | Same |
+| `dsSigCltImg`, `dsSignatureCoSignImg`, `dsSignatureIMG` | varbinary | CHECKSUM does not work on binary |
+| `upsize_ts` | varbinary(8) | Extracted to Silver/Gold but not fingerprinted |
+| `_site_code`, `silver_updated_at` | metadata | ETL-managed — no change signal |
 
-> **Conclusion: RowChkSum is fully aligned. The same 49 columns are hashed in both the old ETL and the Fabric pipeline. A row with a matching RowChkSum in Fabric Silver will have the same hash as the same row had in Azure SQL BHG_DR.**
+> **Note:** Fabric intentionally extends CHECKSUM with optional columns (using NULL when absent) so changes to `ServiceType`, telehealth, or hold fields trigger Silver updates. This differs from the old C# path where those columns were excluded entirely.
 
 ---
 
-## 16. RowState — Implementation in Fabric Silver
+## 20. RowState in Fabric Silver and Gold
 
 ### Where RowState comes from — the stored procedure
 
@@ -1267,7 +1398,8 @@ This is computed in the notebook from `dsClt`, which is already in the Bronze da
 
 | Fabric Silver Column | Source | Purpose |
 |---|---|---|
-| `RowState` | Computed: `dsClt >= 0 → 1, else 0` | Active vs placeholder flag — matches SP logic |
+| `RowState` | Computed: `dsClt >= 0 → 1, else 0` | Active vs placeholder — copied to Gold as `RowState` |
+| `upsize_ts` | SAMMS (optional) | Replication timestamp — copied to Gold unchanged |
 | `silver_created_at` | `current_timestamp()` on first INSERT | When this record was first loaded into Silver |
 | `silver_updated_at` | `current_timestamp()` on every update | When this record's data last changed |
 | `last_seen_at` | `current_timestamp()` on every run | Last time this record appeared in any extraction |
@@ -1275,7 +1407,7 @@ This is computed in the notebook from `dsClt`, which is already in the Bronze da
 
 ---
 
-## 17. Architectural Decisions — Lookback and Single Silver Table
+## 21. Architectural Decisions — Lookback and Single Silver Table
 
 ### Decision 1: Fixed lookback window (`p_lookback_days`)
 
@@ -1286,34 +1418,29 @@ Last Friday/month → -90 days
 Special override  → -200 days
 ```
 
-**Fabric behavior:** Fixed `p_lookback_days = 15` parameter.
+**Fabric behavior:** Fixed `p_lookback_days = 15` on child pipeline (Int parameter).
 
-**Why this is not a gap:** The dynamic 15/90/200 day logic will be driven by **control tables** in the future Fabric architecture. When the pipeline is triggered, the orchestration layer will read the control table to determine the correct lookback value for that day and pass it as `p_lookback_days`. The pipeline itself is intentionally kept simple — it receives whatever value it is given and uses it. No change to the pipeline is needed when control tables are implemented.
+**Why this is not a gap:** Dynamic 15/90/200 day logic will come from **control tables** later. The orchestration layer will pass the correct value as `p_lookback_days`. For manual runs today, pass `90` or `200` when triggering the parent pipeline.
 
-**For manual runs today:** If you need the 90-day window (e.g., running at month end), simply pass `p_lookback_days = 90` when you trigger the pipeline manually.
+### Decision 2: Single Silver table + Gold warehouse reload
 
----
+**Old ETL:** Year-partitioned Azure tables (`pats.tbl_DartsSrv_20XX`) via multiple merge SPs.
 
-### Decision 2: Single Silver table instead of year-partitioned tables
+**Fabric behavior:**
+- Silver: one Delta table `bhg_silver.pats.sl_tblDartSrv` with `dsDtStartYear` for filtering
+- Gold: `bhg_gold.pats.gd_darts_srv` — truncated and fully reloaded from Silver each run
 
-**Old ETL behavior:** 11 separate Azure SQL tables, one per year:
-```
-pats.tbl_DartsSrv_2014B4   (2008–2014)
-pats.tbl_DartsSrv_2015
-pats.tbl_DartsSrv_2016
-...
-pats.tbl_DartsSrv_2024
-```
+The `dsDtStartYear` column (Cell 1) supports logical year filtering. Add `.partitionBy("dsDtStartYear")` on first Silver write for performance at scale.
 
-**Fabric behavior:** Single unified Silver table: `bhg_silver.pats.sl_tblDartSrv`
+### Decision 3: Two-pipeline orchestration
 
-**Why this is the correct design for Fabric:** This is a deliberate client decision. Delta Lake on Fabric handles large table scale differently than Azure SQL. Instead of splitting physically by year, the single Silver table uses the `dsDtStartYear` column (computed in Cell 1) for logical partitioning. Delta's predicate pushdown means a query filtering `WHERE dsDtStartYear = 2023` only reads 2023 data — the same performance benefit as a separate table, without the complexity of 11 separate merge operations.
+**Child `dartSRV_Pipeline`:** SAMMS → Bronze only (ForEach + Lookup + Copy).
 
-**The `dsDtStartYear` column already computed in Cell 1 is ready for this.** When you want to partition the Silver Delta table by year, add `.partitionBy("dsDtStartYear")` to the initial write in Cell 1 and include `dsDtStartYear` in the Silver merge condition in Cell 2 for maximum query efficiency.
+**Parent `Execute_DartSrv`:** Invokes child, runs Silver notebook, then Truncate + Copy to Gold.
 
 ---
 
-## 18. Why Five Date Columns in the WHERE Clause
+## 22. Why Five Date Columns in the WHERE Clause
 
 ```sql
 WHERE dsClt IS NOT NULL
@@ -1347,7 +1474,7 @@ By checking all five, the pipeline captures any record that was touched for any 
 
 ---
 
-## 19. Troubleshooting Guide
+## 23. Troubleshooting Guide
 
 ### Pipeline fails at `lkp_check_optional_columns_exist`
 
@@ -1408,6 +1535,22 @@ By checking all five, the pipeline captures any record that was touched for any 
 **Symptom:** `ServiceType` column is always `NULL` in Bronze even for newer clinics.  
 **Cause:** The `source_schema` in the `p_sites` array is wrong, or the table name is different in that clinic.  
 **Fix:** Confirm that `source_schema = "dbo"` and `source_table = "tblDartsSrv"` are correct for each clinic object in `p_sites`. Run the Lookup query manually against that database to verify.
+
+---
+
+### Gold copy fails after truncate
+
+**Symptom:** `copy_darts_silver_to_gold` fails; Gold table is empty.  
+**Cause:** Column mapping mismatch between Silver and Gold, or Silver table name case (`sl_tbldartsrv` vs `sl_tblDartSrv`).  
+**Fix:** Verify mappings in `dartdefintion.txt`. Re-run parent pipeline from Silver notebook step if Gold was truncated but copy failed.
+
+---
+
+### upsize_ts missing in Silver on older deployments
+
+**Symptom:** Copy to Gold fails on `upsize_ts` column.  
+**Cause:** Silver table created before `upsize_ts` was added to extraction.  
+**Fix:** Cell 1 runs `ALTER TABLE ... ADD COLUMNS (upsize_ts BINARY)` automatically. Re-run notebook Cell 1 if needed.
 
 ---
 

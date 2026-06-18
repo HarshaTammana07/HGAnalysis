@@ -1,0 +1,7 @@
+{
+  "workspace_id": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+  "pipelines": {
+    "Execute_Notes": "189b74e5-ef11-4ee4-afb8-4a9b8a576f30",
+    "pl_note_saams_to_lakehouse": "61f2955b-68c9-4a3b-8da7-186a0ce8e23e"
+  }
+}

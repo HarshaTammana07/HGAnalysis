@@ -1,0 +1,60 @@
+from pyspark.sql import functions as F
+from pyspark.sql.types import *
+from delta.tables import DeltaTable
+
+etlconfig_table = "bhg_bronze.meta.etlconfig"
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+
+created_by = "Harsha"
+environment_name = "DEV"
+trigger_type = "SCHEDULE"
+trigger_frequency = "DAILY"
+triggered_by = "Fabric"
+
+etl_schema = StructType([
+    StructField("ConfigId", LongType(), True),
+    StructField("ConfigName", StringType(), True),
+    StructField("PipelineName", StringType(), True),
+    StructField("PipelinePath", StringType(), True),
+    StructField("TransformationModule", StringType(), True),
+    StructField("SourceSystem", StringType(), True),
+    StructField("SourceType", StringType(), True),
+    StructField("TargetName", StringType(), True),
+    StructField("EnvironmentName", StringType(), True),
+    StructField("PipelineDependency", StringType(), True),
+    StructField("ExecutionSequence", IntegerType(), True),
+    StructField("TriggerType", StringType(), True),
+    StructField("TriggerFrequency", StringType(), True),
+    StructField("TriggeredBy", StringType(), True),
+    StructField("IsActive", IntegerType(), True),
+    StructField("ConnectionConfig", StringType(), True),
+    StructField("CreatedBy", StringType(), True),
+    StructField("ModifiedBy", StringType(), True)
+])
+
+etl_rows = [
+    (25, "SAMMS DartsSrv Bronze Pipeline", "dartSRV_Pipeline", "/pipelines/dartSRV_Pipeline", None,
+     "SAMMS", "DATA BASE", "BR", environment_name, None, 1, trigger_type, trigger_frequency, triggered_by, 1, "{}", created_by, created_by),
+
+    (26, "SAMMS DartsSrv Silver Pipeline", "nb_darts_bronze_to_silver", "/notebooks/nb_darts_bronze_to_silver", "/notebooks/nb_darts_bronze_to_silver",
+     "SAMMS", "TABLE", "SL", environment_name, "DARTS_BRONZE", 2, trigger_type, trigger_frequency, triggered_by, 1, "{}", created_by, created_by),
+
+    (27, "SAMMS DartsSrv Gold Pipeline", "Execute_DartSrv", "/pipelines/Execute_DartSrv", "Versioned Gold Publish",
+     "SAMMS", "TABLE", "GL", environment_name, "DARTS_SILVER", 3, trigger_type, trigger_frequency, triggered_by, 1, "{}", created_by, created_by)
+]
+
+etl_df = (
+    spark.createDataFrame(etl_rows, etl_schema)
+    .withColumn("CreatedAt", F.current_timestamp())
+    .withColumn("ModifiedAt", F.current_timestamp())
+)
+
+etl_cols = [f.name for f in etl_df.schema.fields]
+etl_update = {c: f"s.{c}" for c in etl_cols if c not in ["ConfigId", "CreatedAt", "CreatedBy"]}
+etl_insert = {c: f"s.{c}" for c in etl_cols}
+
+DeltaTable.forName(spark, etlconfig_table).alias("t") \
+    .merge(etl_df.alias("s"), "t.ConfigId = s.ConfigId") \
+    .whenMatchedUpdate(set=etl_update) \
+    .whenNotMatchedInsert(values=etl_insert) \
+    .execute()

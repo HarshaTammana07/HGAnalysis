@@ -1,0 +1,12 @@
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\bin\Debug\net10.0\BHG-DR-LIB.deps.json
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\bin\Debug\net10.0\BHG-DR-LIB.dll
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\bin\Debug\net10.0\BHG-DR-LIB.pdb
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.csproj.AssemblyReference.cache
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.AssemblyInfoInputs.cache
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.AssemblyInfo.cs
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.csproj.CoreCompileInputs.cache
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.dll
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\refint\BHG-DR-LIB.dll
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\BHG-DR-LIB.pdb
+C:\Users\bcatellier\Documents\BCAppCode\BHG-DR-LIB\obj\Debug\net10.0\ref\BHG-DR-LIB.dll

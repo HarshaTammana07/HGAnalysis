@@ -1,0 +1,78 @@
+from pyspark.sql.functions import col, current_timestamp, year, row_number, when
+from pyspark.sql.window import Window
+
+# The pipeline passes p_ingest_run_id as a parameter.
+# The try/except allows you to run this cell manually during development
+# without the pipeline by falling back to a hardcoded test value.
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = "test-run-001"
+
+bronze_table = "bhg_bronze.Dart.br_tblDartSrv"
+silver_table = "bhg_silver.pats.sl_tblDartSrv"
+
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+
+# Read only the rows from THIS pipeline run.
+# Bronze is an append-only table with rows from many runs.
+# We filter to p_ingest_run_id so we only process today's extraction.
+bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+
+bronze_count = bronze_df.count()
+print(f"Bronze rows for this run: {bronze_count}")
+
+# Safety check: if no rows found, the pipeline or copy activity failed.
+# Raising an exception here marks the notebook activity as failed in the pipeline.
+if bronze_count == 0:
+    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+
+# Deduplicate within current run.
+# Key = _site_code + dsID.
+# If the same record appears twice (e.g., due to a retry), keep the latest one.
+w = Window.partitionBy("_site_code", "dsID").orderBy(col("_extracted_at").desc())
+
+src_df = (
+    bronze_df
+    .where(col("_site_code").isNotNull() & col("dsID").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+    # Extract the year from session start date.
+    # Used for partitioning and year-based filtering in Silver.
+    .withColumn("dsDtStartYear", year(col("dsDtStart")))
+    # Timestamp set every time this row is written/updated in Silver.
+    .withColumn("silver_updated_at", current_timestamp())
+    # Timestamp of when this row was last seen in a SAMMS extraction.
+    .withColumn("last_seen_at", current_timestamp())
+    # Matches the stored procedure logic: 1 = active/valid patient, 0 = placeholder (dsClt < 0).
+    .withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))
+)
+
+# Create a temp view so you can query src_df with SQL if needed for debugging.
+src_df.createOrReplaceTempView("vw_darts_current_run")
+
+src_count = src_df.count()
+print(f"Prepared source rows for Silver: {src_count}")
+
+# If the Silver table does not exist yet (first-ever run), create it.
+# This uses overwrite mode to write the full initial load.
+# silver_created_at is added here and will never be overwritten in future updates.
+if not spark.catalog.tableExists(silver_table):
+    (
+        src_df
+        .withColumn("silver_created_at", current_timestamp())
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created Silver table and inserted rows: {src_count}")
+else:
+    print(f"Silver table already exists: {silver_table}")
+    silver_columns = {field.name for field in spark.table(silver_table).schema.fields}
+    if "upsize_ts" not in silver_columns:
+        spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (upsize_ts BINARY)")
+        print("Added missing Silver column: upsize_ts")

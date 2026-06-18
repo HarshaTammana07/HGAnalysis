@@ -1,0 +1,43 @@
+/****** Object:  StoredProcedure [pats].[MergeFormSignaturesPeriodicReassessments]    Script Date: 5/28/2026 4:26:39 PM ******/SET ANSI_NULLS ONGOSET QUOTED_IDENTIFIER ONGOALTER procedure [pats].[MergeFormSignaturesPeriodicReassessments] (  @sitecode varchar(25))asDECLARE @SummaryOfChanges TABLE(Change VARCHAR(20));Declare @LastModAt Date = GetDate();Merge into pats.tbl_dbo_FormAnswerSignatures as t/*[SiteCode]      ,[FormName]      ,[FormId]      ,[ClientId]      ,[CreatedOn]      ,[UpdatedOn]      ,[CompletedBySignatureSignatureDate]      ,[CounselorSignatureSignatureDate]      ,[DoctorSignatureSignatureDate]      ,[MedicalProviderSignatureSignatureDate]      ,[PatientSignatureDate]      ,[ProviderSignatureSignatureDate]      ,[RequestorSignatureDate]      ,[StaffSignatureDate]      ,[SupervisorSignatureSignatureDate]      ,[RowState]      ,[LastModAt]      ,[RowChkSum]*/Using (select distinct SiteCode, FormName, FormId, ClientId, CreatedOn, UpdatedOn = x.ModifiedOn, Isdeleted , CompletedBySignatureSignatureDate = null, CounselorSignatureSignatureDate = CounselorSignatureDate, DoctorSignatureSignatureDate = null, MedicalProviderSignatureSignatureDate = null, PatientSignatureDate = PatientSignatureDate, ProviderSignatureSignatureDate = ProviderSignatureDate, RequestorSignatureDate = null, StaffSignatureDate = null, SupervisorSignatureSignatureDate = SupervisorSignatureDate
+
+ from (SELECT distinct a.SiteCode, FormName = 'Periodic Reassessment', FormId = '99-'+ convert(varchar, a.ClientId) + '-' + convert(varchar, isnull(b.PreAdmissionId, 0)) + '-' + convert(varchar, a.id)--+ '-' + convert(varchar, isnull(a.DataFormId, 0)), a.ClientId, a.CreatedOn, a.ModifiedOn, PatientSignatureDate, CounselorSignatureDate, ProviderSignatureDate, SupervisorSignatureDate
+
+        , b.PreAdmissionId, a.IsDeletedFROM [pats].[Tbl_NewPeriodicReassessment] a left join [pats].[Tbl_NewPeriodicReassessmentCounselorReview] bon (a.SiteCode = b.SiteCode and a.id = b.newperiodicreassessmentID and a.PreAdmissionId = b.PreAdmissionId)) x where SiteCode = @sitecode) as s
+
+    on (t.SiteCode = s.SiteCode and t.FormId = s.FormId and t.clientid = s.clientid)When Matched Thenupdate set t.[FormName] = s.[FormName], t.[CreatedOn] = s.[CreatedOn], t.[UpdatedOn] = s.[UpdatedOn]
+
+      , t.[CompletedBySignatureSignatureDate] = s.[CompletedBySignatureSignatureDate]
+
+    , t.[CounselorSignatureSignatureDate] = s.[CounselorSignatureSignatureDate]
+
+    , t.[DoctorSignatureSignatureDate] = s.[DoctorSignatureSignatureDate]
+
+      , t.[MedicalProviderSignatureSignatureDate] = s.[MedicalProviderSignatureSignatureDate]
+
+    , t.[PatientSignatureDate] = s.[PatientSignatureDate]
+
+    , t.[ProviderSignatureSignatureDate] = s.[ProviderSignatureSignatureDate]
+
+      , t.[RequestorSignatureDate] = s.[RequestorSignatureDate], t.[StaffSignatureDate] = s.[StaffSignatureDate]
+
+    , t.[SupervisorSignatureSignatureDate] = s.[SupervisorSignatureSignatureDate]
+
+    , t.[RowState] = case when s.isDeleted = 0 then 1 else 0 end, t.[LastModAt] = @LastModAt
+
+when not Matched by TARGET thenInsert (SiteCode, [FormName], [FormId], [ClientId], [CreatedOn], [UpdatedOn]
+
+      , [CompletedBySignatureSignatureDate], [CounselorSignatureSignatureDate], [DoctorSignatureSignatureDate]
+
+      , [MedicalProviderSignatureSignatureDate], [PatientSignatureDate], [ProviderSignatureSignatureDate]
+
+      , [RequestorSignatureDate], [StaffSignatureDate], [SupervisorSignatureSignatureDate], [RowState], [LastModAt])values (s.SiteCode, s.[FormName], s.[FormId], s.[ClientId], s.[CreatedOn], s.[UpdatedOn]
+
+      , s.[CompletedBySignatureSignatureDate], s.[CounselorSignatureSignatureDate], s.[DoctorSignatureSignatureDate]
+
+      , s.[MedicalProviderSignatureSignatureDate], s.[PatientSignatureDate], s.[ProviderSignatureSignatureDate]
+
+      , s.[RequestorSignatureDate], s.[StaffSignatureDate], s.[SupervisorSignatureSignatureDate]
+
+    , case when s.isDeleted = 0 then 1 else 0 end, @LastModAt)--When not Matched by SOURCE then --and t.SiteCode = s.SiteCode and t.dsID = s.dsID and t.clientid = s.clientid--  update set t.RowState = 0--deleteoutput $action into @SummaryOfChanges;select */*  RowsUpd = count(case when Change = 'UPDATE' then 1 else 0 end)     , RowsIns = count(case when Change = 'INSERT' then 1 else 0 end) */from @SummaryOfChanges;update pats.tbl_dbo_FormAnswerSignatures set RowState = 0
+
+  where SiteCode = @sitecode and FormName = 'Periodic Reassessment' and LastModAt < @LastModAt

@@ -1,0 +1,39 @@
+/****** Object:  StoredProcedure [stg].[sp_FormQA_Merge]    Script Date: 4/17/2026 2:06:32 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [stg].[sp_FormQA_Merge]
+(
+  @sitecode varchar(25)
+) as
+ 
+DECLARE @SummaryOfChanges TABLE(Change VARCHAR(20));
+ 
+Merge into [pats].[tbl_dbo_FormQuestionAnswers] as t
+Using (SELECT [Sitecode], [FormName], [FormId],  PreAdmissionId = isnull([PreAdmissionId], -1), ClientId = isnull([ClientId], 0)
+            , [QuestionId], [QuestionOrderId], [QuestionText], [OptionId]
+            , [AnswerValue], [CreatedBy], [CreatedOn], [UpdatedBy], [UpdatedOn], [IsDeleted]
+  FROM [stg].[tbl_FormQA]) s
+    on (t.SiteCode = s.SiteCode and t.FormName = s.FormName and t.FormId = s.FormId and t.PreAdmissionId = s.PreAdmissionId and t.ClientId = s.ClientId
+      and t.QuestionId = s.QuestionId and t.QuestionOrderId = s.QuestionOrderId)
+When Matched Then
+  update set t.QuestionText = s.QuestionText, t.OptionId = s.OptionId, t.AnswerValue = s.AnswerValue, t.CreatedBy = s.CreatedBy
+           , t.CreatedOn = s.CreatedOn, t.UpdatedBy = s.UpdatedBy, t.UpdatedOn = s.UpdatedOn, t.IsDeleted = s.IsDeleted,
+       t.RowState = case when s.IsDeleted = 1 then 0 else 1 end
+when not Matched by TARGET then
+    Insert ([Sitecode], [FormName], [FormId], [PreAdmissionId], [ClientId]
+            , [QuestionId], [QuestionOrderId], [QuestionText], [OptionId]
+            , [AnswerValue], [CreatedBy], [CreatedOn], [UpdatedBy], [UpdatedOn], [IsDeleted], RowState, LastModAt)
+  values (s.[Sitecode], s.[FormName], s.[FormId], s.[PreAdmissionId], s.[ClientId]
+            , s.[QuestionId], s.[QuestionOrderId], s.[QuestionText], s.[OptionId]
+            , s.[AnswerValue], s.[CreatedBy], s.[CreatedOn], s.[UpdatedBy], s.[UpdatedOn], s.[IsDeleted]
+      , case when s.IsDeleted = 1 then 0 else 1 end, getDate())
+ 
+output $action into @SummaryOfChanges;
+ 
+select *
+     /*  RowsUpd = count(case when Change = 'UPDATE' then 1 else 0 end)
+     , RowsIns = count(case when Change = 'INSERT' then 1 else 0 end) */
+  from @SummaryOfChanges;
+GO

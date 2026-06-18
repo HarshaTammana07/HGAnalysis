@@ -1,4 +1,4 @@
-# FormAnswerSignatures — Microsoft Fabric ETL Pipeline Implementation Guide
+﻿# FormAnswerSignatures — Microsoft Fabric ETL Pipeline Implementation Guide
 
 **Pipeline Name:** FormAnswerSignatures Bronze → Silver ETL  
 **Data:** Clinical form signature date records — one row per form instance, tracking when each role signed  
@@ -6,6 +6,124 @@
 **Silver Target:** `bhg_silver.pats.sl_tblFormAnswerSignatures`  
 **Control Dependency:** `bhg_silver.ctrl.Forms2Process` (Fabric lakehouse table — read only from Spark, never from SAMMS)  
 **Author Reference:** `FormAnswerSignatures_Tables_Columns_Logic.md`, `SaveAnswerSignatures_Transformation_Logic.md`, `BHGTaskRunner/Program.cs`, `SaveFormQAData.cs`
+
+---
+
+## 0. Orchestration Pattern — Multi-Pipeline Execution at Scale
+
+### Architecture: 5 Parallel ForEach × 23 Sites + Parent Orchestrator
+
+The AnswerSignatures pipeline follows the same orchestration pattern as FormQuestionAnswers:
+
+```
+Parent Pipeline (Execute_Form_AnswerSignature)
+  │
+  └── Executed_After_BronzCopy  (InvokePipeline — waitOnCompletion: true)
+        │
+        └── Child Pipeline (pl_answersig_samms_to_lakehouse)
+              ├── ForEach 1 → 23 sites  (p_sites)
+              ├── ForEach 2 → 23 sites  (p_sites2)
+              ├── ForEach 3 → 23 sites  (p_sites3)
+              ├── ForEach 4 → 23 sites  (p_sites4)
+              └── ForEach 5 → 23 sites  (p_sites5)
+              [all 5 ForEach run in parallel — 115 sites total]
+
+  After InvokePipeline succeeds:
+  └── nb_answersig_bronze_to_silver (Silver Notebook)
+```
+
+> **Why `waitOnCompletion: true` is critical:** All 115 sites must finish writing to Bronze before the Silver notebook runs. Without it, the Silver notebook starts mid-extraction and misses rows from still-running sites.
+
+---
+
+### Step-by-Step: Building the Parent Orchestrator Pipeline
+
+#### 0.1 Create the Parent Pipeline
+
+1. In Fabric, create a new data pipeline: **`Execute_Form_AnswerSignature`**
+2. This pipeline has only **two activities** — one Invoke Pipeline and one Silver Notebook
+
+#### 0.2 Add Parameters to the Parent Pipeline
+
+In **Edit → Parameters** tab, add:
+
+| Parameter | Type | Default |
+|---|---|---|
+| `p_ingest_run_id` | String | `@pipeline().RunId` |
+| `p_lookback_days` | Int | `30` |
+| `p_reload` | Bool | `false` |
+| `p_sites` | Array | `[{"site_code": "...", "source_database": "..."}, ...]` (23 sites) |
+| `p_sites2` | Array | (next 23 sites) |
+| `p_sites3` | Array | (next 23 sites) |
+| `p_sites4` | Array | (next 23 sites) |
+| `p_sites5` | Array | (last 23 sites) |
+
+#### 0.3 Add ONE Invoke Pipeline Activity
+
+1. **Drag an Invoke Pipeline activity** onto the canvas
+2. **Rename it:** `Executed_After_BronzCopy`
+3. **No dependency** — starts immediately when parent runs
+4. **Configure Settings tab:**
+
+| Setting | Value |
+|---|---|
+| Pipeline | `pl_answersig_samms_to_lakehouse` (child pipeline) |
+| Wait on completion | ✓ (must be checked) |
+
+5. **Configure Parameters tab:**
+
+| Parameter | Value |
+|---|---|
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_lookback_days` | `@pipeline().parameters.p_lookback_days` (Expression) |
+| `p_reload` | `@pipeline().parameters.p_reload` (Expression) |
+| `p_sites` | `@pipeline().parameters.p_sites` (Expression) |
+| `p_sites2` | `@pipeline().parameters.p_sites2` (Expression) |
+| `p_sites3` | `@pipeline().parameters.p_sites3` (Expression) |
+| `p_sites4` | `@pipeline().parameters.p_sites4` (Expression) |
+| `p_sites5` | `@pipeline().parameters.p_sites5` (Expression) |
+
+**Full JSON:**
+```json
+{
+    "name": "Executed_After_BronzCopy",
+    "type": "InvokePipeline",
+    "dependsOn": [],
+    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
+    "typeProperties": {
+        "waitOnCompletion": true,
+        "operationType": "InvokeFabricPipeline",
+        "pipelineId": "cf9e89d0-9574-439e-85b9-c022327ed022",
+        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+        "parameters": {
+            "p_ingest_run_id": { "value": "@pipeline().parameters.p_ingest_run_id", "type": "Expression" },
+            "p_lookback_days": { "value": "@pipeline().parameters.p_lookback_days", "type": "Expression" },
+            "p_reload": { "value": "@pipeline().parameters.p_reload", "type": "Expression" },
+            "p_sites":  { "value": "@pipeline().parameters.p_sites",  "type": "Expression" },
+            "p_sites2": { "value": "@pipeline().parameters.p_sites2", "type": "Expression" },
+            "p_sites3": { "value": "@pipeline().parameters.p_sites3", "type": "Expression" },
+            "p_sites4": { "value": "@pipeline().parameters.p_sites4", "type": "Expression" },
+            "p_sites5": { "value": "@pipeline().parameters.p_sites5", "type": "Expression" }
+        }
+    },
+    "externalReferences": { "connection": "9efac0af-aea0-4007-90e5-0fa555fb1fa2" }
+}
+```
+
+#### 0.4 Add the Silver Notebook Activity
+
+1. **Drag a Notebook activity** onto the canvas
+2. **Rename it:** `nb_answersig_bronze_to_silver`
+3. **Dependency:** `Executed_After_BronzCopy` → `nb_answersig_bronze_to_silver` (Succeeded)
+4. **Configure Parameters:**
+
+| Parameter | Value |
+|---|---|
+| `p_ingest_run_id` | `@pipeline().parameters.p_ingest_run_id` (Expression) |
+| `p_lookback_days` | `@pipeline().parameters.p_lookback_days` (Expression) |
+| `p_reload` | `@pipeline().parameters.p_reload` (Expression) |
+
+This notebook reads Bronze filtered by `_ingest_run_id`, processes all 115 sites' rows together, and merges into Silver in a single pass.
 
 ---
 
@@ -22,7 +140,7 @@
 9. [Step 4 — Inside ForEach: IfCondition — Gate on AnswerSignature Table](#9-step-4--inside-foreach-ifcondition--gate-on-answersignature-table)
 10. [Step 5 — Inside True Branch: Lookup 2 — Get All Existing Tables](#10-step-5--inside-true-branch-lookup-2--get-all-existing-tables)
 11. [Step 6 — Inside True Branch: Notebook Activity — SQL Builder](#11-step-6--inside-true-branch-notebook-activity--sql-builder)
-12. [Step 7 — Inside True Branch: Set Variable — Capture Built SQL](#12-step-7--inside-true-branch-set-variable--capture-built-sql)
+12. [Step 7 — Inside True Branch: Copy Activity — Extract to Bronze](#12-step-7--inside-true-branch-copy-activity--extract-to-bronze)
 13. [Step 8 — Inside True Branch: Copy Activity — Extract to Bronze](#13-step-8--inside-true-branch-copy-activity--extract-to-bronze)
 14. [Step 9 — Add the Silver Notebook Activity (After ForEach)](#14-step-9--add-the-silver-notebook-activity-after-foreach)
 15. [Step 10 — Create the SQL Builder Notebook: nb_answersig_build_site_sql](#15-step-10--create-the-sql-builder-notebook-nb_answersig_build_site_sql)
@@ -90,14 +208,8 @@
 │  │  │                   │ exitValue                   ││                │  │
 │  │  │                   ▼                            ││                │  │
 │  │  │  ┌──────────────────────────────────────┐     ││                │  │
-│  │  │  │ sv_set_answersig_sql (Set Variable)  │     ││                │  │
-│  │  │  │ v_answersig_sql = exitValue          │     ││                │  │
-│  │  │  └────────────────┬─────────────────────┘     ││                │  │
-│  │  │                   │ Succeeded                   ││                │  │
-│  │  │                   ▼                            ││                │  │
-│  │  │  ┌──────────────────────────────────────┐     ││                │  │
 │  │  │  │ cp_answersig_to_bronze (Copy)         │     ││                │  │
-│  │  │  │ query = @variables('v_answersig_sql') │     ││                │  │
+│  │  │  │ query = activity exit value           │     ││                │  │
 │  │  │  │ → SAMMS SQL Server (Fabric gateway)  │     ││                │  │
 │  │  │  │ → APPEND → bhg_bronze                │     ││                │  │
 │  │  │  │         Forms.br_tblFormAnswerSig    │     ││                │  │
@@ -269,18 +381,6 @@ Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
 
 ---
 
-### Pipeline Variable
-
-Go to: **Pipeline canvas → click empty space → Variables tab → + New**
-
-#### Variable: `v_answersig_sql`
-
-| Setting | Value |
-|---|---|
-| Name | `v_answersig_sql` |
-| Type | `String` |
-| Default | *(leave blank)* |
-
 ---
 
 ## 6. Step 1 — Create the Data Pipeline in Fabric
@@ -288,7 +388,7 @@ Go to: **Pipeline canvas → click empty space → Variables tab → + New**
 1. Open your Fabric workspace → click **+ New** → **Data pipeline**
 2. Name it: `pl_answersig_samms_to_lakehouse`
 3. Click **Create**
-4. Add all four parameters and the `v_answersig_sql` variable as defined in Section 5
+4. Add all four parameters as defined in Section 5
 
 ---
 
@@ -546,46 +646,14 @@ This notebook is a **pure string generator**. It reads `bhg_silver.ctrl.Forms2Pr
 
 ---
 
-## 12. Step 7 — Inside True Branch: Set Variable — Capture Built SQL
+## 12. Step 7 — Inside True Branch: Copy Activity — Extract to Bronze
 
-### Add the activity
-1. Drag a **Set Variable** activity
-2. Rename it: `sv_set_answersig_sql`
-3. Dependency: `nb_answersig_build_site_sql` → `sv_set_answersig_sql` (Succeeded)
-
-**Settings:**
-
-| Setting | Value |
-|---|---|
-| Variable name | `v_answersig_sql` |
-| Value | `@activity('nb_answersig_build_site_sql').output.result.exitValue` (Expression) |
-
-**JSON:**
-```json
-{
-    "name": "sv_set_answersig_sql",
-    "type": "SetVariable",
-    "dependsOn": [
-        { "activity": "nb_answersig_build_site_sql", "dependencyConditions": ["Succeeded"] }
-    ],
-    "typeProperties": {
-        "variableName": "v_answersig_sql",
-        "value": {
-            "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue",
-            "type": "Expression"
-        }
-    }
-}
-```
-
----
-
-## 13. Step 8 — Inside True Branch: Copy Activity — Extract to Bronze
+The notebook `nb_answersig_build_site_sql` constructs the full UNION SQL and returns it via `mssparkutils.notebook.exit()`. The Copy activity receives this directly — no Set Variable intermediary needed.
 
 ### Add the activity
 1. Drag a **Copy** activity
 2. Rename it: `cp_answersig_to_bronze`
-3. Dependency: `sv_set_answersig_sql` → `cp_answersig_to_bronze` (Succeeded)
+3. Dependency: `nb_answersig_build_site_sql` → `cp_answersig_to_bronze` (Succeeded)
 
 **Important database-context note:** The SQL generated by `nb_answersig_build_site_sql`
 uses fully qualified source tables like `[SAMMS-ColoradoSpringsV5].dbo.[Form]`.
@@ -601,7 +669,7 @@ name 'dbo.Form'` errors in the Copy activity.
 | Source type | SQL Server |
 | Connection | `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` |
 | Use query | **Query** |
-| Query | `@variables('v_answersig_sql')` (Expression) |
+| Query | `@activity('nb_answersig_build_site_sql').output.result.exitValue` (Expression) |
 | Query timeout | `02:00:00` |
 
 ### Configure Sink tab
@@ -636,13 +704,13 @@ FormAnswerSignatures has a completely different column structure (9 signature da
     "name": "cp_answersig_to_bronze",
     "type": "Copy",
     "dependsOn": [
-        { "activity": "sv_set_answersig_sql", "dependencyConditions": ["Succeeded"] }
+        { "activity": "nb_answersig_build_site_sql", "dependencyConditions": ["Succeeded"] }
     ],
     "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
     "typeProperties": {
         "source": {
             "type": "SqlServerSource",
-            "sqlReaderQuery": { "value": "@variables('v_answersig_sql')", "type": "Expression" },
+            "sqlReaderQuery": { "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue", "type": "Expression" },
             "queryTimeout": "02:00:00",
             "partitionOption": "None",
             "datasetSettings": {
@@ -1003,6 +1071,49 @@ strCmd = (
     f"LEFT JOIN _AS_agg ag ON ag.FormId = x.FormId\n"
 )
 
+# ── Legacy special branch: Periodic Reassessment / Prefix 99 ─────────
+# BHG_DR contains FormAnswerSignature rows with:
+#   FormName = 'Periodic Reassessment'
+#   FormId   = '99-' + ClientId + '-' + PreAdmissionId + '-' + Id
+# These rows are not generated by the current active Forms2Process config.
+# They come from NewPeriodicReassessment + NewPeriodicReassessmentCounselorReview.
+# This mirrors [pats].[MergeFormSignaturesPeriodicReassessments]:
+# it is intentionally full-site, not lookback filtered.
+# Guard with existing_tables so sites without these source tables skip cleanly.
+if (
+    "newperiodicreassessment" in existing_tables
+    and "newperiodicreassessmentcounselorreview" in existing_tables
+):
+    block = (
+        f"\nUNION\n"
+        f"SELECT DISTINCT\n{meta_cols}"
+        f"  SiteCode='{sc}', 'Periodic Reassessment' AS [FormName],\n"
+        f"  '99-' + CONVERT(varchar, ISNULL(a.ClientId, 0))"
+        f" + '-' + CONVERT(varchar, ISNULL(b.PreAdmissionId, 0))"
+        f" + '-' + CONVERT(varchar, a.Id) AS [FormID],\n"
+        f"  ClientId = ISNULL(a.ClientId, 0),\n"
+        f"  [CreatedOn] = CONVERT(date, a.CreatedOn),\n"
+        f"  [UpdatedOn] = CONVERT(date, a.ModifiedOn),\n"
+        f"  IsDeleted = CASE WHEN ISNULL(a.IsDeleted,0)=0 THEN 0 ELSE 1 END,\n"
+        f"  CompletedBySignatureSignatureDate = null,\n"
+        f"  CounselorSignatureSignatureDate = CONVERT(date, b.CounselorSignatureDate),\n"
+        f"  DoctorSignatureSignatureDate = null,\n"
+        f"  MedicalProviderSignatureSignatureDate = null,\n"
+        f"  PatientSignatureDate = CONVERT(date, b.PatientSignatureDate),\n"
+        f"  ProviderSignatureSignatureDate = CONVERT(date, b.ProviderSignatureDate),\n"
+        f"  RequestorSignatureDate = null,\n"
+        f"  StaffSignatureDate = null,\n"
+        f"  SupervisorSignatureSignatureDate = CONVERT(date, b.SupervisorSignatureDate)\n"
+        f"FROM {tbl('NewPeriodicReassessment')} a\n"
+        f"LEFT JOIN {tbl('NewPeriodicReassessmentCounselorReview')} b\n"
+        f"    ON a.Id = b.NewPeriodicReassessmentId\n"
+        f"   AND a.PreAdmissionId = b.PreAdmissionId\n"
+    )
+    strCmd += block
+    print("  + NewPeriodicReassessment (Periodic Reassessment / Prefix 99)")
+else:
+    print("  SKIP Periodic Reassessment / Prefix 99: source tables not found")
+
 # ── Step 2: Loop over Forms2Process — UNION in each custom table ─────
 # NOTE: No ORDER BY — matches old system's unordered loop.
 # 3 switch cases: tblORDERREQ, tblTP17REVIEW, default.
@@ -1247,6 +1358,7 @@ for _, xf in f2p_df.iterrows():
         # ── Level B: 9 signature date columns ─────────────────────
         # For AdmissionAssessment: Patient, Provider, Staff, Supervisor → aas. alias
         # For NewAdmissionAssessment: all 9 → b. alias
+        # For MNComprehensiveAssessment: Counselor, Patient, Staff, Supervisor → b. alias
         # SF_PatientPreAdmission: Staff → null when site is "LAB"
         # All others: → a. alias
         def build_sig_col(col_val, col_label, default_alias="a"):
@@ -1264,6 +1376,14 @@ for _, xf in f2p_df.iterrows():
             elif table_name == "NewAdmissionAssessment":
                 alias = "b"
                 source_table = "NewAdmissionAssessmentASAMDimension6"
+            elif table_name == "MNComprehensiveAssessment" and col_label in (
+                "CounselorSignatureSignatureDate",
+                "PatientSignatureDate",
+                "StaffSignatureDate",
+                "SupervisorSignatureSignatureDate"
+            ):
+                alias = "b"
+                source_table = "MNComprehensiveAssessmentSocialHistory"
             # Special: SF_PatientPreAdmission + LAB site → StaffSignatureDate = null
             if table_name == "SF_PatientPreAdmission" and col_label == "StaffSignatureDate" and p_site_code.upper() == "LAB":
                 return f"{col_label} = null"
@@ -1335,6 +1455,19 @@ for _, xf in f2p_df.iterrows():
                 )
             else:
                 print(f"  WARN: NewAdmissionAssessmentASAMDimension6 not found — b sig cols will be null")
+
+        # Additional join for MNComprehensiveAssessment
+        # updatedProgram.cs routes Counselor/Patient/Staff/Supervisor signature dates
+        # through MNComprehensiveAssessmentSocialHistory alias b.
+        if table_name == "MNComprehensiveAssessment":
+            if "mncomprehensiveassessmentsocialhistory" in existing_tables:
+                block += (
+                    f"INNER JOIN {tbl('MNComprehensiveAssessmentSocialHistory')} b\n"
+                    f"    ON a.preadmissionID = b.preadmissionID\n"
+                    f"   AND a.Id = b.MNComprehensiveAssessmentFormId\n"
+                )
+            else:
+                print(f"  WARN: MNComprehensiveAssessmentSocialHistory not found — b sig cols will be null")
 
         # Date filter WHERE clause
         if date_filter and modified_on and str(modified_on) not in ("", "nan", "None"):
@@ -1609,7 +1742,7 @@ In Fabric: `RowChkSum` is **not computed and not present** in Bronze. The Silver
 
 ```python
 from delta.tables import DeltaTable
-from pyspark.sql.functions import current_timestamp
+from pyspark.sql.functions import col, current_timestamp
 
 silver_table = "bhg_silver.pats.sl_tblFormAnswerSignatures"
 
@@ -1640,7 +1773,7 @@ insert_values["silver_created_at"] = "current_timestamp()"
         # 4-column composite PK
         """
         tgt.SiteCode = src.SiteCode
-        AND tgt.FormName = src.FormName
+        AND tgt.FormName <=> src.FormName
         AND tgt.FormId   = src.FormId
         AND tgt.ClientId = src.ClientId
         """
@@ -1652,6 +1785,61 @@ insert_values["silver_created_at"] = "current_timestamp()"
     .whenNotMatchedInsert(values=insert_values)
     .execute()
 )
+
+# Mirrors [pats].[MergeFormSignaturesPeriodicReassessments]:
+# after the full-site Periodic Reassessment merge, any older active
+# Periodic Reassessment row for those processed sites that was not present
+# in the current source set is marked inactive.
+current_pr_df = (
+    src_df
+    .where(col("FormName") == "Periodic Reassessment")
+    .select("SiteCode", "FormName", "FormId", "ClientId")
+    .distinct()
+)
+
+pr_sites = [r["SiteCode"] for r in current_pr_df.select("SiteCode").distinct().collect()]
+
+if pr_sites:
+    silver_pr_df = (
+        spark.table(silver_table)
+        .where((col("FormName") == "Periodic Reassessment") & (col("SiteCode").isin(pr_sites)) & (col("RowState") == 1))
+        .select("SiteCode", "FormName", "FormId", "ClientId")
+    )
+
+    stale_pr_df = (
+        silver_pr_df.alias("tgt")
+        .join(
+            current_pr_df.alias("src"),
+            on=["SiteCode", "FormName", "FormId", "ClientId"],
+            how="left_anti"
+        )
+        .distinct()
+    )
+
+    stale_pr_count = stale_pr_df.count()
+    if stale_pr_count:
+        (
+            silver_delta.alias("tgt")
+            .merge(
+                stale_pr_df.alias("src"),
+                """
+                tgt.SiteCode = src.SiteCode
+                AND tgt.FormName = src.FormName
+                AND tgt.FormId   = src.FormId
+                AND tgt.ClientId = src.ClientId
+                """
+            )
+            .whenMatchedUpdate(
+                set={
+                    "RowState": "0",
+                    "silver_updated_at": "current_timestamp()"
+                }
+            )
+            .execute()
+        )
+    print(f"Periodic Reassessment stale-row reset complete: {stale_pr_count} rows set inactive.")
+else:
+    print("No Periodic Reassessment source rows in this run; stale-row reset skipped.")
 
 print("Silver MERGE for FormAnswerSignatures completed successfully.")
 ```
@@ -1715,11 +1903,9 @@ STEP 4 — nb_answersig_build_site_sql (Notebook, True branch)
   RETURNS: full SQL string via mssparkutils.notebook.exit()
            (NO SELECT DISTINCT wrapper — unlike FormQA)
 
-STEP 5 — sv_set_answersig_sql: v_answersig_sql = exitValue
-
-STEP 6 — cp_answersig_to_bronze (Copy)
+STEP 5 — cp_answersig_to_bronze (Copy)
   Source: SAMMS SQL Server (via Fabric gateway)
-    query = @variables('v_answersig_sql')
+    query = @activity('nb_answersig_build_site_sql').output.result.exitValue
   Sink: bhg_bronze.Forms.br_tblFormAnswerSig  (APPEND)
   → N rows written, tagged with _ingest_run_id
 
@@ -2059,3 +2245,5 @@ spark.sql("UPDATE bhg_silver.pats.sl_tblFormAnswerSignatures SET FormId = UPPER(
 ---
 
 *End of Implementation Guide*
+
+

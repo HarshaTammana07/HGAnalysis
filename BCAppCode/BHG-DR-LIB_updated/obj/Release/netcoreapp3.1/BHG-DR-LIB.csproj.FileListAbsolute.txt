@@ -1,0 +1,9 @@
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\bin\Release\netcoreapp3.1\BHG-DR-LIB.deps.json
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\bin\Release\netcoreapp3.1\BHG-DR-LIB.dll
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\bin\Release\netcoreapp3.1\BHG-DR-LIB.pdb
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.csprojAssemblyReference.cache
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.AssemblyInfoInputs.cache
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.AssemblyInfo.cs
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.csproj.CoreCompileInputs.cache
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.dll
+C:\BCProjects\BHG-DWP\BHG-DR-LIB\obj\Release\netcoreapp3.1\BHG-DR-LIB.pdb

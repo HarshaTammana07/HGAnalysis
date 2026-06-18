@@ -1,4 +1,4 @@
--- GROUP 1 (Sites 1–23) --
+
 [
   {"site_code": "AHK", "source_database": "SAMMS-Ahoskie"},
   {"site_code": "B12B", "source_database": "SAMMS-ColoradoSpringsV5"},
@@ -22,11 +22,7 @@
   {"site_code": "B42", "source_database": "SAMMS-VirginiaBeachV5"},
   {"site_code": "B42A", "source_database": "SAMMS-NewportNewsV5"},
   {"site_code": "B42B", "source_database": "SAMMS-FranklinV5"},
-  {"site_code": "B42C", "source_database": "SAMMS-GlenAllenV5"}
-]
-
--- GROUP 2 (Sites 24–46) --
-[
+  {"site_code": "B42C", "source_database": "SAMMS-GlenAllenV5"},
   {"site_code": "B42D", "source_database": "SAMMS-ChesapeakeSouthV5"},
   {"site_code": "B44", "source_database": "SAMMS-AlbanyV5"},
   {"site_code": "B45", "source_database": "SAMMS-TiftonV5"},
@@ -49,11 +45,7 @@
   {"site_code": "B76", "source_database": "SAMMS-Huntsville-OBOT"},
   {"site_code": "BAT", "source_database": "SAMMS-Batesville"},
   {"site_code": "BG", "source_database": "SAMMS-BowlingGreen"},
-  {"site_code": "BOI", "source_database": "SAMMS-Boise"}
-]
-
--- GROUP 3 (Sites 47–69) --
-[
+  {"site_code": "BOI", "source_database": "SAMMS-Boise"},
   {"site_code": "CBCO", "source_database": "SAMMS-CoeurdAleneV6"},
   {"site_code": "CON", "source_database": "SAMMS-Conway"},
   {"site_code": "D07", "source_database": "SAMMS-KnoxvilleV6"},
@@ -74,13 +66,8 @@
   {"site_code": "FS", "source_database": "SAMMS-FortSmith"},
   {"site_code": "FW", "source_database": "SAMMS-FortWayne"},
   {"site_code": "GAL", "source_database": "SAMMS-Gaylord"},
-  {"site_code": "Global", "source_database": "SAMMSGLOBAL"},
   {"site_code": "HGT", "source_database": "SAMMS-Hagerstown"},
-  {"site_code": "HNT", "source_database": "SAMMS-Huntsville"}
-]
-
--- GROUP 4 (Sites 70–92) --
-[
+  {"site_code": "HNT", "source_database": "SAMMS-Huntsville"},
   {"site_code": "HS", "source_database": "SAMMS-HotSprings"},
   {"site_code": "JON", "source_database": "SAMMS-Jonesboro"},
   {"site_code": "LAN", "source_database": "SAMMS-Lansing"},
@@ -103,11 +90,7 @@
   {"site_code": "TE", "source_database": "SAMMS-Tempe"},
   {"site_code": "TEX", "source_database": "SAMMS-Texarkana"},
   {"site_code": "TTCA", "source_database": "SAMMS-BessemerV5"},
-  {"site_code": "TTCB", "source_database": "SAMMS-CullmanV5"}
-]
-
--- GROUP 5 (Sites 93–116) --
-[
+  {"site_code": "TTCB", "source_database": "SAMMS-CullmanV5"},
   {"site_code": "TTCC", "source_database": "SAMMS-GrandBay"},
   {"site_code": "TU", "source_database": "SAMMS-Tucson"},
   {"site_code": "V1", "source_database": "SAMMS-VCPHCS-I-MemphisV5"},

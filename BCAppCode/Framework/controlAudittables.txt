@@ -1,0 +1,456 @@
+Fabric Control And Audit Tables
+Current Framework Reference For DartsSrv
+
+Last aligned with:
+- BCAppCode/SaveDartsSrvDocumentation/nb_control_audit_writer_complete.md
+- DartsSrv control/audit design where Bronze is per-site and Silver/Gold are layer-level
+
+Important current behavior:
+- siteaudit is no longer used by DartsSrv.
+- Bronze per-site results are written directly into meta.taskaudit.
+- Bronze taskconfig requires one active row per active site.
+- Silver taskconfig requires one active row.
+- Gold taskconfig requires one active row.
+- taskaudit and taskqueue now carry SiteCode, DataBaseName, and SiteName.
+
+
+1) meta.dataquality
+
+Purpose:
+- Stores row-count, null-count, duplicate-count, and validation status.
+- Darts finalizer writes Silver and Gold data quality rows.
+
+Query:
+
+select top 5 *
+from [meta].[dataquality]
+order by CreatedAt desc;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+DqId	bigint	NULL	YES
+RunId	bigint	NULL	YES
+ConfigId	bigint	NULL	YES
+TaskConfigId	bigint	NULL	YES
+TableName	varchar	8000	YES
+RowCount	bigint	NULL	YES
+NullCount	bigint	NULL	YES
+DuplicateCount	bigint	NULL	YES
+ValidationStatus	varchar	8000	YES
+CreatedAt	datetime2	NULL	YES
+
+
+2) meta.etlconfig
+
+Purpose:
+- One row per logical pipeline layer.
+- For DartsSrv we use three active rows:
+  - BR = Bronze
+  - SL = Silver
+  - GL = Gold
+
+DartsSrv expected rows:
+
+ConfigId	TargetName	Example ConfigName
+25	BR	SAMMS DartsSrv Bronze Pipeline
+26	SL	SAMMS DartsSrv Silver Pipeline
+27	GL	SAMMS DartsSrv Gold Pipeline
+
+Query:
+
+select *
+from [meta].[etlconfig]
+where ConfigName like 'SAMMS DartsSrv%'
+order by ExecutionSequence;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+ConfigId	bigint	NULL	YES
+ConfigName	varchar	8000	YES
+PipelineName	varchar	8000	YES
+PipelinePath	varchar	8000	YES
+TransformationModule	varchar	8000	YES
+SourceSystem	varchar	8000	YES
+SourceType	varchar	8000	YES
+TargetName	varchar	8000	YES
+EnvironmentName	varchar	8000	YES
+PipelineDependency	varchar	8000	YES
+ExecutionSequence	int	NULL	YES
+TriggerType	varchar	8000	YES
+TriggerFrequency	varchar	8000	YES
+TriggeredBy	varchar	8000	YES
+IsActive	int	NULL	YES
+ConnectionConfig	varchar	8000	YES
+CreatedAt	datetime2	NULL	YES
+CreatedBy	varchar	8000	YES
+ModifiedAt	datetime2	NULL	YES
+ModifiedBy	varchar	8000	YES
+
+
+3) meta.taskconfig
+
+Purpose:
+- Defines executable tasks under each etlconfig row.
+- For DartsSrv, Bronze is per-site. Silver and Gold are one task each.
+
+Current DartsSrv pattern:
+
+ConfigId 25 / BR:
+- One active taskconfig row per site.
+- SiteCode, DataBaseName, and SiteName should be populated.
+- TargetTable should be br_tblDartSrv.
+
+ConfigId 26 / SL:
+- One active taskconfig row.
+- Site fields can be null.
+- TargetTable should be sl_tbldartsrv.
+
+ConfigId 27 / GL:
+- One active taskconfig row.
+- Site fields can be null.
+- TargetTable should be gd_darts_srv.
+
+Important current columns added for DartsSrv:
+- SiteCode
+- DataBaseName
+- SiteName
+
+LookbackDays:
+- Can store Darts lookback days here if the parent pipeline is changed to read it from taskconfig.
+- Current Darts pipeline can still pass p_lookback_days as a pipeline parameter unless changed.
+
+Query:
+
+select *
+from [meta].[taskconfig]
+where ConfigId in (25, 26, 27)
+order by ConfigId, ExecutionOrder, SiteCode;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+TaskConfigId	bigint	NULL	YES
+ConfigId	bigint	NULL	YES
+TaskName	varchar	8000	YES
+Endpoint	varchar	8000	YES
+Method	varchar	8000	YES
+AuthType	varchar	8000	YES
+SourceTable	varchar	8000	YES
+PaginationEnabled	int	NULL	YES
+PaginationParam	varchar	8000	YES
+LoadType	varchar	8000	YES
+IsIncremental	int	NULL	YES
+WatermarkColumn	varchar	8000	YES
+LookbackDays	int	NULL	YES
+TargetSchema	varchar	8000	YES
+TargetTable	varchar	8000	YES
+TargetPath	varchar	8000	YES
+ExecutionOrder	int	NULL	YES
+RetryCount	int	NULL	YES
+TimeoutSeconds	int	NULL	YES
+RequestBody	varchar	8000	YES
+DependencyTaskConfigId	bigint	NULL	YES
+SiteCode	varchar	8000	YES
+DataBaseName	varchar	8000	YES
+SiteName	varchar	8000	YES
+IsActive	int	NULL	YES
+CreatedAt	datetime2	NULL	YES
+CreatedBy	varchar	8000	YES
+ModifiedAt	datetime2	NULL	YES
+ModifiedBy	varchar	8000	YES
+
+
+4) meta.pipelinerun
+
+Purpose:
+- Stores one run row per layer.
+- DartsSrv creates three RunId values per parent pipeline run:
+  - one for BR
+  - one for SL
+  - one for GL
+
+How RunId is generated:
+- In the audit writer notebook using new_bigint().
+- Each layer gets a related but separate RunId.
+
+Query:
+
+select top 20 *
+from [meta].[pipelinerun]
+where ConfigName like 'SAMMS DartsSrv%'
+order by CreatedAt desc;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+RunId	bigint	NULL	YES
+ConfigId	bigint	NULL	YES
+ConfigName	varchar	8000	YES
+PipelineName	varchar	8000	YES
+PipelinePath	varchar	8000	YES
+SourceSystem	varchar	8000	YES
+TargetName	varchar	8000	YES
+EnvironmentName	varchar	8000	YES
+StartTime	datetime2	NULL	YES
+EndTime	datetime2	NULL	YES
+Status	varchar	8000	YES
+TriggerType	varchar	8000	YES
+TriggeredBy	varchar	8000	YES
+TotalTasks	int	NULL	YES
+SuccessTasks	int	NULL	YES
+FailedTasks	int	NULL	YES
+SkippedTasks	int	NULL	YES
+RestartFlag	int	NULL	YES
+AttemptNumber	int	NULL	YES
+CreatedAt	datetime2	NULL	YES
+
+
+5) meta.taskqueue
+
+Purpose:
+- Stores task execution state for each task created by the audit start notebook.
+- Bronze creates one taskqueue row per active site.
+- Silver creates one taskqueue row.
+- Gold creates one taskqueue row.
+
+Important current columns added for DartsSrv:
+- SiteCode
+- DataBaseName
+- SiteName
+
+Status flow:
+- START_LAYER_RUNS inserts rows as RUNNING.
+- FINALIZE_DARTS_SUCCESS updates them to SUCCESS.
+- FINALIZE_DARTS_FAILURE updates failed/upstream rows to FAILED or SKIPPED depending on failure point.
+
+Query:
+
+select top 50 *
+from [meta].[taskqueue]
+where ConfigId in (25, 26, 27)
+order by CreatedAt desc, SiteCode;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+TaskId	bigint	NULL	YES
+RunId	bigint	NULL	YES
+ConfigId	bigint	NULL	YES
+TaskConfigId	bigint	NULL	YES
+TaskName	varchar	8000	YES
+SourceType	varchar	8000	YES
+TargetTable	varchar	8000	YES
+ExecutionOrder	int	NULL	YES
+ExecutionFlag	int	NULL	YES
+Status	varchar	8000	YES
+RetryAttempt	int	NULL	YES
+RestartFlag	int	NULL	YES
+AttemptNumber	int	NULL	YES
+HttpStatusCode	int	NULL	YES
+ApiResponseTimeMs	bigint	NULL	YES
+SiteCode	varchar	8000	YES
+DataBaseName	varchar	8000	YES
+SiteName	varchar	8000	YES
+StartTime	datetime2	NULL	YES
+EndTime	datetime2	NULL	YES
+ErrorMessage	varchar	8000	YES
+CreatedAt	datetime2	NULL	YES
+
+
+6) meta.taskaudit
+
+Purpose:
+- Stores final task audit details.
+- DartsSrv uses this table instead of siteaudit.
+- Bronze per-site row counts are written here using SiteCode, DataBaseName, and SiteName.
+
+Important current columns added for DartsSrv:
+- SiteCode
+- DataBaseName
+- SiteName
+
+Bronze count behavior:
+- RowsRead and RowsWritten are counted from bhg_bronze.Dart.br_tblDartSrv.
+- The count is filtered to the current _ingest_run_id.
+- Counts are grouped by _site_code and _source_database.
+- Counts are joined to taskconfig/audit context by SiteCode + DataBaseName.
+
+Equivalent Bronze count logic:
+
+select
+    _site_code as SiteCode,
+    _source_database as DataBaseName,
+    count(*) as RowsCopied
+from bhg_bronze.Dart.br_tblDartSrv
+where _ingest_run_id = '<current pipeline ingest run id>'
+group by _site_code, _source_database;
+
+Silver count behavior:
+- RowsRead = Bronze rows for the current run.
+- RowsWritten = current Silver table row count.
+
+Gold count behavior:
+- RowsRead = current Silver table row count.
+- RowsWritten = current Gold table row count.
+
+Query:
+
+select top 50 *
+from [meta].[taskaudit]
+where ConfigId in (25, 26, 27)
+order by CreatedAt desc, SiteCode;
+
+Current columns:
+
+COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	IS_NULLABLE
+AuditId	bigint	NULL	YES
+TaskId	bigint	NULL	YES
+RunId	bigint	NULL	YES
+ConfigId	bigint	NULL	YES
+TaskConfigId	bigint	NULL	YES
+TaskName	varchar	8000	YES
+TableName	varchar	8000	YES
+StepName	varchar	8000	YES
+Status	varchar	8000	YES
+LogLevel	varchar	8000	YES
+RowsRead	bigint	NULL	YES
+RowsWritten	bigint	NULL	YES
+RowsFailed	bigint	NULL	YES
+ErrorMessage	varchar	8000	YES
+SiteCode	varchar	8000	YES
+DataBaseName	varchar	8000	YES
+SiteName	varchar	8000	YES
+StartTime	datetime2	NULL	YES
+EndTime	datetime2	NULL	YES
+DurationSeconds	bigint	NULL	YES
+CreatedAt	datetime2	NULL	YES
+
+
+7) meta.siteaudit
+
+Status:
+- Deprecated for DartsSrv.
+- No longer written by nb_control_audit_writer_complete.md.
+- Do not use siteaudit for DartsSrv validation or reporting.
+
+Replacement:
+- Use meta.taskaudit for per-site Bronze audit.
+
+Reason:
+- Bronze taskconfig is now one row per site.
+- taskaudit now contains SiteCode, DataBaseName, and SiteName.
+- This avoids writing a separate siteaudit table and keeps task execution and per-site row counts in one framework table.
+
+
+8) DartsSrv Control/Audit Flow
+
+Start notebook mode:
+- START_LAYER_RUNS
+
+Reads:
+- meta.etlconfig where ConfigName like 'SAMMS DartsSrv%' and TargetName in BR, SL, GL
+- meta.taskconfig for active rows under those ConfigIds
+
+Writes:
+- meta.pipelinerun
+- meta.taskqueue
+
+Success finalizer mode:
+- FINALIZE_DARTS_SUCCESS
+
+Reads:
+- Bronze rows by _ingest_run_id
+- Silver table count
+- Gold table count
+
+Writes/updates:
+- Updates meta.taskqueue statuses
+- Updates meta.pipelinerun statuses
+- Appends meta.taskaudit rows
+- Appends meta.dataquality rows
+
+Failure finalizer mode:
+- FINALIZE_DARTS_FAILURE
+
+Writes/updates:
+- Updates failed task/layer statuses
+- Appends failure rows to meta.taskaudit
+- Stores ErrorMessage where available
+
+
+9) Quick Validation Queries
+
+Check active Darts configs:
+
+select ConfigId, ConfigName, TargetName, ExecutionSequence, IsActive
+from [meta].[etlconfig]
+where ConfigName like 'SAMMS DartsSrv%'
+order by ExecutionSequence;
+
+Check active Darts tasks:
+
+select
+    TaskConfigId,
+    ConfigId,
+    TaskName,
+    TargetTable,
+    SiteCode,
+    DataBaseName,
+    SiteName,
+    LookbackDays,
+    ExecutionOrder,
+    IsActive
+from [meta].[taskconfig]
+where ConfigId in (25, 26, 27)
+order by ConfigId, SiteCode, ExecutionOrder;
+
+Check latest Darts taskqueue:
+
+select top 100
+    TaskId,
+    RunId,
+    ConfigId,
+    TaskConfigId,
+    TaskName,
+    SiteCode,
+    DataBaseName,
+    Status,
+    StartTime,
+    EndTime,
+    ErrorMessage,
+    CreatedAt
+from [meta].[taskqueue]
+where ConfigId in (25, 26, 27)
+order by CreatedAt desc, SiteCode;
+
+Check latest Darts taskaudit:
+
+select top 100
+    AuditId,
+    TaskId,
+    RunId,
+    ConfigId,
+    TaskConfigId,
+    TaskName,
+    TableName,
+    SiteCode,
+    DataBaseName,
+    SiteName,
+    Status,
+    RowsRead,
+    RowsWritten,
+    RowsFailed,
+    ErrorMessage,
+    CreatedAt
+from [meta].[taskaudit]
+where ConfigId in (25, 26, 27)
+order by CreatedAt desc, SiteCode;
+
+Check latest Darts data quality:
+
+select top 50 *
+from [meta].[dataquality]
+where ConfigId in (25, 26, 27)
+order by CreatedAt desc;
