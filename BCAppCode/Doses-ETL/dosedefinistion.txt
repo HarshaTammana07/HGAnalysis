@@ -1,0 +1,2323 @@
+﻿
+
+Parent:
+
+{
+    "name": "pl_dose",
+    "objectId": "a3401580-ada4-49c7-8efe-55a94295a020",
+    "properties": {
+        "activities": [
+            {
+                "name": "Src_to_Brz",
+                "type": "InvokePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "control_audit_dose",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "b3b79e02-d56b-4f2a-b68e-289793c8d8d5",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_sites": {
+                            "value": "@activity('fliter_Active_Sitecodes').output.value",
+                            "type": "Expression"
+                        },
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_audit_context_json": {
+                            "value": "@activity('control_audit_dose').output.result.exitValue",
+                            "type": "Expression"
+                        },
+                        "p_work_date": {
+                            "value": "@convertFromUtc(utcNow(), 'Central Standard Time', 'yyyy-MM-dd')",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
+                }
+            },
+            {
+                "name": "fliter_Active_Sitecodes",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_taskconfigs",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_taskconfigs').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(\n    and(\n        and(\n            equals(item().ConfigId, 7),\n            or(\n                equals(item().TaskName, 'Bronze DoseExcuse'),\n                equals(item().TaskName, 'Bronze Dose')\n            )\n        ),\n        equals(item().IsActive, 1)\n    ),\n    and(\n        not(equals(item().SiteCode, null)),\n        not(equals(item().DataBaseName, null))\n    )\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "control_audit_dose",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "fliter_Active_Sitecodes",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "2ba7000b-89f6-4e40-ac7f-7787792e2ee8",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Dose",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "pl_dose",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/pl_dose",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_dose_failure_notification",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "If Condition1",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "7590b2e2-50bb-4694-9ef9-0d1f4c02b156",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "Dose ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Dose",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Dose",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Dose pipeline failed or audit finalization failed. See error details.",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@if(and(not(empty(variables('v_method_results_json'))), not(equals(variables('v_method_results_json'), '{}'))), variables('v_method_results_json'), 'Dose pipeline failed. Check the pipeline run activity grid for details.')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_get_taskconfigs",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_ids_json": {
+                            "value": "[7,8]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": {
+                                "value": "[\"DoseExcuse\",\"Dose\"]",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_source_table": {
+                            "value": "false",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "doses_excuse_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "set_bronze_method_results_from_child",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "72d50d83-99ab-4d6b-981d-939486313012",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_succeeded": {
+                            "value": {
+                                "value": "@string(equals(json(variables('v_bronze_method_results_json'))['DoseExcuse']['status'],'SUCCESS'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('fliter_Active_Sitecodes').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_taskconfig_json": {
+                            "value": {
+                                "value": "@activity('nb_get_taskconfigs').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_method": {
+                            "value": "DoseExcuse",
+                            "type": "string"
+                        },
+                        "p_bronze_config_id": {
+                            "value": "7",
+                            "type": "int"
+                        },
+                        "p_silver_config_id": {
+                            "value": "8",
+                            "type": "int"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "dose_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "set_bronze_method_results_from_child",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "658d5662-6be6-4ef7-b3e2-a68e52c4ecf8",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_succeeded": {
+                            "value": {
+                                "value": "@string(equals(json(variables('v_bronze_method_results_json'))['Dose']['status'], 'SUCCESS'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('fliter_Active_Sitecodes').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_taskconfig_json": {
+                            "value": {
+                                "value": "@activity('nb_get_taskconfigs').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_method": {
+                            "value": "Dose",
+                            "type": "string"
+                        },
+                        "p_bronze_config_id": {
+                            "value": "7",
+                            "type": "int"
+                        },
+                        "p_silver_config_id": {
+                            "value": "8",
+                            "type": "int"
+                        },
+                        "p_work_date": {
+                            "value": {
+                                "value": "@convertFromUtc(utcNow(), 'Central Standard Time', 'yyyy-MM-dd')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_lookback_days": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_lookback_days",
+                                "type": "Expression"
+                            },
+                            "type": "int"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set_bronze_method_results_from_child",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Src_to_Brz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_bronze_method_results_json",
+                    "value": {
+                        "value": "@coalesce(if(and(and(contains(activity('Src_to_Brz').output,'properties'),contains(activity('Src_to_Brz').output.properties,'returnValue')),contains(activity('Src_to_Brz').output.properties.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.properties.returnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'pipelineReturnValue'),contains(activity('Src_to_Brz').output.pipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.pipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'PipelineReturnValue'),contains(activity('Src_to_Brz').output.PipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.PipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'returnValue'),contains(activity('Src_to_Brz').output.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.returnValue['v_bronze_method_results_json']),null),'{\"DoseExcuse\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for DoseExcuse\"},\"Dose\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for Dose\"}}')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Set_dose_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "dose_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "doses_excuse_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_result_json",
+                    "value": {
+                        "value": "@concat('{',if(equals(activity('doses_excuse_bronze_to_silver').Status,'Succeeded'),substring(string(activity('doses_excuse_bronze_to_silver').output.result.exitValue),1,sub(length(string(activity('doses_excuse_bronze_to_silver').output.result.exitValue)),2)),concat('\"DoseExcuse\":{\"method\":\"DoseExcuse\",\"layer\":\"SL\",\"status\":\"',if(equals(activity('doses_excuse_bronze_to_silver').Status,'Skipped'),'SKIPPED','FAILED'),'\",\"rows_read\":0,\"rows_inserted\":0,\"rows_updated\":0,\"rows_skipped\":0,\"message\":\"',if(equals(activity('doses_excuse_bronze_to_silver').Status,'Skipped'),'DosesExcuse Silver notebook skipped','DosesExcuse Silver notebook failed before returning exitValue'),'\"}')),',',if(equals(activity('dose_bronze_to_silver').Status,'Succeeded'),substring(string(activity('dose_bronze_to_silver').output.result.exitValue),1,sub(length(string(activity('dose_bronze_to_silver').output.result.exitValue)),2)),concat('\"Dose\":{\"method\":\"Dose\",\"layer\":\"SL\",\"status\":\"',if(equals(activity('dose_bronze_to_silver').Status,'Skipped'),'SKIPPED','FAILED'),'\",\"rows_read\":0,\"rows_inserted\":0,\"rows_updated\":0,\"rows_skipped\":0,\"message\":\"',if(equals(activity('dose_bronze_to_silver').Status,'Skipped'),'Doses Silver notebook skipped','Doses Silver notebook failed before returning exitValue'),'\"}')),'}')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "If Condition1",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Set_dose_method_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(not(contains(variables('v_bronze_method_results_json'),'FAILED')),and(not(contains(variables('v_bronze_method_results_json'),'ERROR')),and(not(contains(variables('v_bronze_method_results_json'),'SKIPPED')),and(not(contains(variables('v_silver_method_result_json'),'FAILED')),and(not(contains(variables('v_silver_method_result_json'),'ERROR')),not(contains(variables('v_silver_method_result_json'),'SKIPPED')))))))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "control_audit_dose_Failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "2ba7000b-89f6-4e40-ac7f-7787792e2ee8",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('control_audit_dose').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('fliter_Active_Sitecodes').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_bronze_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_bronze_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_result_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "control_audit_dose_Sucess",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "2ba7000b-89f6-4e40-ac7f-7787792e2ee8",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('control_audit_dose').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('fliter_Active_Sitecodes').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_bronze_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_bronze_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_result_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "dose_sl_to_gl",
+                "type": "Copy",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "Set_dose_method_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "tbl_dose"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "DOSE"
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "SiteCode",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "SiteCode",
+                                    "physicalType": "varchar",
+                                    "length": "25"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "RowState",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DoseId",
+                                    "type": "Int64",
+                                    "physicalType": "long"
+                                },
+                                "sink": {
+                                    "name": "DoseID",
+                                    "physicalType": "bigint"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "CltId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "CltID",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DtMedDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "dtMedDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "LastModAt",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "GuestId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "GuestID",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DtDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "dtDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dose",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "Dose",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "StrUser",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "strUser",
+                                    "physicalType": "varchar",
+                                    "length": "50"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "BlVoid",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "blVoid",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "StrVoidReason",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "strVoidReason",
+                                    "physicalType": "varchar",
+                                    "length": "1500"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "BlException",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "blException",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Bottletype",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "bottletype",
+                                    "physicalType": "varchar",
+                                    "length": "250"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Ordernum",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "ordernum",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ExceptionReason",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "ExceptionReason",
+                                    "physicalType": "varchar",
+                                    "length": "2000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "BlBulk",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "blBULK",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "BlPrepack",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "blPrepack",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dtgiven",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DTgiven",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dtprep",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DTprep",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DtVoid",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "dtVoid",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Ppstaff",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "PPStaff",
+                                    "physicalType": "varchar",
+                                    "length": "50"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Exceptiontype",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "exceptiontype",
+                                    "physicalType": "varchar",
+                                    "length": "250"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Manualauthdtm",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "manualauthdtm",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Manualauthuser",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "manualauthuser",
+                                    "physicalType": "varchar",
+                                    "length": "50"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dosenote",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "dosenote",
+                                    "physicalType": "varchar",
+                                    "length": "250"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dosesig",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "dosesig",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "InventoryGroup",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "InventoryGroup",
+                                    "physicalType": "varchar",
+                                    "length": "50"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "SiteId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "SiteID",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DoseSigImg",
+                                    "type": "Byte[]",
+                                    "physicalType": "binary"
+                                },
+                                "sink": {
+                                    "name": "DoseSigImg",
+                                    "physicalType": "varbinary",
+                                    "length": "8000"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "dose_excuse_sl_to_gl",
+                "type": "Copy",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "Set_dose_method_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "tbl_dose_excuse"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "DOSEExcuse"
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "SiteCode",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "SiteCode",
+                                    "physicalType": "varchar",
+                                    "length": "25"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowChkSum",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "RowChkSum",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState",
+                                    "type": "Boolean",
+                                    "physicalType": "boolean"
+                                },
+                                "sink": {
+                                    "name": "RowState",
+                                    "physicalType": "bit"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "LastModAt",
+                                    "physicalType": "datetime2",
+                                    "precision": 3
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ExId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "ExID",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "CltID",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "cltID",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DtEx",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "dtEX",
+                                    "physicalType": "datetime2",
+                                    "precision": 3
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "StrExcused",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "strEXCUSED",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Dtstamp",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "dtstamp",
+                                    "physicalType": "datetime2",
+                                    "precision": 3
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "StrUser",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "strUSER",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            }
+        },
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            },
+            "v_method_results_json": {
+                "type": "String"
+            },
+            "v_silver_method_result_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "16bd3f28-b8cb-49cb-98f3-566527c19303",
+        "lastPublishTime": "2026-07-21T09:50:07Z"
+    }
+}
+
+
+
+
+Child:
+
+
+{
+    "name": "pl_dose_src_brz",
+    "objectId": "b3b79e02-d56b-4f2a-b68e-289793c8d8d5",
+    "properties": {
+        "activities": [
+            {
+                "name": "fe_samms_doseexcuse",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_doseexcuse_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_doseexcuse_sites').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 10,
+                    "activities": [
+                        {
+                            "name": "Dose_excuse_src_to_brz",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'IF EXISTS (\n    SELECT 1\n    FROM [', item().DataBaseName, '].sys.tables t\n    JOIN [', item().DataBaseName, '].sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE t.name = ''tblDOSE_Excuse''\n      AND s.name = ''dbo''\n)\n\nBEGIN\n\nSELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n\n    ExId,\n    CltID,\n    DtEx,\n    Dtstamp,\n    StrUser,\n    StrExcused,\n\n    CHECKSUM(\n        ExId,\n        CltID,\n        DtEx,\n        Dtstamp,\n        StrUser\n    ) AS RowChkSum\n\nFROM [', item().DataBaseName, '].dbo.tblDOSE_Excuse\n\nUNION ALL\nSELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n    CAST(NULL AS int) AS ExId,\n    CAST(NULL AS int) AS CltID,\n    CAST(NULL AS datetime) AS DtEx,\n    CAST(NULL AS datetime) AS Dtstamp,\n    CAST(NULL AS varchar(100)) AS StrUser,\n    CAST(NULL AS varchar(max)) AS StrExcused,\n    CAST(NULL AS int) AS RowChkSum\nORDER BY ExId\n\nEND'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "database": "SAMMSGLOBAL"
+                                        },
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Dose",
+                                            "table": "br_tblDoseExcuse"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "fe_samms_dose",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_Child_dose_Sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_Child_dose_Sites').output.value",
+                        "type": "Expression"
+                    },
+                    "batchCount": 10,
+                    "activities": [
+                        {
+                            "name": "Dose_src_to_brz",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'IF EXISTS (\n    SELECT 1\n    FROM [', item().DataBaseName, '].sys.tables t\n    JOIN [', item().DataBaseName, '].sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE t.name = ''tblDOSE''\n      AND s.name = ''dbo''\n)\n\nBEGIN\n\nSELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))) AS SourceQueryStartDate,\n    DoseId,\n    CltId,\n    DtMedDate,\n    GuestId,\n    DtDate,\n    Dose,\n    StrUser,\n    BlVoid,\n    StrVoidReason,\n    BlException,\n    Bottletype,\n    Ordernum,\n    ExceptionReason,\n    BlBulk,\n    BlPrepack,\n    Dtgiven,\n    Dtprep,\n    DtVoid,\n    Ppstaff,\n    Exceptiontype,\n    Manualauthdtm,\n    Manualauthuser,\n    Dosenote,\n    Dosesig,\n    InventoryGroup,\n    SiteId,\n    DoseSigImg,\n\n    CHECKSUM(\n        DoseId,\n        CltId,\n        DtMedDate,\n        GuestId,\n        DtDate,\n        Dose,\n        StrUser,\n        BlVoid,\n        StrVoidReason,\n        BlException,\n        Bottletype,\n        Ordernum,\n        ExceptionReason,\n        BlBulk,\n        BlPrepack,\n        Dtgiven,\n        Dtprep,\n        DtVoid,\n        Ppstaff,\n        Exceptiontype,\n        Manualauthdtm,\n        Manualauthuser,\n        Dosenote,\n        InventoryGroup,\n        SiteId\n    ) AS RowChkSum\n\nFROM [', item().DataBaseName, '].dbo.tblDOSE d\n\nWHERE\n    (\n        YEAR(d.dtDate) >= YEAR(DATEADD(year, -1, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))))\n        OR YEAR(d.dtMedDate) >= YEAR(DATEADD(year, -1, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))))\n    )\n    AND d.dtDate <= DATEADD(day, 2, CONVERT(date, ''', pipeline().parameters.p_work_date, '''))\n    AND d.CltId IS NOT NULL\n    AND (\n        (\n            ''', item().SiteCode, ''' IN (''V10A'', ''CBCO'', ''V21'', ''V10'')\n            AND d.dtDate >= DATEADD(month, -1, CONVERT(date, ''', pipeline().parameters.p_work_date, '''))\n        )\n        OR\n        (\n            ''', item().SiteCode, ''' NOT IN (''V10A'', ''CBCO'', ''V21'', ''V10'')\n            AND d.dtDate >= DATEADD(month, -6, CONVERT(date, ''', pipeline().parameters.p_work_date, '''))\n        )\n    )\n\nUNION ALL\nSELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))) AS SourceQueryStartDate,\n    CAST(NULL AS bigint) AS DoseId,\n    CAST(NULL AS int) AS CltId,\n    CAST(NULL AS datetime) AS DtMedDate,\n    CAST(NULL AS int) AS GuestId,\n    CAST(NULL AS datetime) AS DtDate,\n    CAST(NULL AS int) AS Dose,\n    CAST(NULL AS varchar(100)) AS StrUser,\n    CAST(NULL AS bit) AS BlVoid,\n    CAST(NULL AS varchar(max)) AS StrVoidReason,\n    CAST(NULL AS bit) AS BlException,\n    CAST(NULL AS varchar(100)) AS Bottletype,\n    CAST(NULL AS int) AS Ordernum,\n    CAST(NULL AS varchar(max)) AS ExceptionReason,\n    CAST(NULL AS bit) AS BlBulk,\n    CAST(NULL AS bit) AS BlPrepack,\n    CAST(NULL AS datetime) AS Dtgiven,\n    CAST(NULL AS datetime) AS Dtprep,\n    CAST(NULL AS bit) AS DtVoid,\n    CAST(NULL AS varchar(100)) AS Ppstaff,\n    CAST(NULL AS varchar(100)) AS Exceptiontype,\n    CAST(NULL AS datetime) AS Manualauthdtm,\n    CAST(NULL AS varchar(100)) AS Manualauthuser,\n    CAST(NULL AS varchar(max)) AS Dosenote,\n    CAST(NULL AS varchar(max)) AS Dosesig,\n    CAST(NULL AS varchar(100)) AS InventoryGroup,\n    CAST(NULL AS int) AS SiteId,\n    CAST(NULL AS varbinary(max)) AS DoseSigImg,\n    CAST(NULL AS int) AS RowChkSum\nORDER BY DoseId\n\nEND'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "database": "SAMMSGLOBAL"
+                                        },
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Dose",
+                                            "table": "br_tblDose"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set_child_bronze_method_result",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_samms_dose",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_samms_doseexcuse",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{','\"DoseExcuse\":\n{\"status\":\"',if(equals(activity('fe_samms_doseexcuse').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_samms_doseexcuse').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_samms_doseexcuse').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_samms_doseexcuse').error,'DoseExcuse Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'},','\"Dose\":\n{\"status\":\"',if(equals(activity('fe_samms_dose').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_samms_dose').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_samms_dose').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_samms_dose').error,'Dose Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}','}')"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "flt_child_doseexcuse_sites",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'DoseExcuse')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "flt_Child_dose_Sites",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method,'Dose')",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_audit_context_json": {
+                "type": "string"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "2026-07-06"
+            }
+        },
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "16bd3f28-b8cb-49cb-98f3-566527c19303",
+        "lastPublishTime": "2026-07-19T14:53:27Z"
+    }
+}
+
+
+
+nb_dose_excuse_brnz_to_slv
+
+cell 1:
+
+# ============================================================
+# DOSE EXCUSE
+# BRONZE -> SILVER
+# PART 1: PREPARE CLEAN SILVER SOURCE
+# ============================================================
+
+from delta.tables import DeltaTable
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.window import Window
+from notebookutils import mssparkutils
+import json
+
+spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
+
+try: p_ingest_run_id
+except NameError: p_ingest_run_id = "test-run-001"
+
+try: p_sites_json
+except NameError: p_sites_json = "[]"
+
+try: p_bronze_method_results_json
+except NameError: p_bronze_method_results_json = "{}"
+
+try: p_taskconfig_json
+except NameError: p_taskconfig_json = "[]"
+
+try: p_method
+except NameError: p_method = "DoseExcuse"
+
+try: p_bronze_config_id
+except NameError: p_bronze_config_id = 7
+
+try: p_silver_config_id
+except NameError: p_silver_config_id = 8
+
+method_name = "DoseExcuse"
+default_bronze_table = "bhg_bronze.Dose.br_tblDoseExcuse"
+default_silver_table = "bhg_silver.pats.tbl_dose_excuse"
+
+final_columns = [
+    "SiteCode",
+    "RowChkSum",
+    "RowState",
+    "ExId",
+    "CltID",
+    "DtEx",
+    "StrExcused",
+    "Dtstamp",
+    "StrUser",
+    "LastModAt"
+]
+
+def notebook_exit(payload):
+    text = json.dumps(payload, default=str, separators=(",", ":"))
+    mssparkutils.notebook.exit(text)
+
+def parse_json(raw, default):
+    if raw is None:
+        return default
+    text = str(raw).strip()
+    if text == "":
+        return default
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, str):
+            parsed = json.loads(parsed)
+        return parsed
+    except Exception:
+        return default
+
+def boolish(value):
+    return str(value).strip().lower() in ("1", "true", "yes")
+
+def project_final_columns(df, columns):
+    existing = {c.lower(): c for c in df.columns}
+    projected = []
+    for c in columns:
+        actual = existing.get(c.lower())
+        projected.append(col(actual).alias(c) if actual else lit(None).alias(c))
+    return df.select(*projected)
+
+def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+    body = {
+        "method": method_name,
+        "layer": "SL",
+        "status": status,
+        "rows_read": int(rows_read or 0),
+        "rows_inserted": int(rows_inserted or 0),
+        "rows_updated": int(rows_updated or 0),
+        "rows_skipped": int(rows_skipped or 0)
+    }
+    if message:
+        body["message"] = str(message)[:4000]
+    if site_results is not None:
+        body["site_results"] = site_results
+    return {method_name: body}
+
+def table_exists(table_name):
+    try:
+        spark.table(table_name).limit(0).count()
+        return True
+    except Exception:
+        return False
+
+def expected_sites_for_method():
+    rows = parse_json(p_sites_json, [])
+    expected = []
+    for row in rows:
+        if str(row.get("Method", "")).lower() == method_name.lower():
+            site_code = row.get("SiteCode")
+            if site_code:
+                expected.append(str(site_code))
+    return sorted(set(expected))
+
+def build_site_results(successful_sites):
+    successful = {str(x) for x in successful_sites if x is not None}
+    results = []
+    for site_code in expected_sites_for_method():
+        if site_code in successful:
+            results.append({"site_code": site_code, "status": "SUCCESS"})
+        else:
+            results.append({
+                "site_code": site_code,
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": f"{method_name} Bronze copy failed or did not write the site success marker."
+            })
+    return results
+
+def taskconfig_rows(raw):
+    if raw is None:
+        return []
+    text = str(raw).strip()
+    if text in ("", "[]", "{}"):
+        return []
+    parsed = json.loads(text)
+    if isinstance(parsed, str):
+        parsed = json.loads(parsed)
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict):
+        for key in ("value", "rows", "items", "taskconfig", "tasks"):
+            value = parsed.get(key)
+            if isinstance(value, list):
+                return value
+    return []
+
+def row_value(row, name):
+    if not isinstance(row, dict):
+        return None
+    for key in (name, name[:1].lower() + name[1:], name.lower()):
+        if key in row:
+            return row.get(key)
+    return None
+
+def request_body_full_table(row):
+    request_body = row_value(row, "RequestBody")
+    if not request_body:
+        return None
+    try:
+        parsed = json.loads(str(request_body))
+        if isinstance(parsed, dict) and parsed.get("full_table"):
+            return str(parsed.get("full_table"))
+    except Exception:
+        return None
+    return None
+
+def build_full_table(layer_prefix, target_schema, target_table):
+    if not target_table:
+        return None
+    schema = str(target_schema or "").strip()
+    table = str(target_table).strip()
+    if "." in table:
+        return table
+    if not schema:
+        return None
+    if schema.lower().startswith(layer_prefix.lower() + ".") or schema.lower() == layer_prefix.lower():
+        return f"{schema}.{table}"
+    if "." in schema:
+        return f"{schema}.{table}"
+    return f"{layer_prefix}.{schema}.{table}"
+
+def resolve_taskconfig_table(config_id_to_match, layer_prefix, layer_name, default_full_table):
+    rows = taskconfig_rows(p_taskconfig_json)
+    for row in rows:
+        config_id = row_value(row, "ConfigId")
+        method = row_value(row, "Method")
+        if str(config_id) == str(config_id_to_match) and str(method).lower() == str(p_method).lower():
+            table_name = build_full_table(
+                layer_prefix,
+                row_value(row, "TargetSchema"),
+                row_value(row, "TargetTable")
+            )
+            if table_name:
+                return table_name
+            table_name = request_body_full_table(row)
+            if table_name:
+                return table_name
+            raise Exception(f"{layer_name} taskconfig row for ConfigId={config_id_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
+
+    if rows:
+        raise Exception(f"No {layer_name} taskconfig row found for ConfigId={config_id_to_match}, Method={p_method}.")
+    return default_full_table
+
+bronze_table = resolve_taskconfig_table(p_bronze_config_id, "bhg_bronze", "Bronze", default_bronze_table)
+silver_table = resolve_taskconfig_table(p_silver_config_id, "bhg_silver", "Silver", default_silver_table)
+
+bronze_df = spark.table(bronze_table).where(col("IngestRunId") == lit(p_ingest_run_id))
+bronze_count = bronze_df.count()
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+print(f"Bronze rows for this run: {bronze_count}")
+
+successful_bronze_sites = [
+    r["SiteCode"]
+    for r in bronze_df.where(col("SiteCode").isNotNull()).select("SiteCode").distinct().collect()
+]
+site_results = build_site_results(successful_bronze_sites)
+
+if bronze_count == 0:
+    notebook_exit(result_payload(
+        "SKIPPED",
+        rows_read=0,
+        rows_skipped=0,
+        message=f"No successful Bronze sites found for {method_name} ingest_run_id = {p_ingest_run_id}; Silver skipped.",
+        site_results=site_results
+    ))
+
+w = Window.partitionBy("SiteCode", "ExId").orderBy(col("ExtractedAt").desc())
+
+src_work_df = (
+    bronze_df
+    .where(col("SiteCode").isNotNull() & col("ExId").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+    .withColumn("RowState", lit(True).cast(BooleanType()))
+    .withColumn("LastModAt", current_timestamp())
+)
+
+src_df = project_final_columns(src_work_df, final_columns).cache()
+src_count = src_df.count()
+print(f"Prepared source rows for DoseExcuse Silver: {src_count}")
+
+if not table_exists(silver_table):
+    (
+        src_df
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created clean DoseExcuse Silver table: {silver_table}")
+else:
+    existing_df = spark.table(silver_table)
+    if existing_df.columns != final_columns:
+        normalized_df = (
+            project_final_columns(existing_df, final_columns)
+            .where(col("ExId").isNotNull())
+            .cache()
+        )
+        normalized_count = normalized_df.count()
+        (
+            normalized_df
+            .write
+            .format("delta")
+            .mode("overwrite")
+            .option("overwriteSchema", "true")
+            .saveAsTable(silver_table)
+        )
+        normalized_df.unpersist()
+        print(f"Normalized DoseExcuse Silver to final columns. Rows preserved: {normalized_count}")
+
+cell 2:
+
+# ============================================================
+# DOSE EXCUSE
+# BRONZE -> SILVER
+# PART 2: MERGE AND EXIT
+# ============================================================
+
+from delta.tables import DeltaTable
+from pyspark.sql.functions import *
+
+if src_count == 0:
+    src_df.unpersist()
+    notebook_exit(result_payload(
+        "SUCCESS",
+        rows_read=0,
+        rows_skipped=0,
+        message=f"{method_name} Bronze succeeded but no business rows were returned for this run.",
+        site_results=site_results
+    ))
+
+delta_tbl = DeltaTable.forName(spark, silver_table)
+
+site_list = [r["SiteCode"] for r in src_df.select("SiteCode").distinct().collect()]
+site_string = ",".join([f"'{s}'" for s in site_list])
+
+if site_string:
+    delta_tbl.update(
+        condition=f"SiteCode IN ({site_string})",
+        set={"RowState": "CAST(false AS BOOLEAN)"}
+    )
+
+silver_df = spark.table(silver_table)
+merge_condition = "t.SiteCode = s.SiteCode AND t.ExId = s.ExId"
+
+update_dict = {c: f"s.{c}" for c in silver_df.columns if c in src_df.columns}
+insert_dict = {c: f"s.{c}" for c in silver_df.columns if c in src_df.columns}
+
+(
+    delta_tbl.alias("t")
+    .merge(src_df.alias("s"), merge_condition)
+    .whenMatchedUpdate(
+        condition="t.RowChkSum IS NULL OR s.RowChkSum IS NULL OR t.RowChkSum <> s.RowChkSum",
+        set=update_dict
+    )
+    .whenMatchedUpdate(
+        condition="t.RowChkSum = s.RowChkSum",
+        set={
+            "RowState": "CAST(true AS BOOLEAN)",
+            "LastModAt": "current_timestamp()"
+        }
+    )
+    .whenNotMatchedInsert(values=insert_dict)
+    .execute()
+)
+
+final_df = spark.table(silver_table)
+print(f"DoseExcuse Silver rows after merge: {final_df.count()}")
+display(final_df.limit(20))
+
+rows_read = int(src_count)
+src_df.unpersist()
+
+notebook_exit(result_payload(
+    "SUCCESS",
+    rows_read=rows_read,
+    rows_inserted=0,
+    rows_updated=0,
+    rows_skipped=0,
+    message="DoseExcuse Bronze to Silver completed successfully.",
+    site_results=site_results
+))
+
+
+nb_doses_brnz_to_slv
+
+cell 1:
+
+# ============================================================
+# DOSE
+# BRONZE -> SILVER
+# PART 1: PREPARE CLEAN SILVER SOURCE
+# ============================================================
+
+from delta.tables import DeltaTable
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.window import Window
+from notebookutils import mssparkutils
+from datetime import datetime, timedelta
+import json
+
+spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
+
+try: p_ingest_run_id
+except NameError: p_ingest_run_id = "test-run-001"
+
+try: p_sites_json
+except NameError: p_sites_json = "[]"
+
+try: p_work_date
+except NameError: p_work_date = datetime.now().strftime("%Y-%m-%d")
+
+try: p_lookback_days
+except NameError: p_lookback_days = 15
+
+try: p_taskconfig_json
+except NameError: p_taskconfig_json = "[]"
+
+try: p_method
+except NameError: p_method = "Dose"
+
+try: p_bronze_config_id
+except NameError: p_bronze_config_id = 7
+
+try: p_silver_config_id
+except NameError: p_silver_config_id = 8
+
+method_name = "Dose"
+default_bronze_table = "bhg_bronze.Dose.br_tblDose"
+default_silver_table = "bhg_silver.pats.tbl_dose"
+
+final_columns = [
+    "SiteCode",
+    "RowState",
+    "RowChkSum",
+    "LastModAt",
+    "DoseId",
+    "CltId",
+    "DtMedDate",
+    "GuestId",
+    "DtDate",
+    "Dose",
+    "StrUser",
+    "BlVoid",
+    "StrVoidReason",
+    "BlException",
+    "Bottletype",
+    "Ordernum",
+    "ExceptionReason",
+    "BlBulk",
+    "BlPrepack",
+    "Dtgiven",
+    "Dtprep",
+    "DtVoid",
+    "Ppstaff",
+    "Exceptiontype",
+    "Manualauthdtm",
+    "Manualauthuser",
+    "Dosenote",
+    "Dosesig",
+    "InventoryGroup",
+    "SiteId",
+    "DoseSigImg"
+]
+
+def notebook_exit(payload):
+    text = json.dumps(payload, default=str, separators=(",", ":"))
+    mssparkutils.notebook.exit(text)
+
+def parse_json(raw, default):
+    if raw is None:
+        return default
+    text = str(raw).strip()
+    if text == "":
+        return default
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, str):
+            parsed = json.loads(parsed)
+        return parsed
+    except Exception:
+        return default
+
+def project_final_columns(df, columns):
+    existing = {c.lower(): c for c in df.columns}
+    projected = []
+    for c in columns:
+        actual = existing.get(c.lower())
+        projected.append(col(actual).alias(c) if actual else lit(None).alias(c))
+    return df.select(*projected)
+
+def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+    body = {
+        "method": method_name,
+        "layer": "SL",
+        "status": status,
+        "rows_read": int(rows_read or 0),
+        "rows_inserted": int(rows_inserted or 0),
+        "rows_updated": int(rows_updated or 0),
+        "rows_skipped": int(rows_skipped or 0)
+    }
+    if message:
+        body["message"] = str(message)[:4000]
+    if site_results is not None:
+        body["site_results"] = site_results
+    return {method_name: body}
+
+def table_exists(table_name):
+    try:
+        spark.table(table_name).limit(0).count()
+        return True
+    except Exception:
+        return False
+
+def expected_sites_for_method():
+    rows = parse_json(p_sites_json, [])
+    expected = []
+    for row in rows:
+        if str(row.get("Method", "")).lower() == method_name.lower():
+            site_code = row.get("SiteCode")
+            if site_code:
+                expected.append(str(site_code))
+    return sorted(set(expected))
+
+def build_site_results(successful_sites):
+    successful = {str(x) for x in successful_sites if x is not None}
+    results = []
+    for site_code in expected_sites_for_method():
+        if site_code in successful:
+            results.append({"site_code": site_code, "status": "SUCCESS"})
+        else:
+            results.append({
+                "site_code": site_code,
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": f"{method_name} Bronze copy failed or did not write the site success marker."
+            })
+    return results
+
+def taskconfig_rows(raw):
+    if raw is None:
+        return []
+    text = str(raw).strip()
+    if text in ("", "[]", "{}"):
+        return []
+    parsed = json.loads(text)
+    if isinstance(parsed, str):
+        parsed = json.loads(parsed)
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict):
+        for key in ("value", "rows", "items", "taskconfig", "tasks"):
+            value = parsed.get(key)
+            if isinstance(value, list):
+                return value
+    return []
+
+def row_value(row, name):
+    if not isinstance(row, dict):
+        return None
+    for key in (name, name[:1].lower() + name[1:], name.lower()):
+        if key in row:
+            return row.get(key)
+    return None
+
+def request_body_full_table(row):
+    request_body = row_value(row, "RequestBody")
+    if not request_body:
+        return None
+    try:
+        parsed = json.loads(str(request_body))
+        if isinstance(parsed, dict) and parsed.get("full_table"):
+            return str(parsed.get("full_table"))
+    except Exception:
+        return None
+    return None
+
+def build_full_table(layer_prefix, target_schema, target_table):
+    if not target_table:
+        return None
+    schema = str(target_schema or "").strip()
+    table = str(target_table).strip()
+    if "." in table:
+        return table
+    if not schema:
+        return None
+    if schema.lower().startswith(layer_prefix.lower() + ".") or schema.lower() == layer_prefix.lower():
+        return f"{schema}.{table}"
+    if "." in schema:
+        return f"{schema}.{table}"
+    return f"{layer_prefix}.{schema}.{table}"
+
+def resolve_taskconfig_table(config_id_to_match, layer_prefix, layer_name, default_full_table):
+    rows = taskconfig_rows(p_taskconfig_json)
+    for row in rows:
+        config_id = row_value(row, "ConfigId")
+        method = row_value(row, "Method")
+        if str(config_id) == str(config_id_to_match) and str(method).lower() == str(p_method).lower():
+            table_name = build_full_table(
+                layer_prefix,
+                row_value(row, "TargetSchema"),
+                row_value(row, "TargetTable")
+            )
+            if table_name:
+                return table_name
+            table_name = request_body_full_table(row)
+            if table_name:
+                return table_name
+            raise Exception(f"{layer_name} taskconfig row for ConfigId={config_id_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
+
+    if rows:
+        raise Exception(f"No {layer_name} taskconfig row found for ConfigId={config_id_to_match}, Method={p_method}.")
+    return default_full_table
+
+work_date = datetime.strptime(str(p_work_date)[:10], "%Y-%m-%d").date()
+rowstate_reset_date = (work_date - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
+
+bronze_table = resolve_taskconfig_table(p_bronze_config_id, "bhg_bronze", "Bronze", default_bronze_table)
+silver_table = resolve_taskconfig_table(p_silver_config_id, "bhg_silver", "Silver", default_silver_table)
+
+bronze_df = spark.table(bronze_table).where(col("IngestRunId") == lit(p_ingest_run_id))
+bronze_count = bronze_df.count()
+print(f"Processing ingest_run_id: {p_ingest_run_id}")
+print(f"Work date: {work_date}")
+print(f"Lookback days: {p_lookback_days}")
+print(f"RowState reset date: {rowstate_reset_date}")
+print(f"Bronze table: {bronze_table}")
+print(f"Silver table: {silver_table}")
+print(f"Bronze rows for this run: {bronze_count}")
+
+successful_bronze_sites = [
+    r["SiteCode"]
+    for r in bronze_df.where(col("SiteCode").isNotNull()).select("SiteCode").distinct().collect()
+]
+site_results = build_site_results(successful_bronze_sites)
+
+if bronze_count == 0:
+    notebook_exit(result_payload(
+        "SKIPPED",
+        rows_read=0,
+        rows_skipped=0,
+        message=f"No successful Bronze sites found for {method_name} ingest_run_id = {p_ingest_run_id}; Silver skipped.",
+        site_results=site_results
+    ))
+
+w = Window.partitionBy("SiteCode", "DoseId").orderBy(col("ExtractedAt").desc())
+
+src_work_df = (
+    bronze_df
+    .where(col("SiteCode").isNotNull() & col("DoseId").isNotNull())
+    .withColumn("rn", row_number().over(w))
+    .where(col("rn") == 1)
+    .drop("rn")
+    .withColumn(
+        "RowState",
+        when(
+            ((col("BlVoid") == lit(True)) & (col("DtVoid") == lit(True))) |
+            ((col("CltId") < lit(0)) & (col("CltId") != lit(-111))),
+            lit(False)
+        ).otherwise(lit(True)).cast(BooleanType())
+    )
+    .withColumn("LastModAt", current_timestamp())
+)
+
+src_df = project_final_columns(src_work_df, final_columns).cache()
+src_count = src_df.count()
+print(f"Prepared source rows for Dose Silver: {src_count}")
+
+if not table_exists(silver_table):
+    (
+        src_df
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .saveAsTable(silver_table)
+    )
+    print(f"Created clean Dose Silver table: {silver_table}")
+else:
+    existing_df = spark.table(silver_table)
+    if existing_df.columns != final_columns:
+        normalized_df = (
+            project_final_columns(existing_df, final_columns)
+            .where(col("DoseId").isNotNull())
+            .cache()
+        )
+        normalized_count = normalized_df.count()
+        (
+            normalized_df
+            .write
+            .format("delta")
+            .mode("overwrite")
+            .option("overwriteSchema", "true")
+            .saveAsTable(silver_table)
+        )
+        normalized_df.unpersist()
+        print(f"Normalized Dose Silver to final columns. Rows preserved: {normalized_count}")
+
+cell 2:
+
+# ============================================================
+# DOSE
+# BRONZE -> SILVER
+# PART 2: MERGE, ROWSTATE RULES, AND EXIT
+# ============================================================
+
+from delta.tables import DeltaTable
+from pyspark.sql.functions import *
+
+if src_count == 0:
+    src_df.unpersist()
+    notebook_exit(result_payload(
+        "SUCCESS",
+        rows_read=0,
+        rows_skipped=0,
+        message=f"{method_name} Bronze succeeded but no business rows were returned for this run.",
+        site_results=site_results
+    ))
+
+delta_tbl = DeltaTable.forName(spark, silver_table)
+
+site_list = [r["SiteCode"] for r in src_df.select("SiteCode").distinct().collect()]
+site_string = ",".join([f"'{s}'" for s in site_list])
+
+if site_string:
+    delta_tbl.update(
+        condition=f"SiteCode IN ({site_string}) AND DtDate >= '{rowstate_reset_date}'",
+        set={"RowState": "CAST(false AS BOOLEAN)"}
+    )
+
+silver_df = spark.table(silver_table)
+merge_condition = "t.SiteCode = s.SiteCode AND t.DoseId = s.DoseId"
+
+update_dict = {c: f"s.{c}" for c in silver_df.columns if c in src_df.columns}
+insert_dict = {c: f"s.{c}" for c in silver_df.columns if c in src_df.columns}
+
+(
+    delta_tbl.alias("t")
+    .merge(src_df.alias("s"), merge_condition)
+    .whenMatchedUpdate(
+        condition="t.RowChkSum IS NULL OR s.RowChkSum IS NULL OR t.RowChkSum <> s.RowChkSum",
+        set=update_dict
+    )
+    .whenMatchedUpdate(
+        condition="t.RowChkSum = s.RowChkSum",
+        set={
+            "RowState": "CASE WHEN (t.BlVoid = true AND t.DtVoid = true) OR (t.CltId < 0 AND t.CltId <> -111) THEN CAST(false AS BOOLEAN) ELSE CAST(true AS BOOLEAN) END",
+            "LastModAt": "current_timestamp()"
+        }
+    )
+    .whenNotMatchedInsert(values=insert_dict)
+    .execute()
+)
+
+# Final legacy RowState guard for Dose.
+if site_string:
+    delta_tbl.update(
+        condition=f"SiteCode IN ({site_string}) AND ((BlVoid = true AND DtVoid = true) OR (CltId < 0 AND CltId <> -111))",
+        set={"RowState": "CAST(false AS BOOLEAN)"}
+    )
+
+final_df = spark.table(silver_table)
+print(f"Dose Silver rows after merge: {final_df.count()}")
+display(final_df.limit(20))
+
+rows_read = int(src_count)
+src_df.unpersist()
+
+notebook_exit(result_payload(
+    "SUCCESS",
+    rows_read=rows_read,
+    rows_inserted=0,
+    rows_updated=0,
+    rows_skipped=0,
+    message="Dose Bronze to Silver completed successfully.",
+    site_results=site_results
+))
+

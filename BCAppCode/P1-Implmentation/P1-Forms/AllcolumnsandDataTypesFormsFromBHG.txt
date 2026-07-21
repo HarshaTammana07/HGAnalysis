@@ -1,0 +1,658 @@
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	MaxLength	NumericPrecision	NumericScale	IsNullable
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RowChkSum	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	LastModAt	3	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RowState	4	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	Id	5	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DataFormId	6	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	PreAdmissionId	7	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ClientId	8	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ClientName	9	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ClientM4Id	10	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CreatedBy	11	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CreatedOn	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ModifiedBy	13	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ModifiedOn	14	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLActiveSubstanceUsers	15	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCurrentJob	16	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLRelationshipStatus	17	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLWhatKindOfSchoolAttend	18	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLLiveWithYou	19	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLPreferredLanguage	20	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLEmploymentStatus	21	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMother	22	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckFather	23	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckSibling	24	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalGrandmother	25	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalGrandfather	26	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalAunt	27	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalUncle	28	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalCousins	29	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalGrandmother	30	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalGrandfather	31	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalAunt	32	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalUncle	33	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalCousins	34	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLHighestGradeCompleted	35	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLWhatBranch	36	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLTypeDischarge	37	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLGender	38	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLSexualOrientation	39	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLInfluenceDrugs	40	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLWhatBranchType	41	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsVeteransAdministration	42	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsPeerSupportMeetings	43	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsFriendsRecovery	44	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsCourtFines	45	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsOpenWarrants	46	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsOpenCourtCases	47	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsDrugTreatmentCourt	48	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsIncarcerated	49	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsArrested	50	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsSaferSexPractices	51	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsMakeYouUncomfortable	52	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsFeelingTraumatized	53	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsPertainingBeingLGBT	54	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsLGBT	55	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsCourtOrderedChildSupportPayments	56	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsArmedForces	57	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsTrainingActivities	58	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsEmploymentSituation	59	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsHighSchoolDiplomaGED	60	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsReadWriteEffectively	61	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsMainstreamClasses	62	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsHeldBackSchool	63	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsHaveAnyChildren	64	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsChildSupportPayments	65	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsCareOfFamilyMembers	66	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsAbuseNeglectGrowingUp	67	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsUnderstandEnglish	68	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsCountToSupportYou	69	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsCloseRelationship	70	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsDeployOverseas	71	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMother	72	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckFather	73	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckSibling	74	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalGrandmother	75	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalGrandfather	76	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalAunt	77	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalUncle	78	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalCousins	79	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalGrandmother	80	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalGrandfather	81	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalAunt	82	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalUncle	83	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalCousins	84	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckVisuallyShowMe	85	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckVerballyExplainItToMe	86	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPersonalExperience	87	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckTactilelyHandsOn	88	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckTalkItThrough	89	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckNoOne	90	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckImmediateFamily	91	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckExtendedFamily	92	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckCloseFriendsOnly	93	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckFriends	94	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckPeopleWork	95	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckEveryone	96	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckGamblingDisorder	97	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckFoodOvereating	98	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckEatingDisorders	99	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckInternetAddiction	100	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckSocialMediaAddiction	101	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckLoveIntimacyDependence	102	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckFamilyDisorder	103	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckFriendsYourselfRecovery	104	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckCoworkers	105	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckMeetings	106	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CheckOnline	107	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsDeleted	108	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	HowLongHadCurrentJob	109	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsFullTimeStudent	110	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	IsPartTimeStudent	111	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	Version	112	nvarchar	25	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ThoseWhoAreNotcisgender	113	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CulturalPreferencesForYourTreatment	114	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	FamilyStruggledWithDrugAlcoholProblems	115	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ExperiencedAnytraumaAbuseNeglect	116	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	PhysicalAbuseViolenceCaptivityOther	117	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	VerbalEmotionalFinancialAbuse	118	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	NeglectTraumaRelatedYourRace	119	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SexualAbuseAssaultSexualExploitation	120	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	CurrentlyExperiencingAbuseNglectExploitation	121	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	AnyDifficultyCopingWithTrauma	122	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	HaveYouEverReceivedServices	123	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ProbationorParole	124	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SocialHistoryProblemsWithOther	125	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	FindSupportYourselfInRecoveryOther	126	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceWhite	127	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceBlack	128	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceAmericanIndian	129	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceAsian	130	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceNativeHawaiian	131	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceTwoorMore	132	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceOther	133	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	RaceOtherTxt	134	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	Hispanic	135	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	NonHispanic	136	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	DDLTermsofGender	137	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	ObsevationofOthers	138	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	AffectedYourEmployment	139	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	PhysicalAbuse	140	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SexualAbuse	141	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	VerbalAbuse	142	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	Neglect	143	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	Captivity	144	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SexualExploitation	145	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	LaborExploitation	146	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	TraumaRelatedtoRace	147	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	TraumaOther	148	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SupportiveSexualOrientaion	149	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	NotSupportiveSexualOrientaion	150	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	SubstancesAffectedYourLife	151	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	AlwaysFollowsSaferSexPracices	152	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ComprehensiveAssessmentForm	HaveHighSchoolDiploma	153	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	SiteCode	1	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_EandMFormPregnancy	EandMFormId	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_EandMFormPregnancy	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ClientId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DataFormId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	CreatedOn	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	CreatedBy	7	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ModifiedOn	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ModifiedBy	9	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Isdeleted	10	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	FormDate	11	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ServiceId	12	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Context	13	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Version	14	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DDLTrimester	15	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DoseTxt	16	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	MgTxt	17	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DoseStabilityTxt	18	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	SignsTxt	19	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Bleeding	20	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Contraction	21	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	NauseaVomiting	22	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	PregnancyOtherTxt	23	nvarchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	MedicationsTxt	24	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	PrenatalVitaminsTxt	25	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	AllergiesTxt	26	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ChangesInRoutineTxt	27	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	UDSRadioBtn	28	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	SmokerRadioBtn	29	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	IllicitDrugTxt	30	nvarchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	NoOfPregnanciesTxt	31	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DeliveriesTxt	32	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	DateOfLastOB	33	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	NameofOBTxt	34	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	PregnancyCommentsTxt	35	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	WTTxt	36	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	GravidaTxt	37	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ParaTxt	38	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	Provider	39	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	PrenatalCare	40	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	ReviewedandAcknowledged	41	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	NAPregnancyGrid	42	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormPregnancy	LastModAt	43	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	SiteCode	1	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_EandMFormMDM	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_EandMFormMDM	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	ClientId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	DataFormId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	CreatedOn	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	CreatedBy	7	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	ModifiedOn	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	ModifiedBy	9	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	Isdeleted	10	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	FormDate	11	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	ServiceId	12	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	Context	13	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	Version	14	nvarchar	128	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	MEdicalProviderSignatureDate	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_EandMFormMDM	MEdicalProviderSignatureBy	16	nvarchar	200	NULL	NULL	YES
+BHG_DR	pats	tbl_SF_DataForms	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	FormName	3	nvarchar	-1	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	FormURL	4	nvarchar	-1	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	PatientId	5	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	IsDeleted	6	bit	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	CreatedBy	7	nvarchar	-1	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	CreatedOn	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SF_DataForms	LastUpdatedBy	9	nvarchar	-1	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	LastUpdatedOn	10	date	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_SF_DataForms	Program	11	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_SF_DataForms	EnrollmentId	12	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_SF_DataForms	dsID	13	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_SF_DataForms	EnrollmentDate	14	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	SiteCode	1	nvarchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_SMSTextConsentForm	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_SMSTextConsentForm	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	DataFormId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	ClientId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	ClientName	6	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	PhoneNo	7	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	DoNotAgreetoReceive	8	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	PatientSignature	9	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	PatientSignatureDate	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	PatientSignatureBy	11	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	CreatedBy	12	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	CreatedOn	13	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	ModifiedBy	14	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	ModifiedOn	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	IsDeleted	16	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	Version	17	nvarchar	20	NULL	NULL	YES
+BHG_DR	pats	tbl_SMSTextConsentForm	Permission	18	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ConsenttoMarketing	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_ConsenttoMarketing	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	DataFormId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	ClientId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	Text	6	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	Email	7	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	Phone	8	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	PatientSignature	9	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	PatientSignatureDate	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	PatientSignatureBy	11	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	CreatedBy	12	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	CreatedOn	13	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	ModifiedBy	14	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	ModifiedOn	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	IsDeleted	16	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	LastModAt	17	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ConsenttoMarketing	RowState	18	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	ClientId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	DataFormId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	MedicaidID	6	nvarchar	255	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignature	7	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignatureBy	8	nvarchar	255	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignatureDate	9	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignature	10	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignatureBy	11	nvarchar	255	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignatureDate	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	IsDeleted	13	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	CreatedBy	14	varchar	255	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	CreatedOn	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	ModifiedBy	16	varchar	255	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	ModifiedOn	17	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	Version	18	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	Patients1	19	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	Patients2	20	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	LastModAt	21	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeAgreementandDiversionControl	RowState	22	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	DataFormId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	PreAdmissionId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	ClientId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	TakeHomeDosesUnsafe	6	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	LastDoseIncrease	7	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	LikelihoodOfUsingMedication	8	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	SafeguardingMedication	9	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	AbstainingFromOtherSubstances	10	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	LogisticalBarriers	11	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	TotalScore	12	nvarchar	20	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	StaffSignature	13	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	StaffSignatureDate	14	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	StaffSignatureBy	15	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	IsDeleted	16	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	CreatedBy	17	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	CreatedOn	18	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	ModifiedBy	19	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_TakeHomeRiskAssessment	ModifiedOn	20	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	Id	2	int	NULL	10	NULL	NO
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	PreAdmissionId	3	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	ClientId	4	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	DataFormId	5	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	CreatedOn	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	CreatedBy	7	nvarchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	ModifiedOn	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	ModifiedBy	9	nvarchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	Isdeleted	10	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	DischargeReason	11	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	SammsDischargeReason	12	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	DischargeDate	13	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	AdmissionDate	14	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	ProgramId	15	int	NULL	10	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	Version	16	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	PrimaryDischargeReason	17	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	SecondaryDischargeReason	18	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	LastModAt	19	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_NewDischargeTransferPlanForm	RowState	20	int	NULL	10	NULL	YES
+
+
+
+
+
+
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	IsNullable
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RowChkSum	2	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	LastModAt	3	timestamp	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RowState	4	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	Id	5	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DataFormId	6	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	PreAdmissionId	7	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ClientId	8	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ClientName	9	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ClientM4Id	10	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CreatedBy	11	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CreatedOn	12	timestamp	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ModifiedBy	13	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ModifiedOn	14	timestamp	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLActiveSubstanceUsers	15	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCurrentJob	16	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLRelationshipStatus	17	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLWhatKindOfSchoolAttend	18	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLLiveWithYou	19	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLPreferredLanguage	20	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLEmploymentStatus	21	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMother	22	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckFather	23	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckSibling	24	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalGrandmother	25	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalGrandfather	26	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalAunt	27	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalUncle	28	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckMaternalCousins	29	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalGrandmother	30	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalGrandfather	31	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalAunt	32	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalUncle	33	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLCheckPaternalCousins	34	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLHighestGradeCompleted	35	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLWhatBranch	36	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLTypeDischarge	37	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLGender	38	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLSexualOrientation	39	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLInfluenceDrugs	40	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLWhatBranchType	41	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsVeteransAdministration	42	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsPeerSupportMeetings	43	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsFriendsRecovery	44	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsCourtFines	45	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsOpenWarrants	46	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsOpenCourtCases	47	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsDrugTreatmentCourt	48	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsIncarcerated	49	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsArrested	50	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsSaferSexPractices	51	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsMakeYouUncomfortable	52	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsFeelingTraumatized	53	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsPertainingBeingLGBT	54	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsLGBT	55	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsCourtOrderedChildSupportPayments	56	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsArmedForces	57	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsTrainingActivities	58	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsEmploymentSituation	59	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsHighSchoolDiplomaGED	60	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsReadWriteEffectively	61	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsMainstreamClasses	62	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsHeldBackSchool	63	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsHaveAnyChildren	64	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsChildSupportPayments	65	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsCareOfFamilyMembers	66	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsAbuseNeglectGrowingUp	67	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsUnderstandEnglish	68	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsCountToSupportYou	69	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsCloseRelationship	70	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsDeployOverseas	71	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMother	72	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckFather	73	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckSibling	74	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalGrandmother	75	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalGrandfather	76	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalAunt	77	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalUncle	78	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMaternalCousins	79	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalGrandmother	80	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalGrandfather	81	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalAunt	82	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalUncle	83	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPaternalCousins	84	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckVisuallyShowMe	85	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckVerballyExplainItToMe	86	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPersonalExperience	87	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckTactilelyHandsOn	88	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckTalkItThrough	89	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckNoOne	90	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckImmediateFamily	91	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckExtendedFamily	92	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckCloseFriendsOnly	93	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckFriends	94	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckPeopleWork	95	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckEveryone	96	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckGamblingDisorder	97	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckFoodOvereating	98	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckEatingDisorders	99	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckInternetAddiction	100	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckSocialMediaAddiction	101	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckLoveIntimacyDependence	102	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckFamilyDisorder	103	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckFriendsYourselfRecovery	104	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckCoworkers	105	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckMeetings	106	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CheckOnline	107	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsDeleted	108	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	HowLongHadCurrentJob	109	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsFullTimeStudent	110	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	IsPartTimeStudent	111	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	Version	112	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ThoseWhoAreNotcisgender	113	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CulturalPreferencesForYourTreatment	114	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	FamilyStruggledWithDrugAlcoholProblems	115	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ExperiencedAnytraumaAbuseNeglect	116	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	PhysicalAbuseViolenceCaptivityOther	117	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	VerbalEmotionalFinancialAbuse	118	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	NeglectTraumaRelatedYourRace	119	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SexualAbuseAssaultSexualExploitation	120	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	CurrentlyExperiencingAbuseNglectExploitation	121	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	AnyDifficultyCopingWithTrauma	122	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	HaveYouEverReceivedServices	123	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ProbationorParole	124	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SocialHistoryProblemsWithOther	125	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	FindSupportYourselfInRecoveryOther	126	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceWhite	127	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceBlack	128	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceAmericanIndian	129	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceAsian	130	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceNativeHawaiian	131	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceTwoorMore	132	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceOther	133	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	RaceOtherTxt	134	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	Hispanic	135	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	NonHispanic	136	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	DDLTermsofGender	137	int	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	ObsevationofOthers	138	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	AffectedYourEmployment	139	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	PhysicalAbuse	140	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SexualAbuse	141	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	VerbalAbuse	142	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	Neglect	143	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	Captivity	144	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SexualExploitation	145	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	LaborExploitation	146	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	TraumaRelatedtoRace	147	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	TraumaOther	148	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SupportiveSexualOrientaion	149	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	NotSupportiveSexualOrientaion	150	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	SubstancesAffectedYourLife	151	string	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	AlwaysFollowsSaferSexPracices	152	boolean	YES
+FABRIC_SILVER	pats	tbl_ComprehensiveAssessmentForm	HaveHighSchoolDiploma	153	boolean	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	DataFormId	4	int	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	ClientId	5	int	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	Text	6	boolean	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	Email	7	boolean	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	Phone	8	boolean	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	PatientSignature	9	string	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	PatientSignatureDate	10	timestamp	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	PatientSignatureBy	11	string	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	CreatedBy	12	string	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	CreatedOn	13	timestamp	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	ModifiedBy	14	string	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	ModifiedOn	15	timestamp	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	IsDeleted	16	boolean	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	LastModAt	17	timestamp	YES
+FABRIC_SILVER	pats	tbl_ConsenttoMarketing	RowState	18	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	ClientId	4	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	DataFormId	5	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	CreatedOn	6	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	CreatedBy	7	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	ModifiedOn	8	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	ModifiedBy	9	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	Isdeleted	10	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	FormDate	11	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	ServiceId	12	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	Context	13	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	Version	14	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	MEdicalProviderSignatureDate	15	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormMDM	MEdicalProviderSignatureBy	16	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	EandMFormId	2	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ClientId	4	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DataFormId	5	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	CreatedOn	6	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	CreatedBy	7	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ModifiedOn	8	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ModifiedBy	9	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Isdeleted	10	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	FormDate	11	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ServiceId	12	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Context	13	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Version	14	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DDLTrimester	15	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DoseTxt	16	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	MgTxt	17	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DoseStabilityTxt	18	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	SignsTxt	19	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Bleeding	20	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Contraction	21	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	NauseaVomiting	22	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	PregnancyOtherTxt	23	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	MedicationsTxt	24	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	PrenatalVitaminsTxt	25	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	AllergiesTxt	26	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ChangesInRoutineTxt	27	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	UDSRadioBtn	28	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	SmokerRadioBtn	29	int	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	IllicitDrugTxt	30	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	NoOfPregnanciesTxt	31	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DeliveriesTxt	32	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	DateOfLastOB	33	timestamp	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	NameofOBTxt	34	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	PregnancyCommentsTxt	35	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	WTTxt	36	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	GravidaTxt	37	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ParaTxt	38	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	Provider	39	string	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	PrenatalCare	40	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	ReviewedandAcknowledged	41	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	NAPregnancyGrid	42	boolean	YES
+FABRIC_SILVER	pats	tbl_EandMFormPregnancy	LastModAt	43	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	ClientId	4	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	DataFormId	5	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	CreatedOn	6	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	CreatedBy	7	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	ModifiedOn	8	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	ModifiedBy	9	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	Isdeleted	10	boolean	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	DischargeReason	11	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	SammsDischargeReason	12	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	DischargeDate	13	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	AdmissionDate	14	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	ProgramId	15	int	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	Version	16	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	PrimaryDischargeReason	17	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	SecondaryDischargeReason	18	string	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	LastModAt	19	timestamp	YES
+FABRIC_SILVER	pats	tbl_NewDischargeTransferPlanForm	RowState	20	int	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	FormName	3	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	FormURL	4	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	PatientId	5	int	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	IsDeleted	6	boolean	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	CreatedBy	7	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	CreatedOn	8	timestamp	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	LastUpdatedBy	9	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	LastUpdatedOn	10	date	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	Program	11	string	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	EnrollmentId	12	int	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	dsID	13	int	YES
+FABRIC_SILVER	pats	tbl_SF_DataForms	EnrollmentDate	14	timestamp	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	DataFormId	4	int	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	ClientId	5	int	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	ClientName	6	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	PhoneNo	7	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	DoNotAgreetoReceive	8	boolean	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	PatientSignature	9	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	PatientSignatureDate	10	timestamp	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	PatientSignatureBy	11	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	CreatedBy	12	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	CreatedOn	13	timestamp	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	ModifiedBy	14	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	ModifiedOn	15	timestamp	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	IsDeleted	16	boolean	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	Version	17	string	YES
+FABRIC_SILVER	pats	tbl_SMSTextConsentForm	Permission	18	boolean	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	PreAdmissionId	3	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	ClientId	4	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	DataFormId	5	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	MedicaidID	6	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignature	7	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignatureBy	8	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	PatientSignatureDate	9	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignature	10	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignatureBy	11	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	StaffSignatureDate	12	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	IsDeleted	13	boolean	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	CreatedBy	14	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	CreatedOn	15	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	ModifiedBy	16	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	ModifiedOn	17	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	Version	18	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	Patients1	19	boolean	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	Patients2	20	boolean	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	LastModAt	21	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeAgreementandDiversionControl	RowState	22	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	SiteCode	1	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	Id	2	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	DataFormId	3	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	PreAdmissionId	4	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	ClientId	5	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	TakeHomeDosesUnsafe	6	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	LastDoseIncrease	7	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	LikelihoodOfUsingMedication	8	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	SafeguardingMedication	9	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	AbstainingFromOtherSubstances	10	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	LogisticalBarriers	11	int	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	TotalScore	12	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	StaffSignature	13	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	StaffSignatureDate	14	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	StaffSignatureBy	15	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	IsDeleted	16	boolean	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	CreatedBy	17	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	CreatedOn	18	timestamp	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	ModifiedBy	19	string	YES
+FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	ModifiedOn	20	timestamp	YES
+
+

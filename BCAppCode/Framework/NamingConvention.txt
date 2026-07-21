@@ -1,0 +1,153 @@
+Microsoft Fabric Naming Conventions
+1. Objective
+This training helps junior engineers learn how real ETL pipelines are designed in Microsoft Fabric. You will use Data Pipelines, Notebooks, and Medallion Architecture to process data and build business datasets.
+2. Environment Setup
+Create ONE Lakehouse.
+
+Lakehouse name:
+lh_training_etl
+
+All assignments will use this Lakehouse. Bronze, Silver, and Gold tables will be created inside this environment.
+3. Medallion Architecture
+Data flows through three layers:
+
+Source Files
+   ↓
+Pipeline
+   ↓
+Bronze Tables (Raw)
+   ↓
+Notebook Transformations
+   ↓
+Silver Tables (Cleaned)
+   ↓
+Notebook Transformations
+   ↓
+Gold Tables (Business Ready)
+4. Naming Conventions (Must Follow)
+Consistent naming helps teams maintain large data platforms.
+
+Lakehouse Naming
+Format: lh_<domain>_<purpose>
+Example: lh_training_etl
+
+Pipeline Naming
+Format: pl_<domain>_<process>
+Examples:
+pl_customer360_ingestion
+pl_orders_incremental_load
+pl_finance_reconciliation
+
+Notebook Naming
+Format: nb_<domain>_<purpose>
+Examples:
+nb_customer360_transform
+nb_orders_incremental
+nb_customer_scd_type2
+
+Table Naming
+Bronze tables (Raw)
+Format: br_<source>_<entity>
+Examples:
+br_crm_customers
+br_ecommerce_orders
+br_support_tickets
+br_marketing_leads
+br_bank_transactions
+br_ledger_transactions
+
+Silver tables (Cleaned)
+Format: sl_<entity>
+Examples:
+sl_customers
+sl_orders
+sl_support_tickets
+sl_marketing_leads
+sl_orders_clean
+sl_order_status_history
+
+Gold tables (Business)
+Format: gd_<business_entity>
+Examples:
+gd_customer_360
+gd_fact_orders
+gd_dim_customer
+gd_finance_reconciliation
+
+Column Naming Rules
+Use snake case format.
+Examples:
+customer_id
+order_id
+order_amount
+created_timestamp
+updated_timestamp
+5. Assignment Overview
+Assignment 1 – Customer 360 Integration
+Purpose: Combine CRM, Ecommerce, Support, and Marketing datasets to build a unified customer profile.
+
+Assignment 2 – Incremental Orders
+Purpose: Learn how ETL systems process daily batches and detect new or updated records.
+
+Assignment 3 – Slowly Changing Dimension (SCD Type 2)
+Purpose: Track historical changes in customer attributes.
+
+Assignment 4 – Financial Reconciliation
+Purpose: Match financial transactions across multiple systems and detect mismatches.
+6. Expected Deliverables
+Developers must submit:
+• Pipelines created
+• Notebooks created
+• Bronze, Silver, Gold tables
+
+QA must submit:
+• Data validation queries
+• Test execution results
+• Defect reports
+
+
+
+Hi Everyone,
+As part of the naming convention review, I observed that the audit tracking columns used in the tables are not consistently following the agreed naming standards across the Bronze and Silver layers.
+Please standardize the audit/history tracking columns as per the naming convention below. 
+ 
+Current Column	Expected Column
+silver_created_at	CreateInstanceAt
+
+silver_updated_at
+	UpdateInstanceAt
+last_seen_at	LastSeenAt
+_site_code	SiteCode
+_source_databse	SourceDatabase
+_ingest_run_id	IngestRunId
+_extracted_at	ExtractedAt
+_source_query_start_date	SourceQueryStartDate
+
+_source_query_end_date
+	SourceQueryEndDate
+
+_lookback_date
+	LookbackDate
+ 
+Please ensure that both existing and newly created tables follow the above naming standards to maintain consistency across Bronze, Silver, and Gold layers.
+Thank you.
+Slight change -  CreatedInstanceAt, UpdatedInstanceAt, LookbackDays
+
+
+
+Hi Everyone,
+I noticed that we are currently using different naming formats for Bronze-to-Silver and Silver-to-Gold notebooks, such as:
+nb_<domain>_br_to_sl
+nb_<domain>_bronze_to_silver
+nb_<domain>_brz_to_slv
+To maintain consistency across the project, please follow the standard naming convention below going forward:
+Source to Bronze: nb_<domain>_src_to_brz
+Bronze to Silver: nb_<domain>_brz_to_slv
+Silver to Gold: nb_<domain>_slv_to_gld
+Examples:
+nb_ukg_brz_to_slv
+nb_ukg_slv_to_gld
+nb_orders_brz_to_slv
+nb_orders_slv_to_gld
+Kindly use this format for all new notebooks and update existing notebooks where feasible to ensure consistency and easier maintenance.
+Thank you.

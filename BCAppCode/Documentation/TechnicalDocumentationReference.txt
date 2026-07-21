@@ -1,0 +1,1035 @@
+ 
+
+Microsoft Fabric 
+
+Pipeline Documentation — SAMMS Global ETL 
+
+ 
+
+Pipeline Name 
+
+SAMMS Global ETL Pipeline 
+
+Pipeline ID 
+
+PL-SAMMS-GLOBAL-001 
+
+Version 
+
+v1.0 
+
+Author 
+
+Joel Osborm Ravuri 
+
+Department 
+
+Developer 
+
+Created Date 
+
+07/07/2026 
+
+Last Updated 
+
+09/07/2026 
+
+Status 
+
+Draft 
+
+Environment 
+
+Dev  
+
+ 
+
+1.  Document Control 
+
+Version History 
+
+Version 
+
+Date 
+
+Author 
+
+Change Summary 
+
+Approved By 
+
+v1.0 
+
+07/07/2026 
+
+Joel Osborn Ravuri 
+
+Initial draft — generated from SAMMS Global ETL technical design 
+
+[Name] 
+
+ 
+
+Reviewers 
+
+Role 
+
+Name 
+
+Review Date 
+
+Comments 
+
+Technical Lead 
+
+Satya Narayana. A 
+
+ 
+
+ 
+
+Data Architect 
+
+Praveen Vaddi 
+
+ 
+
+ 
+
+QA Engineer 
+
+ 
+
+ 
+
+ 
+
+2.  Executive Summary 
+
+Business Purpose 
+
+The SAMMS Global ETL pipeline migrates and modernizes the legacy SAMMS Global ETL process within Microsoft Fabric. It extracts administrative, billing, and clinical reference data from the SAMMS Global SQL Server database and loads it into Fabric using a metadata-driven Medallion architecture (Bronze, Silver, Gold). 
+
+Unlike the legacy C# services, where extraction and transformation logic were tightly coupled, the Fabric implementation separates orchestration, transformation, publishing and auditing into reusable, configuration-driven components. This improves maintainability, scalability, and operational monitoring while preserving the existing business logic. The pipeline supports ten source tables spanning payer, fee schedule, clinical assessment (BAM, COWS), user/site administration, consent, device, and claim status data. 
+
+ 
+
+Stakeholders 
+
+Role 
+
+Name 
+
+Email 
+
+Department 
+
+Business Owner 
+
+[Name] 
+
+[email@org.com] 
+
+[Dept] 
+
+Technical Owner 
+
+[Name] 
+
+[email@org.com] 
+
+[Dept] 
+
+Primary Consumer 
+
+[Name] 
+
+[email@org.com] 
+
+[Dept] 
+
+ 
+
+SLA & Criticality 
+
+Business Criticality 
+
+High — feeds downstream billing, clinical, and compliance reporting 
+
+Data Freshness SLA 
+
+[e.g. Data available by 6:00 AM daily] 
+
+Max Acceptable Downtime 
+
+[e.g. 4 hours] 
+
+Escalation Contact 
+
+[Name + Phone] 
+
+3.  Pipeline Overview 
+
+Pipeline Metadata 
+
+Copy Job Name 
+
+Dynamic — one Copy Activity per active TaskConfig entry (Switch activity routing by TaskConfigId) 
+
+Copy Job Object ID 
+
+[GUID] 
+
+Job Mode 
+
+Batch (Bronze); Incremental supported per table via IsIncremental / WatermarkColumn / LookbackDays 
+
+Write Behavior 
+
+Bronze: Append (preceded by full truncate); Silver: Overwrite (latest snapshot); Gold: Upsert / Merge 
+
+Enable Staging 
+
+ 
+
+Table Option 
+
+Auto creates new table in case of first entry. 
+
+Timeout 
+
+[00.00:20:00] 
+
+Retry Count 
+
+3 
+
+ 
+
+Data Flow 
+
+Source (SAMMS Global SQL Server) → Bronze Copy Activities (CTRL / PATS child pipelines) → Bronze Lakehouse → Bronze-to-Silver Notebook → Silver Lakehouse → Gold CTRL / Gold PATS Notebooks → Fabric Warehouse → Downstream Reporting. 
+
+Layer 
+
+Component 
+
+Details 
+
+Source 
+
+SAMMS Global SQL Server 
+
+10 source tables across payer, fee schedule, clinical, and administrative domains 
+
+Bronze 
+
+Fabric Copy Activities (CTRL + PATS pipelines) 
+
+Metadata-driven; ForEach + Switch on TaskConfig; raw snapshots, Append mode with pre-load truncate 
+
+Silver 
+
+nb_brz_to_slv notebook 
+
+Schema standardization, SiteCode resolution, duplicate removal 
+
+Gold 
+
+nb_slv_to_gld_ctrl / nb_slv_to_gld_pats notebooks 
+
+Upsert/merge, RowChkSum change detection, active/inactive handling 
+
+Destination 
+
+Fabric Warehouse 
+
+Curated business tables for downstream reporting 
+
+ 
+
+4.  Source System 
+
+Connection Details 
+
+Source Type 
+
+SQL Server (SAMMS Global) 
+
+Server / Host 
+
+BHGDALLSQL05-SQL2016SAMMS-Fabric_SVC 
+
+Database Name 
+
+ SAMMS Global  
+
+Connection ID (Fabric) 
+
+[GUID] 
+
+Authentication 
+
+ 
+
+ 
+
+Source Tables 
+
+The pipeline processes ten configured source tables, each defined as a TaskConfig entry. Row counts, sizes, and primary key status are environment-specific and should be confirmed against the live source. 
+
+Source Table 
+
+Bronze Table 
+
+Row Count 
+
+Size 
+
+Has PK? 
+
+tblPAYER 
+
+brz_GlobalPayor 
+
+907 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblFEESCHED 
+
+brz_FeeSched 
+
+16209 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblFORMSSAMMSClient 
+
+brz_FormsSAMMSClient 
+
+37 
+
+[MB/GB] 
+
+[Yes/No] 
+
+aaBriefAddictionMonitor 
+
+brz_BriefAddictionMonitor 
+
+289914 
+
+[MB/GB] 
+
+[Yes/No] 
+
+aaClinicalOpiateWithdrawalScale 
+
+brz_clinicalopiatewithdrawalscale 
+
+480138 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblUser 
+
+brz_User 
+
+11839 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblUserSites 
+
+brz_UserSites 
+
+70395 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblCONSENTS 
+
+brz_CONSENTS 
+
+459 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblDEVICE 
+
+brz_GlobalDevices 
+
+4007 
+
+[MB/GB] 
+
+[Yes/No] 
+
+tblClaimStatus 
+
+brz_ClaimStatus 
+
+9409 
+
+[MB/GB] 
+
+[Yes/No] 
+
+ 
+
+Load Strategy 
+
+Load Type 
+
+Full Load (Bronze truncate-and-reload); Incremental supported per table via TaskConfig 
+
+Watermark Column 
+
+TaskConfig.WatermarkColumn — configured per table where IsIncremental = 1 
+
+Delta Filter Logic 
+
+Governed by TaskConfig.LookbackDays and WatermarkColumn; e.g. WHERE [WatermarkColumn] > last_run_date 
+
+ 
+
+5.  Destination System (Fabric Warehouse) 
+
+Warehouse Details 
+
+Workspace ID 
+
+[GUID] 
+
+Warehouse Endpoint 
+
+[xxx.datawarehouse.fabric.microsoft.com] 
+
+Destination Schema 
+
+Per TaskConfig.TargetSchema (Gold Warehouse) 
+
+Destination Table 
+
+Per TaskConfig.TargetTable — see Source-to-Target mapping below 
+
+Table Pre-Created 
+
+[Yes / No — Date: DD/MM/YYYY] 
+
+Write Mode 
+
+CTRL tables: standard upsert; PATS tables: RowChkSum-based change detection with merge 
+
+ 
+
+Source-to-Target Mapping 
+
+Source Table 
+
+Bronze Table 
+
+Silver Table 
+
+Gold Table 
+
+tblPAYER 
+
+brz_GlobalPayor 
+
+slv_GlobalPayor 
+
+GlobalPayor 
+
+tblFEESCHED 
+
+brz_FeeSched 
+
+slv_FeeSched 
+
+FeeSched 
+
+tblFORMSSAMMSClient 
+
+brz_FormsSAMMSClient 
+
+slv_FormsSAMMSClient 
+
+FormsSAMMSClient 
+
+aaBriefAddictionMonitor 
+
+brz_BriefAddictionMonitor 
+
+slv_BriefAddictionMonitor 
+
+BriefAddictionMonitor 
+
+aaClinicalOpiateWithdrawalScale 
+
+brz_clinicalopiatewithdrawalscale 
+
+slv_ClinicalOpiateWithdrawalScale 
+
+ClinicalOpiateWithdrawalScale 
+
+tblUser 
+
+brz_User 
+
+slv_User 
+
+User 
+
+tblUserSites 
+
+brz_UserSites 
+
+slv_UserSites 
+
+UserSites 
+
+tblCONSENTS 
+
+brz_CONSENTS 
+
+slv_Consents 
+
+Consents 
+
+tblDEVICE 
+
+brz_GlobalDevices 
+
+slv_GlobalDevices 
+
+GlobalDevices 
+
+tblClaimStatus 
+
+brz_ClaimStatus 
+
+slv_ClaimStatus 
+
+ClaimStatus 
+
+ 
+
+Key Column Mappings 
+
+Specific column-level type changes were not documented in the source technical design; the notable transformation is SiteCode resolution, where internal location identifiers are replaced with business SiteCodes during Silver processing. 
+
+Source Column 
+
+Source Value 
+
+Dest Column 
+
+Dest Value 
+
+Notes 
+
+LocationId 
+
+12 
+
+SiteCode 
+
+AdvMD-NF 
+
+Resolved via Locations reference table 
+
+LocationId 
+
+15 
+
+SiteCode 
+
+AdvMD-OK 
+
+Resolved via Locations reference table 
+
+LocationId 
+
+18 
+
+SiteCode 
+
+AdvMD-TX 
+
+Resolved via Locations reference table 
+
+ 
+
+Row Size Validation 
+
+Calculated Row Size 
+
+[e.g. 4,320 bytes] 
+
+SQL Server Limit 
+
+8,060 bytes 
+
+Status 
+
+[PASS / FAIL] 
+
+MAX Columns (off-row) 
+
+[List column names] 
+
+6.  Control Table & Scheduling 
+
+TaskConfig Entry (representative structure) 
+
+Each of the 10 source tables is registered as a row in bhg_bronze.meta.taskconfig. Representative fields for a single entry (e.g. GlobalPayor): 
+
+endpoint_name / TaskName 
+
+GlobalPayor 
+
+source_schema 
+
+dbo 
+
+source_table 
+
+tblPAYER 
+
+destination_schema 
+
+Global 
+
+destination_table 
+
+GlobalPayor 
+
+frequency 
+
+ 
+
+scheduled_day 
+
+ 
+
+is_active 
+
+IsActive = 1 (active tasks only participate in execution) 
+
+ 
+
+Schedule Configuration 
+
+Frequency 
+
+ 
+
+Trigger Time 
+
+ 
+
+Timezone 
+
+ 
+
+Notebook Entry Point 
+
+nb_get_global_task_config → nb_truncate_brz_tables → nb_brz_to_slv → nb_slv_to_gld_ctrl / nb_slv_to_gld_pats → nb_global_audit 
+
+ 
+
+7.  Notebook / PySpark Implementation 
+
+Notebook Details 
+
+Notebook 
+
+Purpose 
+
+nb_get_global_task_config 
+
+Retrieves active TaskConfig metadata and returns task definitions as JSON to the pipeline 
+
+nb_truncate_brz_tables 
+
+Clears Bronze Delta tables before extraction (prevents duplicate append snapshots) 
+
+nb_brz_to_slv 
+
+Applies technical transformations and loads the Silver layer 
+
+nb_slv_to_gld_ctrl 
+
+Processes CTRL (administrative/reference) tables and performs Gold upserts 
+
+nb_slv_to_gld_pats 
+
+Processes PATS (business/clinical) tables with RowChkSum-based change detection 
+
+nb_global_audit 
+
+Manages pipeline audit lifecycle (START_LAYER_RUNS / FINALIZE_SUCCESS / FINALIZE_FAILURE) 
+
+ 
+
+Method / Function Name 
+
+process_globalpayor, process_feesched, process_user, process_usersites, process_consents, process_globaldevices, process_claimstatus, process_formssammsclient, process_briefaddictionmonitor, process_clinicalopiatewithdrawalscale 
+
+Language 
+
+PySpark 
+
+Error Strategy 
+
+Skip and log — table-level isolation; failed methods recorded in FailedMethods and excluded from downstream layers 
+
+Retry Attempts 
+
+3 
+
+Failure Notification 
+
+Logged to audit framework (PipelineRun / TaskQueue / TaskAudit);  Teams notification will be sent. 
+
+Audit Log Table 
+
+bhg_bronze.meta.PipelineRun, TaskQueue, TaskAudit, DataQuality 
+
+ 
+
+Transformation Logic 
+
+Schema standardization — data type conversion, column ordering, null handling, audit column alignment 
+
+SiteCode resolution — internal location identifiers replaced with business SiteCodes via the Locations reference table 
+
+Duplicate removal — business-key based deduplication using Spark DataFrame operations before Silver write 
+
+Change detection — RowChkSum comparison for PATS Gold tables; configured business-column comparison where no checksum exists 
+
+Upsert processing — insert new records, update changed records, ignore unchanged records 
+
+Active/inactive record handling — records no longer present in source are marked inactive rather than deleted, preserving history 
+
+ 
+
+8.  Security & Compliance 
+
+Access & Permissions 
+
+Source DB Permission 
+
+BHGDALLSQL05-SQL2016SAMMS-Fabric_SVC 
+
+Authentication Method 
+
+Fabric connection 
+
+Credential Storage 
+
+ 
+
+Workspace Access 
+
+BHG PLATFORM CORE DEV 
+
+ 
+
+Data Classification 
+
+The source design references clinical assessment tables (Brief Addiction Monitor, Clinical Opiate Withdrawal Scale) and consent records, indicating the dataset likely contains PHI. This should be formally confirmed by the data/compliance owner. 
+
+Data Classification 
+
+clinical assessment tables  
+
+Contains PHI / PII 
+
+ 
+
+HIPAA Applicable 
+
+ 
+
+Masking in Non-Prod 
+
+ 
+
+Compliance Standards 
+
+ 
+
+9.  Testing & Validation 
+
+Test Results 
+
+Environment 
+
+Test Date 
+
+Tested By 
+
+Row Count Match 
+
+Result 
+
+Dev 
+
+[DD/MM/YYYY] 
+
+[Name] 
+
+[Yes/No] 
+
+[Pass/Fail] 
+
+UAT 
+
+[DD/MM/YYYY] 
+
+[Name] 
+
+[Yes/No] 
+
+[Pass/Fail] 
+
+Prod (dry run) 
+
+[DD/MM/YYYY] 
+
+[Name] 
+
+[Yes/No] 
+
+[Pass/Fail] 
+
+ 
+
+Validation Checklist 
+
+The Gold layer's DataQuality table captures the following validation metrics automatically after each successful table load: 
+
+Row count captured and compared (RowCount metric) 
+
+Duplicate records identified (DuplicateCount metric) 
+
+Null values quantified for loaded columns (NullCount metric) 
+
+Overall ValidationStatus recorded as PASS or FAIL 
+
+Audit log (TaskAudit, PipelineRun) populated after each run 
+
+ 
+
+Performance Metrics 
+
+Source Row Count 
+
+[Actual row count from source] 
+
+Destination Row Count 
+
+[Must match source exactly] 
+
+Load Duration 
+
+[e.g. 4 mins 32 secs] 
+
+Throughput 
+
+[e.g. 12,000 rows/min] 
+
+10.  DevOps & Source Control 
+
+Repository Details 
+
+Azure DevOps Org 
+
+[Organisation name] 
+
+Repository Name 
+
+[e.g. fabric-pipelines] 
+
+Feature Branch 
+
+[e.g. feature/samms-global-etl] 
+
+PR Raised By 
+
+[Developer name] 
+
+PR Approved By 
+
+[Reviewer name] 
+
+Merge Date 
+
+[DD/MM/YYYY] 
+
+ 
+
+Rollback Plan 
+
+Rollback Trigger 
+
+Bronze cleanup or Gold merge failure that leaves audit status as Failed 
+
+Rollback Steps 
+
+[Step-by-step procedure — e.g. rerun failed TaskConfigIds, restore prior Gold snapshot from Delta history] 
+
+Rollback Owner 
+
+[Person responsible] 
+
+Estimated RTO 
+
+[e.g. 2 hours] 
+
+ 
+
+11.  Known Issues & Limitations 
+
+ID 
+
+Issue Description 
+
+Workaround / Notes 
+
+Target Fix Date 
+
+001 
+
+Bronze layer is fully truncated and reloaded on every run, so no historical Bronze snapshots are retained between executions. 
+
+Silver and Gold layers preserve history via active/inactive record handling; confirm this is acceptable for audit needs. 
+
+ 
+
+002 
+
+[Description] 
+
+[Workaround] 
+
+[DD/MM/YYYY] 
+
+12.  Sign-Off & Approvals 
+
+Development 
+
+Role 
+
+Full Name 
+
+Signature 
+
+Date 
+
+Developer / Author 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+Technical Lead 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+Code Reviewer 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+ 
+
+UAT 
+
+Role 
+
+Full Name 
+
+Signature 
+
+Date 
+
+QA / Test Lead 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+Business Owner 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+ 
+
+Production Approval 
+
+Role 
+
+Full Name 
+
+Signature 
+
+Date 
+
+Data Architect 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+Security Officer 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+Project Manager 
+
+[Name] 
+
+______________________ 
+
+[DD/MM/YYYY] 
+
+ 
+
+Microsoft Fabric | Pipeline Documentation | SAMMS Global ETL | Generated from Technical Design 

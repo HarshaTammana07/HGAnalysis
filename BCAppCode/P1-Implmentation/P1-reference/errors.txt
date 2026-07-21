@@ -1,0 +1,95 @@
+Error code
+[UserErrorInvalidColumnMappingColumnNotFound](https://learn.microsoft.com/fabric/data-factory/connector-troubleshoot-ftp-sftp-http#error-code-usererrorinvalidcolumnmappingcolumnnotfound)
+Failure type
+User configuration issue
+Details
+ ErrorCode=UserErrorInvalidColumnMappingColumnNotFound,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Column 'VOregistrationpath' specified in column mapping cannot be found in source data.,Source=Microsoft.DataTransfer.ClientLibrary,' 
+
+Error code
+[UserErrorInvalidColumnMappingColumnNotFound](https://learn.microsoft.com/fabric/data-factory/connector-troubleshoot-ftp-sftp-http#error-code-usererrorinvalidcolumnmappingcolumnnotfound)
+Failure type
+User configuration issue
+Details
+ ErrorCode=UserErrorInvalidColumnMappingColumnNotFound,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Column 'pumpwindow' specified in column mapping cannot be found in source data.,Source=Microsoft.DataTransfer.ClientLibrary,' 
+Activity ID
+ b186de63-6429-4469-9179-701fa94588aa 
+
+Error code
+SqlOperationFailed
+Failure type
+User configuration issue
+Details
+ Failure happened on 'Source' side. ErrorCode=SqlOperationFailed,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=A database operation failed with the following error: 'Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.',Source=,''Type=System.Data.SqlClient.SqlException,Message=Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.,Source=.Net SqlClient Data Provider,SqlErrorNumber=207,Class=16,ErrorCode=-2146232060,State=1,Errors=[{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},],' 
+Activity ID
+ 0405326c-3c99-439c-a954-3fa8a1a0a0b8 
+
+Error code
+SqlOperationFailed
+Failure type
+User configuration issue
+Details
+ Failure happened on 'Source' side. ErrorCode=SqlOperationFailed,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=A database operation failed with the following error: 'Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.',Source=,''Type=System.Data.SqlClient.SqlException,Message=Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.,Source=.Net SqlClient Data Provider,SqlErrorNumber=207,Class=16,ErrorCode=-2146232060,State=1,Errors=[{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},],' 
+Activity ID
+ fbe7bfad-035b-41b3-815a-5be468825fe7 
+Are you satisfied with your experience?
+
+Error code
+SqlOperationFailed
+
+
+Failure type
+User configuration issue
+Details
+ Failure happened on 'Source' side. ErrorCode=SqlOperationFailed,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=A database operation failed with the following error: 'Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.',Source=,''Type=System.Data.SqlClient.SqlException,Message=Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.
+Invalid column name 'SFTPUN'.
+Invalid column name 'SFTPPW'.,Source=.Net SqlClient Data Provider,SqlErrorNumber=207,Class=16,ErrorCode=-2146232060,State=1,Errors=[{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPUN'.,},{Class=16,Number=207,State=1,Message=Invalid column name 'SFTPPW'.,},],' 
+Activity ID
+ a37f7d10-d9c5-4828-919d-0eb2f474d860 
+
+Failure Details
+Failure 1
+Task Config ID :
+Task Name : P1 Reference pipeline failed or audit finalization failed. See error details.
+Error : Failed items only: BR SaveClinic - SaveClinic Bronze ForEach failed; BR Save3pSetup - Save3pSetup Bronze ForEach failed; SL SavePreAdmissionV6 - Traceback (most recent call last): File "/tmp/ipykernel_6527/963860558.py", line 291, in merge_to_silver merge_builder.whenNotMatchedInsert(values=insert_all).execute() File "/usr/hdp/current/spark3-client/jars/delta-spark_2.12-3.2.1.20260427.3.jar/delta/tables.py", line 1065, in execute self._jbuilder.execute() File "/home/trusted-service-user/cluster-env/trident_env/lib/python3.11/site-packages/py4j/java_gateway.py", line 1322, in call return_value = get_return_value( ^^^^^^^^^^^^^^^^^ File "/opt/spark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco return f(*a, **kw) ^^^^^^^^^^^ File "/home/trusted-service-user/cluster-env/trident_env/lib/python3.11/site-packages/py4j/protocol.py", line 326, in get_return_value raise Py4JJavaError( py4j.protocol.Py4JJavaError: An error occurred while calling o8400.execute. : org.apache.spark.SparkException: Job aborted due to stage failure: Task 1 in stage 113.0 failed 4 times, most recent failure: Lost task 1.3 in stage 113.0 (TID 720) (vm-5b767637 executor 1): org.apache.spark.SparkUpgradeException: [INCONSISTENT_BEHAVIOR_CROSS_VERSION.READ_ANCIENT_DATETIME] You may get a different result due to the upgrading to Spark >= 3.0: reading dates before 1582-10-15 or timestamps before 1900-01-01T00:00:00Z from Parquet files can be ambiguous, as the files may be written by Spark 2.x or legacy versions of Hive, which uses a legacy hybrid calendar that is different from Spark 3.0+'s Proleptic Gregorian calendar. See more details in SPARK-31404. You can set the SQL config "spark.sql.parquet.datetimeRebaseModeInRead" or the datasource option "datetimeRebaseMode" to "LEGACY" to rebase the datetime values w.r.t. the calendar difference during reading. To read the datetime values as it is, set the SQL config or the datasource option to "CORRECTED". at org.apache.spark.sql.errors.QueryExecutionErrors$.sparkUpgradeInReadingDatesError(QueryExecutionErrors.scala:752) at org.apache.spark.sql.execution.datasources.DataSourceUtils$.newRebaseExceptionInRead(DataSourceUtils.scala:177) at org.apache.spark.sql.execution.datasources.DataSourceUtils.newRebaseExceptionInRead(DataSourceUtils.scala) at org.apache.spark.sql.execution.datasources.parquet.ParquetVectorUpdaterFactory.rebaseTimestamp(ParquetVectorUpdaterFactory.java:1100) at org.apache.spark.sql.execution.datasources.parquet.ParquetVectorUpdaterFactory.rebaseMicros(ParquetVectorUpdaterFactory.java:1113) at org.apache.spark.sql.execution.datasources.parquet.ParquetVectorUpdaterFactory$LongWithRebaseUpdater.decodeSingleDictionaryId(ParquetVectorUpdaterFactory.java:577) at org.apache.spark.sql.execution.datasources.parquet.ParquetVectorUpdater.decodeDictionaryIds(ParquetVectorUpdater.java:75) at org.apache.spark.sql.execution.datasources.parquet.VectorizedColumnReader.readBatch(VectorizedColumnReader.
+
+
+
+
+
+You have 3 root causes in that file:
+Clinic column mapping missing in some SAMMS sites
+VOregistrationpath not found in source data
+pumpwindow not found in source data
+Same category as blAdjustAtDischarge, PinBeforeSig, etc. Source schema varies by site, but Copy mapping expects the column.
+
+3P Setup source columns missing
+SFTPUN
+SFTPPW
+We had added these to match one schema, but some SAMMS sites do not have them. That is why Save3pSetup Bronze failed.
+
+PreAdmission V6 Silver Spark datetime issue
+READ_ANCIENT_DATETIME
+Some Bronze/Silver parquet data has timestamp/date values before 1900-01-01 or ancient dates.
+Spark needs datetimeRebaseMode config set to LEGACY or CORRECTED before reading/merging.
+
+Good news: your new notification formatting is working. It now shows only:
+BR SaveClinic failed
+BR Save3pSetup failed
+SL SavePreAdmissionV6 failed
+instead of dumping all successful methods.
