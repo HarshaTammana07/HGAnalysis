@@ -7,15 +7,15 @@
 # Configs already created:
 #   34 = SAMMS Notes Bronze Pipeline
 #   35 = SAMMS Notes Silver Pipeline
-#   36 = SAMMS Notes Gold Pipeline
+#   36 = SAMMS Notes Gold Pipeline (retired/disabled for Notes; Silver is now final)
 #
 # Fixed template/task rows:
 #   143 = 3pArnote Bronze template        -> deactivated after site rows are generated
 #   144 = 3pClaimNote Bronze template     -> deactivated after site rows are generated
 #   145 = 3pArnote Silver
 #   146 = 3pClaimNote Silver
-#   147 = 3pArnote Gold
-#   148 = 3pClaimNote Gold
+#   147 = 3pArnote Gold        -> retained only as inactive historical config
+#   148 = 3pClaimNote Gold     -> retained only as inactive historical config
 #
 # Generated Bronze site rows:
 #   143000 + row_number = 3pArnote Bronze - <SiteCode>
@@ -38,6 +38,32 @@ try:
     notes_lookback_days
 except NameError:
     notes_lookback_days = 15
+
+arnote_bronze_request_body = json.dumps({
+    "full_table": "bhg_bronze.Notes.br_tbl3pArnote",
+    "ingest_column": "IngestRunId",
+    "site_column": "SiteCode",
+    "database_column": "SourceDatabase",
+    "dq_keys": ["SiteCode", "arnID"]
+})
+
+claimnote_bronze_request_body = json.dumps({
+    "full_table": "bhg_bronze.Notes.br_tbl3pClaimNote",
+    "ingest_column": "IngestRunId",
+    "site_column": "SiteCode",
+    "database_column": "SourceDatabase",
+    "dq_keys": ["SiteCode", "tpcnTPCID"]
+})
+
+arnote_silver_request_body = json.dumps({
+    "full_table": "bhg_silver.pats.tbl_3pARNOTE",
+    "dq_keys": ["SiteCode", "arnID"]
+})
+
+claimnote_silver_request_body = json.dumps({
+    "full_table": "bhg_silver.pats.tbl_3pClaimNote",
+    "dq_keys": ["SiteCode", "tpcnTPCID"]
+})
 
 # Paste/update content from BCAppCode/Framework/AllsiteCodesAndDatabses.txt here.
 notes_sites_json = r'''
@@ -198,37 +224,37 @@ task_rows = [
         143, 34, "3pArnote Bronze", None, "3pArnote", "SQLServer", "tbl3pARNOTE",
         0, None, "INCREMENTAL", 1, "arnDATE,arnDtRemoved", notes_lookback_days,
         "Notes", "br_tbl3pArnote", "/lakehouse/bhg_bronze/Notes/br_tbl3pArnote",
-        1, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        1, 0, 43200, arnote_bronze_request_body, None, None, None, None, 1, created_by, created_by
     ),
     (
         144, 34, "3pClaimNote Bronze", None, "3pClaimNote", "SQLServer", "tbl3pClaimNote",
         0, None, "INCREMENTAL", 1, "tpcnDtmAdded,tpcnDtTickler", notes_lookback_days,
         "Notes", "br_tbl3pClaimNote", "/lakehouse/bhg_bronze/Notes/br_tbl3pClaimNote",
-        2, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        2, 0, 43200, claimnote_bronze_request_body, None, None, None, None, 1, created_by, created_by
     ),
     (
         145, 35, "3pArnote Silver", None, "3pArnote", "Lakehouse", "bhg_bronze.Notes.br_tbl3pArnote",
-        0, None, "MERGE", 1, "_ingest_run_id", notes_lookback_days,
-        "pats", "sl_tbl_3pARNOTE", "/lakehouse/bhg_silver/pats/sl_tbl_3pARNOTE",
-        1, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        0, None, "MERGE", 1, "IngestRunId", notes_lookback_days,
+        "pats", "tbl_3pARNOTE", "/lakehouse/bhg_silver/pats/tbl_3pARNOTE",
+        1, 0, 43200, arnote_silver_request_body, None, None, None, None, 1, created_by, created_by
     ),
     (
         146, 35, "3pClaimNote Silver", None, "3pClaimNote", "Lakehouse", "bhg_bronze.Notes.br_tbl3pClaimNote",
-        0, None, "MERGE", 1, "_ingest_run_id", notes_lookback_days,
-        "pats", "sl_tbl_3pClaimNote", "/lakehouse/bhg_silver/pats/sl_tbl_3pClaimNote",
-        2, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        0, None, "MERGE", 1, "IngestRunId", notes_lookback_days,
+        "pats", "tbl_3pClaimNote", "/lakehouse/bhg_silver/pats/tbl_3pClaimNote",
+        2, 0, 43200, claimnote_silver_request_body, None, None, None, None, 1, created_by, created_by
     ),
     (
-        147, 36, "3pArnote Gold", None, "3pArnote", "Warehouse", "bhg_silver.pats.sl_tbl_3pARNOTE",
+        147, 36, "3pArnote Gold", None, "3pArnote", "Warehouse", "bhg_silver.pats.tbl_3pARNOTE",
         0, None, "VERSIONED_FULL_OVERWRITE", 0, None, None,
         "pats", "gd_3p_arnote", "bhg_gold.pats.gd_3p_arnote",
-        1, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        1, 0, 43200, None, None, None, None, None, 0, created_by, created_by
     ),
     (
-        148, 36, "3pClaimNote Gold", None, "3pClaimNote", "Warehouse", "bhg_silver.pats.sl_tbl_3pClaimNote",
+        148, 36, "3pClaimNote Gold", None, "3pClaimNote", "Warehouse", "bhg_silver.pats.tbl_3pClaimNote",
         0, None, "VERSIONED_FULL_OVERWRITE", 0, None, None,
         "pats", "gd_3p_claim_note", "bhg_gold.pats.gd_3p_claim_note",
-        2, 0, 43200, None, None, None, None, None, 1, created_by, created_by
+        2, 0, 43200, None, None, None, None, None, 0, created_by, created_by
     )
 ]
 
@@ -330,10 +356,20 @@ DeltaTable.forName(spark, taskconfig_table).update(
     }
 )
 
-# Keep Silver/Gold layer tasks independent for now.
+# Keep Silver layer tasks independent for now. Gold rows are retained inactive only.
 DeltaTable.forName(spark, taskconfig_table).update(
-    condition="TaskConfigId IN (145, 146, 147, 148)",
+    condition="TaskConfigId IN (145, 146)",
     set={
+        "DependencyTaskConfigId": F.lit(None).cast("long"),
+        "ModifiedAt": F.current_timestamp(),
+        "ModifiedBy": F.lit(created_by)
+    }
+)
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId IN (147, 148)",
+    set={
+        "IsActive": F.lit(0),
         "DependencyTaskConfigId": F.lit(None).cast("long"),
         "ModifiedAt": F.current_timestamp(),
         "ModifiedBy": F.lit(created_by)

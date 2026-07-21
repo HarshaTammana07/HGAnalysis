@@ -1,0 +1,1136 @@
+{
+  "name": "pl_p1_assessments_part1",
+  "objectId": "b68f0b4c-d368-4f1b-a4f7-4abf8d88a4b7",
+  "properties": {
+    "activities": [
+      {
+        "name": "fe_each_samms_site",
+        "type": "ForEach",
+        "dependsOn": [],
+        "typeProperties": {
+          "items": {
+            "value": "@pipeline().parameters.p_sites",
+            "type": "Expression"
+          },
+          "isSequential": false,
+          "batchCount": 3,
+          "activities": [
+            {
+              "name": "lkp_check_periodic_reassessment",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'periodic_reassessment_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PeriodicReassessment',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_periodic_reassessment_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_periodic_reassessment",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_periodic_reassessment').output.firstRow.periodic_reassessment_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_periodic_reassessment_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [DataFormId] AS [DataFormId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [ClientId] AS [ClientId],\n    [Date] AS [Date],\n    [CurrentPathway] AS [CurrentPathway],\n    [CurrentPathwayPhase] AS [CurrentPathwayPhase],\n    [CompletedAt] AS [CompletedAt],\n    [CompletedAtOthers] AS [CompletedAtOthers],\n    [IsDeleted] AS [IsDeleted],\n    [CreatedBy] AS [CreatedBy],\n    [CreatedOn] AS [CreatedOn],\n    [ModifiedBy] AS [ModifiedBy],\n    [ModifiedOn] AS [ModifiedOn],\n    [Version] AS [Version],\n    RowChkSum = CHECKSUM([Id], [DataFormId], [PreAdmissionId], [ClientId], [Date], [CurrentPathway], [CurrentPathwayPhase], [CompletedAt], [CompletedAtOthers], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn], [Version])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PeriodicReassessment]\n',\n'WHERE 1 = 1\nORDER BY [Id]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_periodic_reassessment"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_counselor_review",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_counselor_review_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PACounselorReview',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_counselor_review_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_counselor_review",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_counselor_review').output.firstRow.pa_counselor_review_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_counselor_review_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [EarlyIntervention] AS [EarlyIntervention],\n    [OutpatientTreatment] AS [OutpatientTreatment],\n    [IntensiveOutpatient] AS [IntensiveOutpatient],\n    [PartialHospitalization] AS [PartialHospitalization],\n    [ResidentialInpatient] AS [ResidentialInpatient],\n    [MedManagedIntensiveInpatient] AS [MedManagedIntensiveInpatient],\n    [OTS] AS [OTS],\n    [OBOT] AS [OBOT],\n    [OTP] AS [OTP],\n    [OBAT] AS [OBAT],\n    [WithdrawalManagement] AS [WithdrawalManagement],\n    [CopePhase1] AS [CopePhase1],\n    [CopePhase2] AS [CopePhase2],\n    [CopePhase3] AS [CopePhase3],\n    [Induction] AS [Induction],\n    [Stabilization] AS [Stabilization],\n    [Maintenance] AS [Maintenance],\n    [DateCompleted] AS [DateCompleted],\n    [UseScore] AS [UseScore],\n    [RiskScore] AS [RiskScore],\n    [ProtectiveScore] AS [ProtectiveScore],\n    [ClinicalSummary] AS [ClinicalSummary],\n    [PatientSignature] AS [PatientSignature],\n    [PatientSignatureBy] AS [PatientSignatureBy],\n    [PatientSignatureDate] AS [PatientSignatureDate],\n    [CounselorSignature] AS [CounselorSignature],\n    [CounselorSignatureBy] AS [CounselorSignatureBy],\n    [CounselorSignatureDate] AS [CounselorSignatureDate],\n    [SupervisorSignature] AS [SupervisorSignature],\n    [SupervisorSignatureBy] AS [SupervisorSignatureBy],\n    [SupervisorSignatureDate] AS [SupervisorSignatureDate],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [EarlyIntervention], [OutpatientTreatment], [IntensiveOutpatient], [PartialHospitalization], [ResidentialInpatient], [MedManagedIntensiveInpatient], [OTS], [OBOT], [OTP], [OBAT], [WithdrawalManagement], [CopePhase1], [CopePhase2], [CopePhase3], [Induction], [Stabilization], [Maintenance], [DateCompleted], [UseScore], [RiskScore], [ProtectiveScore], [ClinicalSummary], [PatientSignature], [PatientSignatureBy], [PatientSignatureDate], [CounselorSignature], [CounselorSignatureBy], [CounselorSignatureDate], [SupervisorSignature], [SupervisorSignatureBy], [SupervisorSignatureDate])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PACounselorReview]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_counselor_review"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_1",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_1_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension1',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_1_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_1",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_1').output.firstRow.pa_dimension_1_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_1_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [LastUDS] AS [LastUDS],\n    [UDSResult] AS [UDSResult],\n    [IllegalSubstances] AS [IllegalSubstances],\n    [IllegalSubstancesBox] AS [IllegalSubstancesBox],\n    [Overdose] AS [Overdose],\n    [OverdoseBox] AS [OverdoseBox],\n    [NarcanAvailable] AS [NarcanAvailable],\n    [Cravings] AS [Cravings],\n    [CravingRating] AS [CravingRating],\n    [Dimension1ASAMRating] AS [Dimension1ASAMRating],\n    [UAEval] AS [UAEval],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [LastUDS], [UDSResult], [IllegalSubstances], [IllegalSubstancesBox], [Overdose], [OverdoseBox], [NarcanAvailable], [Cravings], [CravingRating], [Dimension1ASAMRating], [UAEval])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension1]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_1"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_2",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_2_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension2',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_2_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_2",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_2').output.firstRow.pa_dimension_2_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_2_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [PhysicalHealthChange] AS [PhysicalHealthChange],\n    [Called911] AS [Called911],\n    [Called911Box] AS [Called911Box],\n    [WorseningMedicalCondition] AS [WorseningMedicalCondition],\n    [WorseningMedicalConditionBox] AS [WorseningMedicalConditionBox],\n    [PrimaryCareProvider] AS [PrimaryCareProvider],\n    [PrimaryCareProviderBox] AS [PrimaryCareProviderBox],\n    [UnprotectedSex] AS [UnprotectedSex],\n    [DrugInjection] AS [DrugInjection],\n    [SharingDrug] AS [SharingDrug],\n    [HIVHepatits] AS [HIVHepatits],\n    [HIVHepatitisBox] AS [HIVHepatitisBox],\n    [TobaccoNicotine] AS [TobaccoNicotine],\n    [TobaccoNicotineFrequency] AS [TobaccoNicotineFrequency],\n    [DiscontinueTobaccoNicotine] AS [DiscontinueTobaccoNicotine],\n    [Dimension2ASAMRating] AS [Dimension2ASAMRating],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [PhysicalHealthChange], [Called911], [Called911Box], [WorseningMedicalCondition], [WorseningMedicalConditionBox], [PrimaryCareProvider], [PrimaryCareProviderBox], [UnprotectedSex], [DrugInjection], [SharingDrug], [HIVHepatits], [HIVHepatitisBox], [TobaccoNicotine], [TobaccoNicotineFrequency], [DiscontinueTobaccoNicotine], [Dimension2ASAMRating])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension2]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_2"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_3",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_3_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension3',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_3_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_3",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_3').output.firstRow.pa_dimension_3_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_3_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [MentalHealthChange] AS [MentalHealthChange],\n    [MentalHealthHospitalized] AS [MentalHealthHospitalized],\n    [MentalHealthHospitalizedbox] AS [MentalHealthHospitalizedbox],\n    [WorseningMentalHealth] AS [WorseningMentalHealth],\n    [WorseningMentalHealthBox] AS [WorseningMentalHealthBox],\n    [Agitation] AS [Agitation],\n    [DecreasedPleasure] AS [DecreasedPleasure],\n    [Anxiety] AS [Anxiety],\n    [LackofInterest] AS [LackofInterest],\n    [Confusion] AS [Confusion],\n    [PanicAttacks] AS [PanicAttacks],\n    [BrainFog] AS [BrainFog],\n    [Numbness] AS [Numbness],\n    [Insomnia] AS [Insomnia],\n    [TroubleFallingAsleep] AS [TroubleFallingAsleep],\n    [TroubleWakingUp] AS [TroubleWakingUp],\n    [Headaches] AS [Headaches],\n    [StomachIssues] AS [StomachIssues],\n    [Fatigue] AS [Fatigue],\n    [Restlessness] AS [Restlessness],\n    [Tearfulness] AS [Tearfulness],\n    [IncreasedAppetite] AS [IncreasedAppetite],\n    [DecreasedAppetite] AS [DecreasedAppetite],\n    [Feelingempty] AS [Feelingempty],\n    [Irritability] AS [Irritability],\n    [Anger] AS [Anger],\n    [GuiltShame] AS [GuiltShame],\n    [MoodSwings] AS [MoodSwings],\n    [DecreasedSelfControl] AS [DecreasedSelfControl],\n    [Nightmares] AS [Nightmares],\n    [DecreasedEnergy] AS [DecreasedEnergy],\n    [IncreasedEnergy] AS [IncreasedEnergy],\n    [LackofFocus] AS [LackofFocus],\n    [Hallucinations] AS [Hallucinations],\n    [Isolation] AS [Isolation],\n    [ObsessiveWorryingThoughts] AS [ObsessiveWorryingThoughts],\n    [LackofMotivation] AS [LackofMotivation],\n    [Forgetfulness] AS [Forgetfulness],\n    [Nervousness] AS [Nervousness],\n    [PersistentSadness] AS [PersistentSadness],\n    [DisorganizedConfusedThoughts] AS [DisorganizedConfusedThoughts],\n    [OtherMentalSymptoms] AS [OtherMentalSymptoms],\n    [OtherMentalSymptomsBox] AS [OtherMentalSymptomsBox],\n    [WishedDead] AS [WishedDead],\n    [KillingYourself] AS [KillingYourself],\n    [Dimension3ASAMRating] AS [Dimension3ASAMRating],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [MentalHealthChange], [MentalHealthHospitalized], [MentalHealthHospitalizedbox], [WorseningMentalHealth], [WorseningMentalHealthBox], [Agitation], [DecreasedPleasure], [Anxiety], [LackofInterest], [Confusion], [PanicAttacks], [BrainFog], [Numbness], [Insomnia], [TroubleFallingAsleep], [TroubleWakingUp], [Headaches], [StomachIssues], [Fatigue], [Restlessness], [Tearfulness], [IncreasedAppetite], [DecreasedAppetite], [Feelingempty], [Irritability], [Anger], [GuiltShame], [MoodSwings], [DecreasedSelfControl], [Nightmares], [DecreasedEnergy], [IncreasedEnergy], [LackofFocus], [Hallucinations], [Isolation], [ObsessiveWorryingThoughts], [LackofMotivation], [Forgetfulness], [Nervousness], [PersistentSadness], [DisorganizedConfusedThoughts], [OtherMentalSymptoms], [OtherMentalSymptomsBox], [WishedDead], [KillingYourself], [Dimension3ASAMRating])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension3]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_3"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_4",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_4_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension4',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_4_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_4",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_4').output.firstRow.pa_dimension_4_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_4_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [MotivationforChange] AS [MotivationforChange],\n    [TreatmentSatisfaction] AS [TreatmentSatisfaction],\n    [TreatmentSatisfactionBox] AS [TreatmentSatisfactionBox],\n    [EventuallyDiscontinuing] AS [EventuallyDiscontinuing],\n    [Discontinuing3to6Months] AS [Discontinuing3to6Months],\n    [Strengths] AS [Strengths],\n    [Needs] AS [Needs],\n    [Abilities] AS [Abilities],\n    [PreferedforTreatment] AS [PreferedforTreatment],\n    [Dimension4ASAMRating] AS [Dimension4ASAMRating],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [MotivationforChange], [TreatmentSatisfaction], [TreatmentSatisfactionBox], [EventuallyDiscontinuing], [Discontinuing3to6Months], [Strengths], [Needs], [Abilities], [PreferedforTreatment], [Dimension4ASAMRating])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension4]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_4"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_5",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_5_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension5',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_5_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_5",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_5').output.firstRow.pa_dimension_5_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_5_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [Triggers] AS [Triggers],\n    [CopingStrategies] AS [CopingStrategies],\n    [ContinueUsing] AS [ContinueUsing],\n    [ContinueUsingBox] AS [ContinueUsingBox],\n    [EmploymentStatus] AS [EmploymentStatus],\n    [EmploymentStatusOther] AS [EmploymentStatusOther],\n    [PartFullTime] AS [PartFullTime],\n    [Arrested] AS [Arrested],\n    [ChangeinLegalStatus] AS [ChangeinLegalStatus],\n    [ChangeinLegalStatusBox] AS [ChangeinLegalStatusBox],\n    [FinancialTrouble] AS [FinancialTrouble],\n    [Dimension5ASAMRating] AS [Dimension5ASAMRating],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [Triggers], [CopingStrategies], [ContinueUsing], [ContinueUsingBox], [EmploymentStatus], [EmploymentStatusOther], [PartFullTime], [Arrested], [ChangeinLegalStatus], [ChangeinLegalStatusBox], [FinancialTrouble], [Dimension5ASAMRating])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension5]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_5"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_pa_dimension_6",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'pa_dimension_6_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'PADimension6',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_pa_dimension_6_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_pa_dimension_6",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_pa_dimension_6').output.firstRow.pa_dimension_6_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_pa_dimension_6_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [PeriodicReassessmentId] AS [PeriodicReassessmentId],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [CurrentlyLivingOther] AS [CurrentlyLivingOther],\n    [EnvironmentStability] AS [EnvironmentStability],\n    [EnvironmentStabilityBox] AS [EnvironmentStabilityBox],\n    [SafefromExploitation] AS [SafefromExploitation],\n    [SafefromExploitationBox] AS [SafefromExploitationBox],\n    [Threats] AS [Threats],\n    [ThreatsBox] AS [ThreatsBox],\n    [Children] AS [Children],\n    [ChildrenAge] AS [ChildrenAge],\n    [ChildrenAgeBox] AS [ChildrenAgeBox],\n    [ChildrenLegalCustody] AS [ChildrenLegalCustody],\n    [ChildFamilyServicesOpenCases] AS [ChildFamilyServicesOpenCases],\n    [FriendsFamilySupport] AS [FriendsFamilySupport],\n    [EnoughMoney] AS [EnoughMoney],\n    [FamilyFriendsinRecovery] AS [FamilyFriendsinRecovery],\n    [CurrentlyConnectedSupport] AS [CurrentlyConnectedSupport],\n    [CurrentlyConnectedSupportBox] AS [CurrentlyConnectedSupportBox],\n    [Barriers] AS [Barriers],\n    [BarriersBox] AS [BarriersBox],\n    [Dimension6ASAMRating] AS [Dimension6ASAMRating],\n    [LivesAlone] AS [LivesAlone],\n    [HouseApartment] AS [HouseApartment],\n    [LiveKids] AS [LiveKids],\n    [Shelter] AS [Shelter],\n    [LivesPartnerSpouse] AS [LivesPartnerSpouse],\n    [SoberLivingHome] AS [SoberLivingHome],\n    [LivesFamily] AS [LivesFamily],\n    [Unhoused] AS [Unhoused],\n    [LivesFriends] AS [LivesFriends],\n    [Other] AS [Other],\n    RowChkSum = CHECKSUM([PeriodicReassessmentId], [PreAdmissionId], [CurrentlyLivingOther], [EnvironmentStability], [EnvironmentStabilityBox], [SafefromExploitation], [SafefromExploitationBox], [Threats], [ThreatsBox], [Children], [ChildrenAge], [ChildrenAgeBox], [ChildrenLegalCustody], [ChildFamilyServicesOpenCases], [FriendsFamilySupport], [EnoughMoney], [FamilyFriendsinRecovery], [CurrentlyConnectedSupport], [CurrentlyConnectedSupportBox], [Barriers], [BarriersBox], [Dimension6ASAMRating], [LivesAlone], [HouseApartment], [LiveKids], [Shelter], [LivesPartnerSpouse], [SoberLivingHome], [LivesFamily], [Unhoused], [LivesFriends], [Other])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[PADimension6]\n',\n'WHERE 1 = 1\nORDER BY SiteCode, [PeriodicReassessmentId]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_pa_dimension_6"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "lkp_check_new_admission_assessment",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "SqlServerSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat(\n'SELECT ',\n'new_admission_assessment_exists',\n' = CASE WHEN EXISTS (SELECT 1 FROM [',\nitem().DataBaseName,\n'].sys.tables t JOIN [',\nitem().DataBaseName,\n'].sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = ''',\n'dbo',\n''' AND UPPER(t.name) = UPPER(''',\n'NewAdmissionAssessment',\n''')) THEN 1 ELSE 0 END'\n)",
+                    "type": "Expression"
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "firstRowOnly": true,
+                "datasetSettings": {
+                  "annotations": [],
+                  "type": "SqlServerTable",
+                  "schema": [],
+                  "externalReferences": {
+                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                  }
+                }
+              }
+            },
+            {
+              "name": "if_new_admission_assessment_exists",
+              "type": "IfCondition",
+              "dependsOn": [
+                {
+                  "activity": "lkp_check_new_admission_assessment",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(activity('lkp_check_new_admission_assessment').output.firstRow.new_admission_assessment_exists, 1)",
+                  "type": "Expression"
+                },
+                "ifFalseActivities": [],
+                "ifTrueActivities": [
+                  {
+                    "name": "cp_new_admission_assessment_to_bronze",
+                    "type": "Copy",
+                    "dependsOn": [],
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureOutput": false,
+                      "secureInput": false
+                    },
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [DataFormId] AS [DataFormId],\n    [ClientId] AS [ClientId],\n    [CreatedOn] AS [CreatedOn],\n    [CreatedBy] AS [CreatedBy],\n    [ModifiedOn] AS [ModifiedOn],\n    [ModifiedBy] AS [ModifiedBy],\n    [IsDeleted] AS [IsDeleted],\n    [Version] AS [Version],\n    RowChkSum = CHECKSUM([Id], [PreAdmissionId], [DataFormId], [ClientId], [CreatedOn], [CreatedBy], [ModifiedOn], [ModifiedBy], [IsDeleted], [Version])',\n'\nFROM [',\nitem().DataBaseName,\n'].[dbo].[NewAdmissionAssessment]\n',\n'WHERE 1 = 1\nORDER BY [Id]'\n)",
+                          "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "annotations": [],
+                          "type": "SqlServerTable",
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                          }
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "annotations": [],
+                          "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                              "annotations": [],
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                "rootFolder": "Tables"
+                              }
+                            }
+                          },
+                          "type": "LakehouseTable",
+                          "schema": [],
+                          "typeProperties": {
+                            "schema": "P1Assessments",
+                            "table": "br_samms_new_admission_assessment"
+                          }
+                        }
+                      },
+                      "enableStaging": false,
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "parameters": {
+      "p_ingest_run_id": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "p_lookback_days": {
+        "type": "int",
+        "defaultValue": 15
+      },
+      "p_sites": {
+        "type": "array",
+        "defaultValue": [
+          {
+            "SiteCode": "AHK",
+            "DataBaseName": "SAMMS-Ahoskie",
+            "TimeZone": "EST",
+            "ClinicName": "Ahoskie"
+          },
+          {
+            "SiteCode": "B27",
+            "DataBaseName": "SAMMS-SavannahV6",
+            "TimeZone": "EST",
+            "ClinicName": "Savannah"
+          },
+          {
+            "SiteCode": "D07",
+            "DataBaseName": "SAMMS-KnoxvilleV6",
+            "TimeZone": "EST",
+            "ClinicName": "Medical Services Knox TN"
+          }
+        ]
+      }
+    }
+  }
+}

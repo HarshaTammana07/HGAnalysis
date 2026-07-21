@@ -1,0 +1,137 @@
+BHG_DR
+
+
+
+SchemaName	TableName	ColumnName	OrdinalPosition	DataType	MaxLength	NumericPrecision	NumericScale	IsNullable
+
+pats	tbl_DOSE	SiteCode	1	varchar	25	NULL	NULL	NO
+
+pats	tbl_DOSE	RowState	2	bit	NULL	NULL	NULL	NO
+
+pats	tbl_DOSE	DoseID	3	bigint	NULL	19	0	NO
+
+pats	tbl_DOSE	CltID	4	int	NULL	10	0	NO
+
+pats	tbl_DOSE	dtMedDate	5	datetime	NULL	NULL	NULL	NO
+
+pats	tbl_DOSE	RowChkSum	6	int	NULL	10	0	YES
+
+pats	tbl_DOSE	LastModAt	7	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	GuestID	8	int	NULL	10	0	YES
+
+pats	tbl_DOSE	dtDate	9	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	Dose	10	int	NULL	10	0	YES
+
+pats	tbl_DOSE	strUser	11	varchar	50	NULL	NULL	YES
+
+pats	tbl_DOSE	blVoid	12	bit	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	strVoidReason	13	varchar	1500	NULL	NULL	YES
+
+pats	tbl_DOSE	blException	14	bit	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	bottletype	15	varchar	250	NULL	NULL	YES
+
+pats	tbl_DOSE	ordernum	16	int	NULL	10	0	YES
+
+pats	tbl_DOSE	ExceptionReason	17	varchar	2000	NULL	NULL	YES
+
+pats	tbl_DOSE	blBULK	18	bit	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	blPrepack	19	bit	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	DTgiven	20	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	DTprep	21	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	dtVoid	22	bit	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	PPStaff	23	varchar	50	NULL	NULL	YES
+
+pats	tbl_DOSE	exceptiontype	24	varchar	250	NULL	NULL	YES
+
+pats	tbl_DOSE	manualauthdtm	25	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE	manualauthuser	26	varchar	50	NULL	NULL	YES
+
+pats	tbl_DOSE	dosenote	27	varchar	250	NULL	NULL	YES
+
+pats	tbl_DOSE	dosesig	28	ntext	1073741823	NULL	NULL	YES
+
+pats	tbl_DOSE	InventoryGroup	29	varchar	50	NULL	NULL	YES
+
+pats	tbl_DOSE	SiteID	30	int	NULL	10	0	YES
+
+pats	tbl_DOSE	DoseSigImg	31	varbinary	-1	NULL	NULL	YES
+
+pats	tbl_DOSE_Excuse	SiteCode	1	varchar	25	NULL	NULL	NO
+
+pats	tbl_DOSE_Excuse	RowChkSum	2	int	NULL	10	0	NO
+
+pats	tbl_DOSE_Excuse	RowState	3	bit	NULL	NULL	NULL	NO
+
+pats	tbl_DOSE_Excuse	LastModAt	4	datetime	NULL	NULL	NULL	NO
+
+pats	tbl_DOSE_Excuse	ExID	5	int	NULL	10	0	NO
+
+pats	tbl_DOSE_Excuse	cltID	6	int	NULL	10	0	YES
+
+pats	tbl_DOSE_Excuse	dtEX	7	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE_Excuse	strEXCUSED	8	ntext	1073741823	NULL	NULL	YES
+
+pats	tbl_DOSE_Excuse	dtstamp	9	datetime	NULL	NULL	NULL	YES
+
+pats	tbl_DOSE_Excuse	strUSER	10	nvarchar	100	NULL	NULL	YES
+ 
+
+
+ Fabric silver:
+
+
+
+
+TABLE_SCHEMA	TABLE_NAME	ORDINAL_POSITION	COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	IS_NULLABLE
+pats	tbl_dose	1	SiteCode	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	2	RowState	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	3	RowChkSum	int	NULL	10	0	YES
+pats	tbl_dose	4	LastModAt	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	5	DoseId	bigint	NULL	19	0	YES
+pats	tbl_dose	6	CltId	int	NULL	10	0	YES
+pats	tbl_dose	7	DtMedDate	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	8	GuestId	int	NULL	10	0	YES
+pats	tbl_dose	9	DtDate	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	10	Dose	int	NULL	10	0	YES
+pats	tbl_dose	11	StrUser	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	12	BlVoid	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	13	StrVoidReason	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	14	BlException	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	15	Bottletype	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	16	Ordernum	int	NULL	10	0	YES
+pats	tbl_dose	17	ExceptionReason	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	18	BlBulk	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	19	BlPrepack	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	20	Dtgiven	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	21	Dtprep	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	22	DtVoid	bit	NULL	NULL	NULL	YES
+pats	tbl_dose	23	Ppstaff	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	24	Exceptiontype	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	25	Manualauthdtm	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose	26	Manualauthuser	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	27	Dosenote	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	28	Dosesig	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	29	InventoryGroup	varchar	8000	NULL	NULL	YES
+pats	tbl_dose	30	SiteId	int	NULL	10	0	YES
+pats	tbl_dose	31	DoseSigImg	varbinary	8000	NULL	NULL	YES
+pats	tbl_dose_excuse	1	SiteCode	varchar	8000	NULL	NULL	YES
+pats	tbl_dose_excuse	2	RowChkSum	int	NULL	10	0	YES
+pats	tbl_dose_excuse	3	RowState	bit	NULL	NULL	NULL	YES
+pats	tbl_dose_excuse	4	ExId	int	NULL	10	0	YES
+pats	tbl_dose_excuse	5	CltID	int	NULL	10	0	YES
+pats	tbl_dose_excuse	6	DtEx	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose_excuse	7	StrExcused	varchar	8000	NULL	NULL	YES
+pats	tbl_dose_excuse	8	Dtstamp	datetime2	NULL	NULL	NULL	YES
+pats	tbl_dose_excuse	9	StrUser	varchar	8000	NULL	NULL	YES
+pats	tbl_dose_excuse	10	LastModAt	datetime2	NULL	NULL	NULL	YES

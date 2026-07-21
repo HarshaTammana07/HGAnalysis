@@ -1,772 +1,1316 @@
-# FormQuestionAnswers — Microsoft Fabric ETL Pipeline Implementation Guide
+Child: pl_answersig_samms_to_lakehouse
 
-**Pipeline Name:** FormQuestionAnswers Bronze → Silver ETL  
-**Data:** Clinical form question-answer records from 75 SAMMS form tables per clinic database  
-**Destination:** Microsoft Fabric Lakehouse (Bronze + Silver layers)  
-**Silver Target:** `bhg_silver.pats.sl_tblFormQuestionAnswers`  
-**Control Dependency:** `bhg_silver.ctrl.tbl_Forms2Process` (Fabric lakehouse table — read only from Spark, never from SAMMS)  
-**Author Reference:** `FormQuestionAnswers_Tables_Columns_Logic.md`, `Forms2Process_Bronze_Extraction_Columns.md`, `BHGTaskRunner/Program.cs`, `SaveFormQAData.cs`
-
----
-
-## Table of Contents
-
-1. [Architecture Overview](#1-architecture-overview)
-2. [What This Pipeline Does — Plain English](#2-what-this-pipeline-does--plain-english)
-3. [Why This Design Uses a SQL Builder Notebook + Copy Activity](#3-why-this-design-uses-a-sql-builder-notebook--copy-activity)
-4. [Prerequisites — What You Need Before Starting](#4-prerequisites--what-you-need-before-starting)
-5. [Pipeline Parameters and Variables — Define These First](#5-pipeline-parameters-and-variables--define-these-first)
-6. [Step 1 — Create the Data Pipeline in Fabric](#6-step-1--create-the-data-pipeline-in-fabric)
-7. [Step 2 — Add the ForEach Activity](#7-step-2--add-the-foreach-activity)
-8. [Step 3 — Inside ForEach: Lookup 1 — Check Form Table Exists](#8-step-3--inside-foreach-lookup-1--check-form-table-exists)
-9. [Step 4 — Inside ForEach: IfCondition — Gate on Form Table](#9-step-4--inside-foreach-ifcondition--gate-on-form-table)
-10. [Step 5 — Inside IfCondition True Branch: Lookup 2 — Get All Existing Tables](#10-step-5--inside-ifcondition-true-branch-lookup-2--get-all-existing-tables)
-11. [Step 6 — Inside True Branch: Notebook Activity — SQL Builder](#11-step-6--inside-true-branch-notebook-activity--sql-builder)
-12. [Step 7 — Inside True Branch: Set Variable — Capture Built SQL](#12-step-7--inside-true-branch-set-variable--capture-built-sql)
-13. [Step 8 — Inside True Branch: Copy Activity — Extract to Bronze](#13-step-8--inside-true-branch-copy-activity--extract-to-bronze)
-14. [Step 9 — Add the Silver Notebook Activity (After ForEach)](#14-step-9--add-the-silver-notebook-activity-after-foreach)
-15. [Step 10 — Create the SQL Builder Notebook: nb_forms_build_site_sql](#15-step-10--create-the-sql-builder-notebook-nb_forms_build_site_sql)
-16. [Step 11 — Create the Silver Notebook: nb_forms_bronze_to_silver](#16-step-11--create-the-silver-notebook-nb_forms_bronze_to_silver)
-17. [Step 12 — Silver Notebook Cell 1: Load Bronze and Prepare Source](#17-step-12--silver-notebook-cell-1-load-bronze-and-prepare-source)
-18. [Step 13 — Silver Notebook Cell 2: Pre-Pass RowState Reset](#18-step-13--silver-notebook-cell-2-pre-pass-rowstate-reset)
-19. [Step 14 — Silver Notebook Cell 3: Delta MERGE Into Silver](#19-step-14--silver-notebook-cell-3-delta-merge-into-silver)
-20. [End-to-End Flow Summary](#20-end-to-end-flow-summary)
-21. [How the Dynamic SQL Generation Works (Forms2Process)](#21-how-the-dynamic-sql-generation-works-forms2process)
-22. [The Base Query — Form + FormTemplate + Question + Answer](#22-the-base-query--form--formtemplate--question--answer)
-23. [The Forms2Process Switch Cases — All 9 Variants](#23-the-forms2process-switch-cases--all-9-variants)
-24. [IsDeleted — Legacy Nullable Pass-Through](#24-isdeleted--legacy-nullable-pass-through)
-25. [RowState Pre-Pass — Why It Exists and How It Works](#25-rowstate-pre-pass--why-it-exists-and-how-it-works)
-26. [The 7-Column Primary Key — No RowChkSum](#26-the-7-column-primary-key--no-rowchksum)
-27. [Lookback Window — 30 Days and ReferralForm Exception](#27-lookback-window--30-days-and-referralform-exception)
-28. [tblTP17REVIEW — Treatment Plan Special Case](#28-tblt-p17review--treatment-plan-special-case)
-29. [tblORDERREQ — Level Justification Special Case](#29-tblorderreq--level-justification-special-case)
-30. [Troubleshooting Guide](#30-troubleshooting-guide)
-
----
-
-## 1. Architecture Overview
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                   Microsoft Fabric Data Pipeline                          │
-│                   pl_forms_samms_to_lakehouse                             │
-│                                                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │  ForEach Site (fe_each_samms_site)                                 │  │
-│  │  Iterates over every clinic in p_sites parameter                   │  │
-│  │                                                                    │  │
-│  │  ┌───────────────────────────────────────────────┐                │  │
-│  │  │ lkp_check_form_table (Lookup)                 │                │  │
-│  │  │ → SELECT name FROM sys.tables WHERE name='Form'│               │  │
-│  │  └─────────────────┬─────────────────────────────┘                │  │
-│  │                    │ Succeeded                                     │  │
-│  │                    ▼                                               │  │
-│  │  ┌───────────────────────────────────────────────┐                │  │
-│  │  │ if_form_table_exists (IfCondition)             │                │  │
-│  │  │ condition: firstRow.form_exists = 1            │                │  │
-│  │  │                                                │                │  │
-│  │  │  TRUE BRANCH ────────────────────────────────┐│                │  │
-│  │  │  ┌──────────────────────────────────────┐    ││                │  │
-│  │  │  │ lkp_get_existing_tables (Lookup)     │    ││                │  │
-│  │  │  │ → SELECT name FROM sys.tables        │    ││                │  │
-│  │  │  │   (returns ALL tables in this SAMMS) │    ││                │  │
-│  │  │  └────────────────┬─────────────────────┘    ││                │  │
-│  │  │                   │ Succeeded                  ││                │  │
-│  │  │                   ▼                            ││                │  │
-│  │  │  ┌──────────────────────────────────────┐     ││                │  │
-│  │  │  │ nb_forms_build_site_sql (Notebook)   │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ INPUT: site_code, wrkdt,             │     ││                │  │
-│  │  │  │        existing_tables (JSON),        │     ││                │  │
-│  │  │  │        ingest_run_id                  │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ READS: bhg_silver.ctrl               │     ││                │  │
-│  │  │  │        .tbl_Forms2Process            │     ││                │  │
-│  │  │  │        (Fabric lakehouse — NO SAMMS) │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ BUILDS: Full UNION SQL string        │     ││                │  │
-│  │  │  │         (base + Forms2Process UNIONs)│     ││                │  │
-│  │  │  │         Only for tables found in     │     ││                │  │
-│  │  │  │         Lookup 2 result              │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ OUTPUT: SQL string via               │     ││                │  │
-│  │  │  │         mssparkutils.notebook.exit() │     ││                │  │
-│  │  │  └────────────────┬─────────────────────┘     ││                │  │
-│  │  │                   │ exitValue                   ││                │  │
-│  │  │                   ▼                            ││                │  │
-│  │  │  ┌──────────────────────────────────────┐     ││                │  │
-│  │  │  │ sv_set_site_sql (Set Variable)       │     ││                │  │
-│  │  │  │ v_site_sql = exitValue               │     ││                │  │
-│  │  │  └────────────────┬─────────────────────┘     ││                │  │
-│  │  │                   │ Succeeded                   ││                │  │
-│  │  │                   ▼                            ││                │  │
-│  │  │  ┌──────────────────────────────────────┐     ││                │  │
-│  │  │  │ cp_forms_to_bronze (Copy Activity)   │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ Source: SAMMS SQL Server             │     ││                │  │
-│  │  │  │   query = @variables('v_site_sql')   │     ││                │  │
-│  │  │  │   (full UNION SQL, already built)    │     ││                │  │
-│  │  │  │                                      │     ││                │  │
-│  │  │  │ Sink: bhg_bronze                     │     ││                │  │
-│  │  │  │       Form.br_tblFormQA (APPEND)    │     ││                │  │
-│  │  │  └──────────────────────────────────────┘     ││                │  │
-│  │  └──────────────────────────────────────────────┘│                │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
-│                         │ ForEach Succeeded                              │
-│                         ▼                                                │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │  nb_forms_bronze_to_silver (Notebook Activity)                     │  │
-│  │                                                                    │  │
-│  │  Cell 1: Read Bronze → filter run → deduplicate                    │  │
-│  │          Compute RowState from IsDeleted + ClientId               │  │
-│  │  Cell 2: Pre-pass RowState reset on existing Silver rows          │  │
-│  │  Cell 3: Delta MERGE → bhg_silver.pats.sl_tblFormQuestionAnswers  │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-**Lakehouse Targets:**
-
-| Layer | Lakehouse | Schema | Table |
-|---|---|---|---|
-| Bronze | `bhg_bronze` | `Forms` | `br_tblFormQA` |
-| Silver | `bhg_silver` | `pats` | `sl_tblFormQuestionAnswers` |
-| Control | `bhg_silver` | `ctrl` | `Forms2Process` |
-
----
-
-## 2. What This Pipeline Does — Plain English
-
-The SAMMS system stores clinical form data across two layers:
-
-1. **The generic form engine** (`Form`, `FormTemplate`, `Question`, `Answer` tables) — handles most forms uniformly
-2. **Custom per-form tables** (e.g., `AdmissionAssessment`, `tblTP17REVIEW`, `ReferralForm`) — dedicated tables for complex or legacy forms
-
-There are **75 enabled form tables** tracked in the control table `tbl_Forms2Process`, which lives in `bhg_silver.ctrl`.
-
-This pipeline, for each clinic:
-1. **Checks** whether the SAMMS database has a `Form` table — if not, the site is skipped silently
-2. **Reads all SAMMS table names** using a Lookup against `sys.tables` — this tells us which form tables actually exist in that clinic's version of SAMMS
-3. **Builds the complete UNION SQL string** using a Spark notebook that reads `bhg_silver.ctrl.tbl_Forms2Process` and generates one UNION block per form table that exists in this SAMMS — the notebook never connects to SAMMS
-4. **Executes that one SQL string** against SAMMS via a single Fabric Copy activity (on-prem gateway) — one query, one result set, one Bronze write
-5. After all clinics are done, runs a **Silver notebook** that reads Bronze, resets stale RowState values via a pre-pass, and Delta-MERGEs into Silver using a 7-column composite primary key
-
----
-
-## 3. Why This Design Uses a SQL Builder Notebook + Copy Activity
-
-| Approach | Why It Does Not Work for FormQuestionAnswers |
-|---|---|
-| **Single static Copy activity** | Cannot conditionally include/exclude 75 table UNIONs based on which tables exist in each SAMMS version |
-| **One Copy activity per form table** | 75 tables × 80 sites = 6,000 Copy activity invocations per run — unmanageable |
-| **JDBC from Spark notebook** | Fabric Spark notebooks cannot connect to on-prem SAMMS SQL Servers through the Fabric on-prem data gateway. JDBC requires a direct network path; the gateway is only usable by Copy activities |
-| **Pipeline expression-only query building** | Fabric pipeline expressions have no `forEach` or `map` construct; you cannot loop over 75 items and build conditional UNION blocks in a single `@concat()` expression |
-
-**This design's solution:**
-
-| Activity | Connects To | Does What |
-|---|---|---|
-| `lkp_get_existing_tables` (Lookup) | SAMMS SQL Server (via Fabric gateway) | Gets list of ALL tables in this SAMMS database |
-| `nb_forms_build_site_sql` (Notebook) | `bhg_silver.ctrl` lakehouse ONLY | Reads Forms2Process, builds full UNION SQL string, returns it via `mssparkutils.notebook.exit()` |
-| `sv_set_site_sql` (Set Variable) | Pipeline variable | Captures the SQL string from notebook exit value |
-| `cp_forms_to_bronze` (Copy) | SAMMS SQL Server (via Fabric gateway) | Executes the pre-built SQL string — one query, all form tables UNIONed |
-
-The Spark notebook does **zero SAMMS communication**. It is a pure Python string generator that reads a Fabric lakehouse table and produces SQL text. All SAMMS communication happens exclusively through Fabric Copy and Lookup activities, which properly route through the on-prem data gateway.
-
----
-
-## 4. Prerequisites — What You Need Before Starting
-
-| Item | What It Is | Where It Lives |
-|---|---|---|
-| SAMMS SQL Server Fabric connection | On-prem gateway connection for Copy + Lookup activities | Fabric workspace → Connections |
-| `bhg_bronze` Lakehouse | Bronze layer | Fabric workspace |
-| `bhg_silver` Lakehouse | Silver layer | Fabric workspace |
-| `Forms` schema in `bhg_bronze` | Schema for FormQA Bronze tables | `bhg_bronze` Lakehouse |
-| `pats` schema in `bhg_silver` | Schema for Silver patient tables | `bhg_silver` Lakehouse |
-| `ctrl` schema in `bhg_silver` | Control/reference table schema | `bhg_silver` Lakehouse |
-| `bhg_silver.ctrl.tbl_Forms2Process` | Pre-loaded Fabric version of BHG_DR's `ctrl.tbl_Forms2Process` | Must be loaded before first run |
-| On-premise data gateway | Routes Fabric Copy/Lookup activities to SAMMS SQL Servers | Fabric settings |
-
-**Key IDs to note down:**
-
-```
-Workspace ID:            c5097ffb-b78e-441d-9575-a82bac23cac8
-Bronze Lakehouse ID:     77d24027-6a1c-43a8-a998-1a14dd3c0d52
-SAMMS Connection ID:     9743b95a-fd66-4f7c-9767-e6eb0f1ecab7
-```
-
-Replace these with your actual GUIDs everywhere they appear.
-
-**`bhg_silver.ctrl.tbl_Forms2Process` required columns:**
-
-| Column | Type | Used For |
-|---|---|---|
-| `TableName` | varchar | SAMMS source table name |
-| `FormName` | varchar | Literal injected into SQL as form name |
-| `Prefix` | int | Numeric prefix for FormID construction |
-| `Enabled` | bit | `1` = active |
-| `RowState` | bit | `1` = active |
-| `CreatedOn` | varchar | Source column name for created date (varies per table) |
-| `ModifiedOn` | varchar | Source column name for modified date (NULL if not applicable) |
-| `DateFilterEnabled` | bit | `1` = apply lookback filter; `0` = always full extract |
-
----
-
-## 5. Pipeline Parameters and Variables — Define These First
-
-### Parameters
-
-Go to: **Pipeline canvas → click empty space → Parameters tab → + New**
-
-#### Parameter 1: `p_ingest_run_id`
-
-| Setting | Value |
-|---|---|
-| Name | `p_ingest_run_id` |
-| Type | `String` |
-| Default | `test-run-001` |
-
-**Why:** Tags every Bronze row with the current pipeline run so the Silver notebook filters to only this run's rows.
-
----
-
-#### Parameter 2: `p_lookback_days`
-
-| Setting | Value |
-|---|---|
-| Name | `p_lookback_days` |
-| Type | `Int` |
-| Default | `30` |
-
-**Why:** The old system uses `DaysBack - 15 = -30` total for forms. Use `365` for a historical deep reload.
-
----
-
-#### Parameter 3: `p_sites`
-
-| Setting | Value |
-|---|---|
-| Name | `p_sites` |
-| Type | `Array` |
-| Default | See JSON below |
-
-**Default Value:**
-```json
-[
-  {
-    "site_code": "ColoradoSpringsV5",
-    "source_database": "SAMMS-ColoradoSpringsV5"
-  }
-]
-```
-
-| Property | Meaning |
-|---|---|
-| `site_code` | Human-readable clinic code injected as a literal in the SQL |
-| `source_database` | Exact database name on the SAMMS SQL Server — used by the Lookup and Copy activities to target the right database |
-
----
-
-#### Parameter 4: `p_reload`
-
-| Setting | Value |
-|---|---|
-| Name | `p_reload` |
-| Type | `Bool` |
-| Default | `false` |
-
-**Why:** When `true`, lookback is overridden to `1/1/2010` for a full historical reload. Mirrors `st.Reload` in the old system.
-
----
-
-### Pipeline Variables
-
-Go to: **Pipeline canvas → click empty space → Variables tab → + New**
-
-#### Variable 1: `v_site_sql`
-
-| Setting | Value |
-|---|---|
-| Name | `v_site_sql` |
-| Type | `String` |
-| Default | *(leave blank)* |
-
-**Why:** The SQL builder notebook writes the full UNION SQL for the current site into this variable. The Copy activity then reads from it. This variable is overwritten on each iteration of the ForEach loop.
-
----
-
-## 6. Step 1 — Create the Data Pipeline in Fabric
-
-1. Open your Fabric workspace
-2. Click **+ New** → **Data pipeline**
-3. Name it: `pl_forms_samms_to_lakehouse`
-4. Click **Create**
-5. On the pipeline canvas, click an empty area → **Parameters tab** → add all four parameters from Section 5
-6. On the same canvas → **Variables tab** → add `v_site_sql`
-
----
-
-## 7. Step 2 — Add the ForEach Activity
-
-1. Drag a **ForEach** onto the canvas
-2. Rename it: `fe_each_samms_site`
-
-**Settings tab:**
-
-| Setting | Value |
-|---|---|
-| Items | `@pipeline().parameters.p_sites` |
-| Sequential | **Checked (True)** |
-| Batch count | Leave blank |
-
-**JSON:**
-```json
 {
-    "name": "fe_each_samms_site",
-    "type": "ForEach",
-    "dependsOn": [],
-    "typeProperties": {
-        "items": { "value": "@pipeline().parameters.p_sites", "type": "Expression" },
-        "isSequential": true,
-        "activities": []
-    }
-}
-```
-
----
-
-## 8. Step 3 — Inside ForEach: Lookup 1 — Check Form Table Exists
-
-### What this does
-
-Probes the SAMMS database for the `Form` table. If it does not exist, this clinic has not been upgraded to the SAMMS form engine and is skipped entirely.
-
-### Add the activity
-1. Click **Edit** on the ForEach to open its inner canvas
-2. Drag a **Lookup** activity
-3. Rename it: `lkp_check_form_table`
-
-### Configure Settings tab
-
-| Setting | Value |
-|---|---|
-| Source type | SQL Server |
-| Connection | `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` |
-| Use query | **Query** |
-| Query | Use the expression below |
-| First row only | **Checked (True)** |
-
-**Query expression (Expression mode):**
-```
-@concat(
-'SELECT form_exists = COUNT(1)
-FROM [', item().source_database, '].sys.tables
-WHERE name = ''Form'''
-)
-```
-
-**This produces:**
-```sql
-SELECT form_exists = COUNT(1)
-FROM [SAMMS-ColoradoSpringsV5].sys.tables
-WHERE name = 'Form'
-```
-
-Returns a single row: `{ "form_exists": 1 }` or `{ "form_exists": 0 }`.
-
-**Policy tab:**
-
-| Setting | Value |
-|---|---|
-| Timeout | `0.12:00:00` |
-| Retry | `0` |
-
-**JSON:**
-```json
-{
-    "name": "lkp_check_form_table",
-    "type": "Lookup",
-    "dependsOn": [],
-    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
-    "typeProperties": {
-        "source": {
-            "type": "SqlServerSource",
-            "sqlReaderQuery": {
-                "value": "@concat('SELECT form_exists = COUNT(1) FROM [', item().source_database, '].sys.tables WHERE name = ''Form''')",
-                "type": "Expression"
-            },
-            "queryTimeout": "02:00:00"
-        },
-        "firstRowOnly": true,
-        "datasetSettings": {
-            "type": "SqlServerTable",
-            "schema": [],
-            "externalReferences": { "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7" }
-        }
-    }
-}
-```
-
----
-
-## 9. Step 4 — Inside ForEach: IfCondition — Gate on Form Table
-
-### Add the activity
-1. On the inner canvas, drag an **IfCondition** activity
-2. Rename it: `if_form_table_exists`
-3. Draw a dependency: `lkp_check_form_table` → `if_form_table_exists` (Succeeded)
-
-### Configure Activities tab — Condition
-
-| Setting | Value |
-|---|---|
-| Condition | `@equals(activity('lkp_check_form_table').output.firstRow.form_exists, 1)` |
-
-**Why:** If `form_exists = 1`, proceed to extract. If `0`, the IfCondition's False branch is empty — the site is silently skipped.
-
-**JSON:**
-```json
-{
-    "name": "if_form_table_exists",
-    "type": "IfCondition",
-    "dependsOn": [
-        { "activity": "lkp_check_form_table", "dependencyConditions": ["Succeeded"] }
-    ],
-    "typeProperties": {
-        "expression": {
-            "value": "@equals(activity('lkp_check_form_table').output.firstRow.form_exists, 1)",
-            "type": "Expression"
-        },
-        "ifTrueActivities": [],
-        "ifFalseActivities": []
-    }
-}
-```
-
-All remaining activities in this section go into `ifTrueActivities`. Click **Edit** on the IfCondition's True branch to open it.
-
----
-
-## 10. Step 5 — Inside IfCondition True Branch: Lookup 2 — Get All Existing Tables
-
-### What this does
-
-Queries `sys.tables` for the current SAMMS database and returns the names of ALL user tables. The SQL builder notebook intersects this list with `tbl_Forms2Process.TableName` to know which form tables to include in the UNION SQL. This is the exact equivalent of the `sys.tables` probe the old C# code runs per form table — done here in a single batch for all tables at once.
-
-### Add the activity
-1. Inside the True branch canvas, drag a **Lookup** activity
-2. Rename it: `lkp_get_existing_tables`
-
-### Configure Settings tab
-
-| Setting | Value |
-|---|---|
-| Source type | SQL Server |
-| Connection | `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` |
-| Use query | **Query** |
-| Query | Use the expression below |
-| First row only | **Unchecked** |
-
-**Query expression (Expression mode):**
-```
-@concat('SELECT name FROM [', item().source_database, '].sys.tables')
-```
-
-**This produces:**
-```sql
-SELECT name FROM [SAMMS-ColoradoSpringsV5].sys.tables
-```
-
-Returns all table names in this SAMMS database — e.g., `[{"name":"Form"}, {"name":"AdmissionAssessment"}, ...]`.
-
-> **Why not filter to only form table names?** Querying all tables with no WHERE clause requires no maintenance when new form tables are added. The SQL builder notebook filters the results against Forms2Process.
-
-**Policy tab:** Same as Lookup 1 (timeout 12h, retry 0).
-
-**JSON:**
-```json
-{
-    "name": "lkp_get_existing_tables",
-    "type": "Lookup",
-    "dependsOn": [],
-    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
-    "typeProperties": {
-        "source": {
-            "type": "SqlServerSource",
-            "sqlReaderQuery": {
-                "value": "@concat('SELECT name FROM [', item().source_database, '].sys.tables')",
-                "type": "Expression"
-            },
-            "queryTimeout": "02:00:00"
-        },
-        "firstRowOnly": false,
-        "datasetSettings": {
-            "type": "SqlServerTable",
-            "schema": [],
-            "externalReferences": { "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7" }
-        }
-    }
-}
-```
-
----
-
-## 11. Step 6 — Inside True Branch: Notebook Activity — SQL Builder
-
-### What this does
-
-This notebook is a **pure string generator**. It:
-- Receives the list of existing SAMMS tables (from Lookup 2) as a JSON string parameter
-- Reads `bhg_silver.ctrl.tbl_Forms2Process` (Fabric lakehouse — no SAMMS connection)
-- Builds the full UNION SQL for this site (base query + one UNION block per enabled form table that exists in this SAMMS)
-- Returns the SQL string via `mssparkutils.notebook.exit()` — the pipeline captures this as the notebook's `exitValue`
-
-**This notebook makes zero connections to SAMMS.**
-
-### Add the activity
-1. On the True branch canvas, drag a **Notebook** activity
-2. Rename it: `nb_forms_build_site_sql`
-3. Draw a dependency: `lkp_get_existing_tables` → `nb_forms_build_site_sql` (Succeeded)
-
-### Configure Settings tab
-
-| Setting | Value |
-|---|---|
-| Notebook | Select `nb_forms_build_site_sql` (create it in Step 10) |
-| Workspace | `c5097ffb-b78e-441d-9575-a82bac23cac8` |
-
-### Configure Parameters
-
-| Parameter Name | Type | Value |
-|---|---|---|
-| `p_site_code` | String | `@item().site_code` (Expression) |
-| `p_source_database` | String | `@item().source_database` (Expression) |
-| `p_ingest_run_id` | String | `@pipeline().parameters.p_ingest_run_id` (Expression) |
-| `p_lookback_days` | Int | `@pipeline().parameters.p_lookback_days` (Expression) |
-| `p_reload` | Bool | `@pipeline().parameters.p_reload` (Expression) |
-| `p_existing_tables_json` | String | `@string(activity('lkp_get_existing_tables').output.value)` (Expression) |
-
-> **`p_existing_tables_json`** is the Lookup 2 result serialised to a JSON string. The notebook deserialises it and extracts the table name set.
-
-**Policy tab:** Timeout `0.12:00:00`, Retry `0`.
-
-**JSON:**
-```json
-{
-    "name": "nb_forms_build_site_sql",
-    "type": "TridentNotebook",
-    "dependsOn": [
-        { "activity": "lkp_get_existing_tables", "dependencyConditions": ["Succeeded"] }
-    ],
-    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
-    "typeProperties": {
-        "notebookId": "<<your-notebook-guid>>",
-        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+    "name": "pl_answersig_samms_to_lakehouse",
+    "objectId": "cf9e89d0-9574-439e-85b9-c022327ed022",
+    "properties": {
+        "activities": [
+            {
+                "name": "fe_each_samms_sites",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 5,
+                    "activities": [
+                        {
+                            "name": "lkp_check_answersig_table",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT answersig_exists = COUNT(1)\nFROM [', item().DataBaseName, '].sys.tables\nWHERE name = ''answersignature'''\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_answersig_table_exists",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_answersig_table",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_answersig_table').output.firstRow.answersig_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "lkp_get_existing_tables",
+                                        "type": "Lookup",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat('SELECT name FROM [', item().DataBaseName, '].sys.tables')",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "firstRowOnly": false,
+                                            "datasetSettings": {
+                                                "annotations": [],
+                                                "type": "SqlServerTable",
+                                                "schema": [],
+                                                "externalReferences": {
+                                                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "nb_answersig_build_site_sql",
+                                        "type": "TridentNotebook",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "lkp_get_existing_columns",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 3,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "notebookId": "673e26ce-cd7a-4b79-83d3-5b5cf7a76c79",
+                                            "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                            "parameters": {
+                                                "p_site_code": {
+                                                    "value": {
+                                                        "value": "@item().SiteCode",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_source_database": {
+                                                    "value": {
+                                                        "value": "@item().DataBaseName",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_ingest_run_id": {
+                                                    "value": {
+                                                        "value": "@pipeline().parameters.p_ingest_run_id",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_lookback_days": {
+                                                    "value": {
+                                                        "value": "@pipeline().parameters.p_lookback_days",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "int"
+                                                },
+                                                "p_reload": {
+                                                    "value": {
+                                                        "value": "@pipeline().parameters.p_reload",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "bool"
+                                                },
+                                                "p_existing_tables_json": {
+                                                    "value": {
+                                                        "value": "@string(activity('lkp_get_existing_tables').output.value)",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_existing_columns_json": {
+                                                    "value": {
+                                                        "value": "@string(activity('lkp_get_existing_columns').output.value)\n",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "sv_set_answersig_sql",
+                                        "type": "SetVariable",
+                                        "state": "Inactive",
+                                        "onInactiveMarkAs": "Succeeded",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "variableName": "v_answersig_sql",
+                                            "value": {
+                                                "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "cp_answersig_to_bronze",
+                                        "type": "Copy",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "nb_answersig_build_site_sql",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue\n",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "Forms",
+                                                        "table": "br_tblFormAnswerSig"
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "lkp_get_existing_columns",
+                                        "type": "Lookup",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "lkp_get_existing_tables",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT table_name = t.name, column_name = c.name\nFROM [', item().DataBaseName, '].sys.tables t\nJOIN [', item().DataBaseName, '].sys.columns c\n  ON t.object_id = c.object_id'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "firstRowOnly": false,
+                                            "datasetSettings": {
+                                                "annotations": [],
+                                                "type": "SqlServerTable",
+                                                "schema": [],
+                                                "externalReferences": {
+                                                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "name": "nb_answersig_bronze_to_silver",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "4cb06dc3-4954-4119-85aa-9e590ac3dc4c",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_ingest_run_id",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_lookback_days": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_lookback_days",
+                                            "type": "Expression"
+                                        },
+                                        "type": "int"
+                                    },
+                                    "p_reload": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_reload",
+                                            "type": "Expression"
+                                        },
+                                        "type": "bool"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_audit_context_json",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
         "parameters": {
-            "p_site_code":             { "value": { "value": "@item().site_code",                                                               "type": "Expression" }, "type": "string" },
-            "p_source_database":       { "value": { "value": "@item().source_database",                                                        "type": "Expression" }, "type": "string" },
-            "p_ingest_run_id":         { "value": { "value": "@pipeline().parameters.p_ingest_run_id",                                         "type": "Expression" }, "type": "string" },
-            "p_lookback_days":         { "value": { "value": "@pipeline().parameters.p_lookback_days",                                         "type": "Expression" }, "type": "int"    },
-            "p_reload":                { "value": { "value": "@pipeline().parameters.p_reload",                                                 "type": "Expression" }, "type": "bool"   },
-            "p_existing_tables_json":  { "value": { "value": "@string(activity('lkp_get_existing_tables').output.value)",                       "type": "Expression" }, "type": "string" }
-        }
-    }
-}
-```
-
----
-
-## 12. Step 7 — Inside True Branch: Set Variable — Capture Built SQL
-
-After the notebook exits, its return value is captured into the pipeline variable `v_site_sql`.
-
-### Add the activity
-1. Drag a **Set Variable** activity onto the True branch canvas
-2. Rename it: `sv_set_site_sql`
-3. Draw a dependency: `nb_forms_build_site_sql` → `sv_set_site_sql` (Succeeded)
-
-### Configure Settings tab
-
-| Setting | Value |
-|---|---|
-| Variable name | `v_site_sql` |
-| Value | `@activity('nb_forms_build_site_sql').output.result.exitValue` (Expression) |
-
-**JSON:**
-```json
-{
-    "name": "sv_set_site_sql",
-    "type": "SetVariable",
-    "dependsOn": [
-        { "activity": "nb_forms_build_site_sql", "dependencyConditions": ["Succeeded"] }
-    ],
-    "typeProperties": {
-        "variableName": "v_site_sql",
-        "value": {
-            "value": "@activity('nb_forms_build_site_sql').output.result.exitValue",
-            "type": "Expression"
-        }
-    }
-}
-```
-
----
-
-## 13. Step 8 — Inside True Branch: Copy Activity — Extract to Bronze
-
-This is the **only** activity that connects to SAMMS for data extraction. It executes the pre-built UNION SQL string from `v_site_sql` against the clinic's SAMMS SQL Server and appends the results to Bronze.
-
-### Add the activity
-1. Drag a **Copy** activity onto the True branch canvas
-2. Rename it: `cp_forms_to_bronze`
-3. Draw a dependency: `sv_set_site_sql` → `cp_forms_to_bronze` (Succeeded)
-
-### Configure Source tab
-
-| Setting | Value |
-|---|---|
-| Source type | SQL Server |
-| Connection | `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` |
-| Use query | **Query** |
-| Query | `@variables('v_site_sql')` (Expression) |
-| Query timeout | `02:00:00` |
-
-> The `v_site_sql` variable holds the complete `SELECT DISTINCT * FROM (...all UNIONs...) z` string built by the notebook. The Copy activity executes it verbatim against the current site's SAMMS database.
-
-### Configure Sink tab
-
-| Setting | Value |
-|---|---|
-| Sink type | **Lakehouse** |
-| Workspace ID | `c5097ffb-b78e-441d-9575-a82bac23cac8` |
-| Artifact (Lakehouse) ID | `77d24027-6a1c-43a8-a998-1a14dd3c0d52` |
-| Root folder | `Tables` |
-| Schema | `Forms` |
-| Table | `br_tblFormQA` |
-| Table action | **Append** |
-| Apply V-Order | No |
-
-### Configure Mapping tab
-
-| Setting | Value |
-|---|---|
-| Type conversion | **Enabled** |
-| Allow data truncation | **True** |
-| Treat boolean as number | **False** |
-
-### Configure Policy tab
-
-| Setting | Value |
-|---|---|
-| Timeout | `0.12:00:00` |
-| Retry | `0` |
-| Retry interval | `30` seconds |
-
-**JSON:**
-```json
-{
-    "name": "cp_forms_to_bronze",
-    "type": "Copy",
-    "dependsOn": [
-        { "activity": "sv_set_site_sql", "dependencyConditions": ["Succeeded"] }
-    ],
-    "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
-    "typeProperties": {
-        "source": {
-            "type": "SqlServerSource",
-            "sqlReaderQuery": { "value": "@variables('v_site_sql')", "type": "Expression" },
-            "queryTimeout": "02:00:00",
-            "partitionOption": "None",
-            "datasetSettings": {
-                "type": "SqlServerTable",
-                "schema": [],
-                "externalReferences": { "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7" }
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 30
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_reload": {
+                "type": "bool",
+                "defaultValue": false
+            },
+            "p_audit_context_json": {
+                "type": "string"
             }
         },
-        "sink": {
-            "type": "LakehouseTableSink",
-            "tableActionOption": "Append",
-            "partitionOption": "None",
-            "applyVOrder": false,
-            "datasetSettings": {
-                "linkedService": {
-                    "name": "bhg_bronze",
-                    "properties": {
-                        "type": "Lakehouse",
+        "variables": {
+            "v_answersig_sql": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "bd4b63e3-7995-4ef5-b12f-c542b2777eef",
+        "lastPublishTime": "2026-06-16T07:20:17Z"
+    }
+}
+
+Parent:  Execute_Pipeline_AnswerSignature
+{
+    "name": "pl_execute_pipeline_answersignature",
+    "objectId": "3d7e0bbc-a3b8-40ae-b933-fa9188990c94",
+    "properties": {
+        "activities": [
+            {
+                "name": "lkp_formanswersignatures_taskconfig",
+                "type": "Lookup",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource"
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "linkedService": {
+                            "name": "bhg_bronze",
+                            "properties": {
+                                "annotations": [],
+                                "type": "Lakehouse",
+                                "typeProperties": {
+                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                    "rootFolder": "Tables"
+                                }
+                            }
+                        },
+                        "type": "LakehouseTable",
+                        "schema": [],
                         "typeProperties": {
-                            "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                            "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                            "rootFolder": "Tables"
+                            "schema": "meta",
+                            "table": "taskconfig"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_formanswersignatures_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_FormAnswerSignatures_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_FormAnswerSignatures_taskconfig').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().ConfigId, 31), equals(item().IsActive, 1)), and(not(equals(item().SiteCode, null)), not(equals(item().DataBaseName, null))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_formanswersig_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_formanswersignatures_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "8c44b574-f4dc-498d-80bb-ff1ee87837f3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS FormAnswerSignatures",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "Execute_Pipeline_AnswerSignature",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/Execute_Pipeline_AnswerSignature",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Invoke_legacy_Executed_AfterBronz",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_formanswersig_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "cf9e89d0-9574-439e-85b9-c022327ed022",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites": {
+                            "value": "@activity('flt_active_formanswersignatures_sites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_reload": {
+                            "value": "@pipeline().parameters.p_reload",
+                            "type": "Expression"
+                        },
+                        "p_audit_context_json": {
+                            "value": "@activity('nb_formanswersig_audit_start').output.result.exitValue",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_answersig_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Invoke_legacy_Executed_AfterBronz",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "4cb06dc3-4954-4119-85aa-9e590ac3dc4c",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_lookback_days": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_lookback_days",
+                                "type": "Expression"
+                            },
+                            "type": "int"
+                        },
+                        "p_reload": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_reload",
+                                "type": "Expression"
+                            },
+                            "type": "bool"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Prepare_FormAnswerSignatures_Versioned_Gold_Table",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "nb_answersig_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
                         }
                     }
                 },
-                "type": "LakehouseTable",
-                "schema": [],
-                "typeProperties": { "schema": "Forms", "table": "br_tblFormQA" }
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DROP TABLE IF EXISTS pats.[tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'), '];\nCREATE TABLE pats.[tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT\n    CAST(SiteCode AS VARCHAR(8000)) AS SiteCode,\n    CAST(FormName AS VARCHAR(8000)) AS FormName,\n    CAST(FormId AS VARCHAR(8000)) AS FormId,\n    CAST(ClientId AS INT) AS ClientId,\n    CAST(CreatedOn AS DATE) AS CreatedOn,\n    CAST(UpdatedOn AS DATE) AS UpdatedOn,\n    CAST(CompletedBySignatureSignatureDate AS DATETIME2(6)) AS CompletedBySignatureSignatureDate,\n    CAST(CounselorSignatureSignatureDate AS DATETIME2(6)) AS CounselorSignatureSignatureDate,\n    CAST(DoctorSignatureSignatureDate AS DATETIME2(6)) AS DoctorSignatureSignatureDate,\n    CAST(MedicalProviderSignatureSignatureDate AS DATETIME2(6)) AS MedicalProviderSignatureSignatureDate,\n    CAST(PatientSignatureDate AS DATETIME2(6)) AS PatientSignatureDate,\n    CAST(ProviderSignatureSignatureDate AS DATETIME2(6)) AS ProviderSignatureSignatureDate,\n    CAST(RequestorSignatureDate AS DATETIME2(6)) AS RequestorSignatureDate,\n    CAST(StaffSignatureDate AS DATETIME2(6)) AS StaffSignatureDate,\n    CAST(SupervisorSignatureSignatureDate AS DATETIME2(6)) AS SupervisorSignatureSignatureDate,\n    CAST(RowState AS INT) AS RowState,\n    CAST(LastModAt AS DATETIME2(6)) AS LastModAt\nFROM pats.tbl_dbo_FormAnswerSignature\nWHERE 1 = 0;')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "Copy_silver_to_gold_version",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Prepare_FormAnswerSignatures_Versioned_Gold_Table",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "LakehouseTableSource",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "sl_tblformanswersignatures"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DataWarehouseSink",
+                        "allowCopyCommand": true,
+                        "writeBehavior": "Insert",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_gold",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "DataWarehouse",
+                                    "typeProperties": {
+                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                                    }
+                                }
+                            },
+                            "type": "DataWarehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": {
+                                    "value": "@concat('tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": true,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "SiteCode",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "SiteCode",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "FormName",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "FormName",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "FormId",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                },
+                                "sink": {
+                                    "name": "FormId",
+                                    "physicalType": "varchar",
+                                    "length": "8000"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ClientId",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "ClientId",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "CreatedOn",
+                                    "type": "Date",
+                                    "physicalType": "date"
+                                },
+                                "sink": {
+                                    "name": "CreatedOn",
+                                    "physicalType": "date"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "UpdatedOn",
+                                    "type": "Date",
+                                    "physicalType": "date"
+                                },
+                                "sink": {
+                                    "name": "UpdatedOn",
+                                    "physicalType": "date"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "CompletedBySignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "CompletedBySignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "CounselorSignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "CounselorSignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "DoctorSignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "DoctorSignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "MedicalProviderSignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "MedicalProviderSignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "PatientSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "PatientSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ProviderSignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "ProviderSignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RequestorSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "RequestorSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "StaffSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "StaffSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "SupervisorSignatureSignatureDate",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "SupervisorSignatureSignatureDate",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "RowState",
+                                    "type": "Int32",
+                                    "physicalType": "integer"
+                                },
+                                "sink": {
+                                    "name": "RowState",
+                                    "physicalType": "int"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "LastModAt",
+                                    "type": "DateTime",
+                                    "physicalType": "timestamp"
+                                },
+                                "sink": {
+                                    "name": "LastModAt",
+                                    "physicalType": "datetime2",
+                                    "precision": 6
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Publish_FormAnswerSignatures_Versioned_Gold",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_silver_to_gold_version",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "@concat('DECLARE @version_count BIGINT;\nDECLARE @final_count BIGINT;\n\nSELECT @version_count = COUNT(*)\nFROM pats.[tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @version_count = 0\n    THROW 50001, ''Validation failed: pats.tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.tbl_dbo_FormAnswerSignature'', ''U'') IS NULL\n    THROW 50002, ''Publish failed: production table pats.tbl_dbo_FormAnswerSignature does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[tbl_dbo_FormAnswerSignatureBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.tbl_dbo_FormAnswerSignature'', ''tbl_dbo_FormAnswerSignatureBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.[tbl_dbo_FormAnswerSignature_v_', replace(pipeline().RunId, '-', '_'), ']'', ''tbl_dbo_FormAnswerSignature'';\n\nSELECT @final_count = COUNT(*)\nFROM pats.tbl_dbo_FormAnswerSignature;\n\nIF @final_count = 0\n    THROW 50003, ''Final verification failed: pats.tbl_dbo_FormAnswerSignature is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''tbl_dbo_FormAnswerSignatureBK_%'' AND t.name <> ''tbl_dbo_FormAnswerSignatureBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''tbl_dbo_FormAnswerSignature_v_%''\n         OR t.name = ''tbl_dbo_FormAnswerSignature_load''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''tbl_dbo_FormAnswerSignature'' AS TableName, @final_count AS [RowCount];')",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "nb_formanswersig_audit_finalize_failure",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_FormAnswerSignatures_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "8c44b574-f4dc-498d-80bb-ff1ee87837f3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_FAILURE",
+                            "type": "string"
+                        },
+                        "p_failed_target_name": {
+                            "value": {
+                                "value": "@if(not(equals(activity('Invoke_legacy_Executed_AfterBronz').Status, 'Succeeded')), 'BR', if(not(equals(activity('nb_answersig_bronze_to_silver').Status, 'Succeeded')), 'SL', 'GL'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_failure_activity": {
+                            "value": "FormAnswerSignatures_Bronze_Silver_Gold_Finalizer",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_formanswersig_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_formanswersignatures_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@string(coalesce(activity('Invoke_legacy_Executed_AfterBronz').error, activity('nb_answersig_bronze_to_silver').error, activity('Prepare_FormAnswerSignatures_Versioned_Gold_Table').error, activity('Copy_silver_to_gold_version').error, activity('Publish_FormAnswerSignatures_Versioned_Gold').error, 'FormAnswerSignatures pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "FAILED",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_formanswersig_audit_finalize_success",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_FormAnswerSignatures_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "8c44b574-f4dc-498d-80bb-ff1ee87837f3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_SUCCESS",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_formanswersig_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_formanswersignatures_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "SUCCESS",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notify_success",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "nb_formanswersig_audit_finalize_success",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "FormAnswerSignatures ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Succeeded",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS FormAnswerSignatures",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Forms",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "GL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "FormAnswerSignatures pipeline completed successfully through Gold",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notify_failed",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "nb_formanswersig_audit_finalize_failure",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "FormAnswerSignatures ETL",
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS FormAnswerSignatures",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "Forms",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "FormAnswerSignatures pipeline failed. See audit finalization error for details.",
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@string(coalesce(activity('nb_formanswersig_audit_finalize_failure').error, activity('Invoke_legacy_Executed_AfterBronz').error, activity('nb_answersig_bronze_to_silver').error, activity('Prepare_FormAnswerSignatures_Versioned_Gold_Table').error, activity('Copy_silver_to_gold_version').error, activity('Publish_FormAnswerSignatures_Versioned_Gold').error, 'FormAnswerSignatures pipeline failed, but no activity error object was available.'))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_get_FormAnswerSignatures_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 30
+            },
+            "p_reload": {
+                "type": "bool",
+                "defaultValue": false
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_audit_context_json": {
+                "type": "string"
             }
         },
-        "enableStaging": false,
-        "translator": {
-            "type": "TabularTranslator",
-            "typeConversion": true,
-            "typeConversionSettings": { "allowDataTruncation": true, "treatBooleanAsNumber": false }
-        }
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-06-29T20:01:27Z"
     }
 }
-```
 
----
-
-## 14. Step 9 — Add the Silver Notebook Activity (After ForEach)
-
-1. Go back to the **main pipeline canvas** (outside the ForEach)
-2. Drag a **Notebook** activity
-3. Rename it: `nb_forms_bronze_to_silver`
-4. Draw dependency: `fe_each_samms_site` → `nb_forms_bronze_to_silver` (Succeeded)
-
-### Configure Settings tab
-
-| Setting | Value |
-|---|---|
-| Notebook | Select `nb_forms_bronze_to_silver` (create it in Step 11) |
-| Workspace | `c5097ffb-b78e-441d-9575-a82bac23cac8` |
-
-### Configure Parameters
-
-| Parameter | Type | Value |
-|---|---|---|
-| `p_ingest_run_id` | String | `@pipeline().parameters.p_ingest_run_id` (Expression) |
-| `p_lookback_days` | Int | `@pipeline().parameters.p_lookback_days` (Expression) |
-| `p_reload` | Bool | `@pipeline().parameters.p_reload` (Expression) |
-
-**Policy:** Timeout `0.12:00:00`, Retry `0`.
-
----
-
-## 15. Step 10 — Create the SQL Builder Notebook: nb_forms_build_site_sql
-
-1. In your Fabric workspace, click **+ New** → **Notebook**
-2. Name it: `nb_forms_build_site_sql`
-3. Attach `bhg_silver` to the notebook's Lakehouse panel — **do NOT attach any SQL Server linked service**
-4. The notebook has **one cell**
-
-> **Critical:** This notebook must have `bhg_silver` in its Lakehouse panel so it can read `bhg_silver.ctrl.tbl_Forms2Process`. It should NOT be configured with any SAMMS connection — all SAMMS communication happens through the Copy and Lookup activities in the pipeline.
-
-### The Full SQL Builder Notebook — paste this exactly
-
-```python
 # ─────────────────────────────────────────────────────────────────────
-# nb_forms_build_site_sql
+# nb_answersig_build_site_sql
 #
 # PURPOSE: Pure SQL string generator — NO SAMMS connection.
 #
-# READS:  bhg_silver.ctrl.tbl_Forms2Process  (Fabric lakehouse)
+# READS:  bhg_silver.ctrl.Forms2Process  (Fabric lakehouse)
 # INPUT:  p_existing_tables_json  — JSON string from Lookup 2 (sys.tables)
 #         p_site_code, p_source_database, p_ingest_run_id,
 #         p_lookback_days, p_reload
 #
-# OUTPUT: Full UNION SQL string via mssparkutils.notebook.exit()
+# BUILDS: Full UNION SQL for FormAnswerSignatures:
+#           UNION 1: All active forms (no date filter — matches old system)
+#           UNION 2: Deleted forms (f.Isdeleted = 1)
+#           + UNION per Forms2Process table (3 switch cases)
+#
+# OUTPUT: SQL string via mssparkutils.notebook.exit()
 #         The Copy activity executes this string against SAMMS.
 # ─────────────────────────────────────────────────────────────────────
 import json
@@ -791,56 +1335,113 @@ except NameError: p_reload = False
 try: p_existing_tables_json
 except NameError: p_existing_tables_json = "[]"
 
+try: p_existing_columns_json
+except NameError: p_existing_columns_json = "[]"
+
 # ── Build the set of tables that exist in this SAMMS database ────────
-# p_existing_tables_json is the string form of the Lookup 2 output:
-#   '[{"name":"Form"},{"name":"AdmissionAssessment"},...]'
-existing_rows = json.loads(p_existing_tables_json)
+existing_rows   = json.loads(p_existing_tables_json)
 existing_tables = {row["name"].lower() for row in existing_rows}
+existing_column_rows = json.loads(p_existing_columns_json)
+existing_columns = {
+    (row["table_name"].lower(), row["column_name"].lower())
+    for row in existing_column_rows
+}
+existing_columns_by_table = {}
+for row in existing_column_rows:
+    existing_columns_by_table.setdefault(row["table_name"].lower(), []).append(row["column_name"])
+
+def column_exists(table_name, column_name):
+    if not table_name or not column_name:
+        return False
+    return (str(table_name).lower(), str(column_name).lower()) in existing_columns
+
+def resolve_column(table_name, configured_col):
+    """
+    Resolve a Forms2Process column name against the actual source table columns.
+    Exact match wins. If not found, allow one unique suffix/contains match so
+    values like PatientSignatureDate can map to AdmissionAssessmentPatientSignatureDate.
+    """
+    if not table_name or not configured_col:
+        return None
+    table_key = str(table_name).lower()
+    configured_key = str(configured_col).lower()
+    actual_cols = existing_columns_by_table.get(table_key, [])
+
+    for actual in actual_cols:
+        if actual.lower() == configured_key:
+            return actual
+
+    suffix_matches = [actual for actual in actual_cols if actual.lower().endswith(configured_key)]
+    if len(suffix_matches) == 1:
+        print(f"  INFO resolved column: {table_name}.{configured_col} -> {suffix_matches[0]}")
+        return suffix_matches[0]
+
+    contains_matches = [actual for actual in actual_cols if configured_key in actual.lower()]
+    if len(contains_matches) == 1:
+        print(f"  INFO resolved column: {table_name}.{configured_col} -> {contains_matches[0]}")
+        return contains_matches[0]
+
+    if len(suffix_matches) > 1 or len(contains_matches) > 1:
+        print(f"  WARN ambiguous column: {table_name}.{configured_col}; emitting NULL")
+    return None
 
 print(f"Site:           {p_site_code}")
 print(f"Database:       {p_source_database}")
 print(f"Run ID:         {p_ingest_run_id}")
 print(f"Existing tables in SAMMS (count): {len(existing_tables)}")
 
-# ── Compute lookback date ────────────────────────────────────────────
+# ── Compute wrkdt (used only for DateFilterEnabled=1 tables) ─────────
+# NOTE: The base Form/AnswerSignature query does NOT use wrkdt.
+# wrkdt only affects the optional WHERE clauses on Forms2Process UNIONs.
 if p_reload:
     wrkdt = "2010-01-01"
 else:
     wrkdt = (datetime.now() - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
 
-print(f"Lookback date:  {wrkdt}")
+print(f"wrkdt (for Forms2Process date filters): {wrkdt}")
 
 # ── Read Forms2Process from bhg_silver.ctrl ───────────────────────────
+# NOTE: No ORDER BY Prefix — unlike FormQuestionAnswers which sorts by Prefix.
+# The old system does: db.TblForms2Process.Where(x => x.Enabled && x.RowState).ToList()
+# with no ordering.
 f2p_df = (
     spark.table("bhg_silver.ctrl.Forms2Process")
     .filter("Enabled = true AND RowState = true")
-    .orderBy("Prefix")
     .toPandas()
 )
 print(f"Forms2Process rows loaded: {len(f2p_df)}")
+print("Forms2Process columns:")
+print(f2p_df.columns.tolist())
 
-sc = p_site_code   # shorthand
+aa_debug = f2p_df[
+    f2p_df["TableName"].astype(str).str.strip().str.lower().eq("admissionassessment")
+]
+print("AdmissionAssessment Forms2Process row:")
+if aa_debug.empty:
+    print("  NOT FOUND")
+else:
+    print(
+        aa_debug[[
+            "FormName",
+            "TableName",
+            "Patient",
+            "Staff",
+            "Supervisor",
+            "Provider",
+            "CreatedOn",
+            "ModifiedOn",
+            "Prefix"
+        ]].to_string(index=False)
+    )
+
+sc = p_site_code  # shorthand
 db = f"[{p_source_database}]"   # source SAMMS database, e.g. [SAMMS-ColoradoSpringsV5]
 
 def tbl(name):
     """Return a fully-qualified SAMMS table reference."""
     return f"{db}.dbo.[{name}]"
 
-def sys_all_columns():
-    """Return the source database sys.all_columns reference."""
-    return f"{db}.sys.all_columns"
-
-# ── Standard SQL fragments reused across cases ─────────────────────
-# Legacy SaveFormQA keeps IsDeleted nullable. It passes source IsDeleted through
-# and lets SaveFormQuestionAnswers derive RowState from IsDeleted + ClientId.
-std_isdeleted = "IsDeleted = a.IsDeleted"
-std_pa_join = (
-    f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.PreAdmissionId = pa.ID "
-    f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
-)
-
-# ── Build metadata literal columns (added to every SELECT) ───────────
-# These land as real columns in Bronze and carry extraction context.
+# ── Metadata columns injected into every SELECT ──────────────────────
 meta_cols = (
     f"  '{sc}' AS _site_code,\n"
     f"  '{p_source_database}' AS _source_database,\n"
@@ -849,88 +1450,186 @@ meta_cols = (
     f"  '{wrkdt}' AS _lookback_date,\n"
 )
 
-# ── Step 1: Base query — Form/FormTemplate/Question/Answer ───────────
-# UNION 1: forms with answered questions (a.Value IS NOT NULL)
-# UNION 2: forms with no questions at all (q.Id IS NULL — header-only)
+# ── Standard IsDeleted expression (alias 'a') — used in Forms2Process loop
+# NOTE: The base Form query uses alias 'f', not 'a'. See base query below
+#       where f.IsDeleted is referenced directly.
+std_isdeleted = (
+    "IsDeleted = CASE "
+    "WHEN ISNULL(a.IsDeleted,0)=0 AND pa.IsDeleted<>1 "
+    "AND ISNULL(pa.DataFormId,0)>=0 AND ISNULL(d.IsDeleted,0)=0 "
+    "THEN 0 ELSE 1 END"
+)
+
+# IsDeleted expression for the base Form query — alias is 'f' not 'a'
+base_isdeleted = (
+    "IsDeleted = CASE "
+    "WHEN ISNULL(f.IsDeleted,0)=0 AND pa.IsDeleted<>1 "
+    "AND ISNULL(pa.DataFormId,0)>=0 AND ISNULL(d.IsDeleted,0)=0 "
+    "THEN 0 ELSE 1 END"
+)
+
+# ── Helper: sig date CASE expression with 1900-01-01 sentinel ────────
+def sig_date_expr(alias, col_name):
+    """
+    Returns: CASE WHEN CONVERT(date, {alias}.{col_name}) IS NULL
+                  THEN '1900-01-01'
+                  ELSE CONVERT(date, {alias}.{col_name})
+             END
+    Matches old system's pattern exactly.
+    """
+    return (
+        f"CASE WHEN CONVERT(date, {alias}.{col_name}) IS NULL "
+        f"THEN '1900-01-01' "
+        f"ELSE CONVERT(date, {alias}.{col_name}) END"
+    )
+
+# ── Step 1: Base query — Form/FormTemplate + AnswerSignature subqueries
 #
-# Outer SELECT adds QuestionOrderId via ROW_NUMBER() for rows where
-# q.QuestionOrderId is NULL (synthetic ordering for forms without it).
+# UNION 1: All active forms — NO date filter (WHERE clause is commented
+#   out in the old system and intentionally omitted here).
+# UNION 2: Deleted forms (WHERE f.Isdeleted = 1).
+#
+# ── Base query inner SELECT (shared by UNION 1 and UNION 2) ─────────
+# Alias is 'f' for Form — NOT 'a'. IsDeleted uses base_isdeleted (f.IsDeleted).
+base_inner_select = (
+    f"  SELECT SiteCode='{sc}', ft.FormName, f.id AS FormId, f.ClientId,\n"
+    f"         f.CreatedOn, f.UpdatedOn,\n"
+    f"         {base_isdeleted}\n"
+    f"  FROM {tbl('Form')} f WITH (NOLOCK)\n"
+    f"    LEFT JOIN {tbl('FormTemplate')} ft WITH (NOLOCK) ON f.FormTemplateId = ft.Id\n"
+    f"    INNER JOIN {tbl('SF_PatientPreAdmission')} pa WITH (NOLOCK) ON f.PreAdmissionId = pa.ID\n"
+    f"    LEFT JOIN {tbl('SF_DataForms')} d WITH (NOLOCK) ON pa.DataFormId = d.Id"
+)
 
-strCmd = f"""
-SELECT
-  {meta_cols}
-  SiteCode, FormName,
-  CONVERT(varchar(100), FormId) AS FormId,
-  PreAdmissionId, ClientId, QuestionId,
-  QuestionOrderId = ISNULL(x.QuestionOrderId,
-      ROW_NUMBER() OVER (
-          PARTITION BY x.FormName, x.FormId, x.ClientId, x.QuestionId
-          ORDER BY x.QuestionId, x.AnswerSeq
-      )
-  ),
-  QuestionText, OptionId, AnswerValue,
-  CreatedBy, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted
-FROM (
+# ── Step 1: Base query — CTE pre-aggregation of AnswerSignature ──────
+#
+# PERFORMANCE CHANGE (replacing 9 correlated subqueries):
+# Old approach: 9 × SELECT TOP 1 ... FROM AnswerSignature WHERE FormId = x.FormId
+#   → AnswerSignature hit ~9 times per Form row → ~161k seeks for 17k rows → 290s wait.
+# New approach: one CTE groups AnswerSignature once by FormId, then a single
+#   LEFT JOIN resolves all 9 sig dates → AnswerSignature scanned once → ~10-30s.
+#
+# Sentinel logic: CASE WHEN Sign IS NULL THEN '1900-01-01' ELSE DateTime END
+#   is applied inside the CTE, preserving exact parity with old correlated subquery.
+# Counselor: CTE covers BOTH 'CounselorSignatureSignatureDate' and
+#   'CounselorSignatureDate' DateField values (some SAMMS versions use either).
+# If no AnswerSignature row exists for a slot → LEFT JOIN produces NULL.
+# This must stay NULL. The old correlated subquery only returns the
+# 1900-01-01 sentinel when an AnswerSignature row exists but Sign is NULL.
+#
+strCmd = (
+    f"WITH _AS_agg AS (\n"
+    f"  SELECT FormId,\n"
+    f"    MAX(CASE WHEN DateField = 'CompletedBySignatureSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS CompletedBySignatureSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField IN ('CounselorSignatureSignatureDate','CounselorSignatureDate')\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS CounselorSignatureSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'DoctorSignatureSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS DoctorSignatureSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'MedicalProviderSignatureSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS MedicalProviderSignatureSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'PatientSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS PatientSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'ProviderSignatureSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS ProviderSignatureSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'RequestorSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS RequestorSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'StaffSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS StaffSignatureDate,\n"
+    f"    MAX(CASE WHEN DateField = 'SupervisorSignatureSignatureDate'\n"
+    f"        THEN CASE WHEN Sign IS NULL THEN '1900-01-01'\n"
+    f"             ELSE CONVERT(varchar(20),[DateTime],23) END END) AS SupervisorSignatureSignatureDate\n"
+    f"  FROM {tbl('AnswerSignature')} WITH (NOLOCK)\n"
+    f"  WHERE DateField IN (\n"
+    f"    'CompletedBySignatureSignatureDate','CounselorSignatureSignatureDate',\n"
+    f"    'CounselorSignatureDate','DoctorSignatureSignatureDate',\n"
+    f"    'MedicalProviderSignatureSignatureDate','PatientSignatureDate',\n"
+    f"    'ProviderSignatureSignatureDate','RequestorSignatureDate',\n"
+    f"    'StaffSignatureDate','SupervisorSignatureSignatureDate'\n"
+    f"  )\n"
+    f"  GROUP BY FormId\n"
+    f")\n"
+    f"SELECT DISTINCT\n{meta_cols}"
+    f"  x.SiteCode, x.FormName,\n"
+    f"  CONVERT(varchar(100), x.FormId) AS FormId,\n"
+    f"  x.ClientId, x.CreatedOn, x.UpdatedOn, x.IsDeleted,\n"
+    # Sig date columns — keep NULL when no AnswerSignature row exists.
+    # The 1900-01-01 sentinel is already applied inside the CTE only when
+    # a matching row exists and Sign is NULL, matching old C# behaviour.
+    f"  ag.CompletedBySignatureSignatureDate AS CompletedBySignatureSignatureDate,\n"
+    f"  ag.CounselorSignatureSignatureDate AS CounselorSignatureSignatureDate,\n"
+    f"  ag.DoctorSignatureSignatureDate AS DoctorSignatureSignatureDate,\n"
+    f"  ag.MedicalProviderSignatureSignatureDate AS MedicalProviderSignatureSignatureDate,\n"
+    f"  ag.PatientSignatureDate AS PatientSignatureDate,\n"
+    f"  ag.ProviderSignatureSignatureDate AS ProviderSignatureSignatureDate,\n"
+    f"  ag.RequestorSignatureDate AS RequestorSignatureDate,\n"
+    f"  ag.StaffSignatureDate AS StaffSignatureDate,\n"
+    f"  ag.SupervisorSignatureSignatureDate AS SupervisorSignatureSignatureDate\n"
+    f"FROM (\n"
+    # UNION 1 — all active forms, NO date filter (intentional — see Section 21)
+    f"{base_inner_select}\n"
+    f"\n  UNION\n\n"
+    # UNION 2 — deleted forms only
+    f"{base_inner_select}\n"
+    f"  WHERE f.Isdeleted = 1\n"
+    f") x\n"
+    f"LEFT JOIN _AS_agg ag ON ag.FormId = x.FormId\n"
+)
 
-  SELECT
-      SiteCode  = '{sc}',
-      ft.FormName,
-      FormId    = f.id,
-      f.ClientId,
-      f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy,
-      f.PreAdmissionId,
-      IsDeleted = f.IsDeleted,
-      QuestionId      = ISNULL(q.Id, 0),
-      QuestionOrderId = q.QuestionOrderId,
-      q.QuestionText,
-      a.OptionId,
-      AnswerValue = a.Value,
-      AnswerSeq   = a.Id
-  FROM {tbl('Form')} f
-      LEFT JOIN {tbl('FormTemplate')} ft ON f.FormTemplateId = ft.Id
-      LEFT JOIN {tbl('Question')} q      ON ft.Id = q.FormTemplateId
-      LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
-  WHERE a.Value IS NOT NULL
-    AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
-
-  UNION
-
-  SELECT
-      SiteCode  = '{sc}',
-      ft.FormName,
-      FormId    = f.id,
-      f.ClientId,
-      f.CreatedOn, f.CreatedBy, f.UpdatedOn, f.UpdatedBy,
-      f.PreAdmissionId,
-      IsDeleted = f.IsDeleted,
-      QuestionId      = ISNULL(q.Id, 0),
-      QuestionOrderId = q.QuestionOrderId,
-      q.QuestionText,
-      a.OptionId,
-      AnswerValue = a.Value,
-      AnswerSeq   = a.Id
-  FROM {tbl('Form')} f
-      LEFT JOIN {tbl('FormTemplate')} ft ON f.FormTemplateId = ft.Id
-      LEFT JOIN {tbl('Question')} q      ON ft.Id = q.FormTemplateId
-      LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
-  WHERE q.Id IS NULL
-    AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
-
-) x
-"""
+# ── Legacy special branch: Periodic Reassessment / Prefix 99 ─────────
+# BHG_DR contains FormAnswerSignature rows with:
+#   FormName = 'Periodic Reassessment'
+#   FormId   = '99-' + ClientId + '-' + PreAdmissionId + '-' + Id
+# These rows are not generated by the current active Forms2Process config.
+# They come from NewPeriodicReassessment + NewPeriodicReassessmentCounselorReview.
+# This mirrors [pats].[MergeFormSignaturesPeriodicReassessments]:
+# it is intentionally full-site, not lookback filtered.
+# Guard with existing_tables so sites without these source tables skip cleanly.
+if (
+    "newperiodicreassessment" in existing_tables
+    and "newperiodicreassessmentcounselorreview" in existing_tables
+):
+    block = (
+        f"\nUNION\n"
+        f"SELECT DISTINCT\n{meta_cols}"
+        f"  SiteCode='{sc}', 'Periodic Reassessment' AS [FormName],\n"
+        f"  '99-' + CONVERT(varchar, ISNULL(a.ClientId, 0))"
+        f" + '-' + CONVERT(varchar, ISNULL(b.PreAdmissionId, 0))"
+        f" + '-' + CONVERT(varchar, a.Id) AS [FormID],\n"
+        f"  ClientId = ISNULL(a.ClientId, 0),\n"
+        f"  [CreatedOn] = CONVERT(date, a.CreatedOn),\n"
+        f"  [UpdatedOn] = CONVERT(date, a.ModifiedOn),\n"
+        f"  IsDeleted = CASE WHEN ISNULL(a.IsDeleted,0)=0 THEN 0 ELSE 1 END,\n"
+        f"  CompletedBySignatureSignatureDate = null,\n"
+        f"  CounselorSignatureSignatureDate = CONVERT(date, b.CounselorSignatureDate),\n"
+        f"  DoctorSignatureSignatureDate = null,\n"
+        f"  MedicalProviderSignatureSignatureDate = null,\n"
+        f"  PatientSignatureDate = CONVERT(date, b.PatientSignatureDate),\n"
+        f"  ProviderSignatureSignatureDate = CONVERT(date, b.ProviderSignatureDate),\n"
+        f"  RequestorSignatureDate = null,\n"
+        f"  StaffSignatureDate = null,\n"
+        f"  SupervisorSignatureSignatureDate = CONVERT(date, b.SupervisorSignatureDate)\n"
+        f"FROM {tbl('NewPeriodicReassessment')} a\n"
+        f"LEFT JOIN {tbl('NewPeriodicReassessmentCounselorReview')} b\n"
+        f"    ON a.Id = b.NewPeriodicReassessmentId\n"
+        f"   AND a.PreAdmissionId = b.PreAdmissionId\n"
+    )
+    strCmd += block
+    print("  + NewPeriodicReassessment (Periodic Reassessment / Prefix 99)")
+else:
+    print("  SKIP Periodic Reassessment / Prefix 99: source tables not found")
 
 # ── Step 2: Loop over Forms2Process — UNION in each custom table ─────
-# For each enabled row in tbl_Forms2Process:
-#   - Check if TableName exists in this SAMMS (using existing_tables set)
-#   - Dispatch to the correct switch case
-#   - Append a UNION block
-#   - If DateFilterEnabled, append a WHERE clause
-
-def updated_on_sql(modified_on, alias="a"):
-    """Build the UpdatedOn column fragment. Handles NULL ModifiedOn column name."""
-    if modified_on and str(modified_on) not in ("", "nan", "None"):
-        return f", CONVERT(date, {alias}.{modified_on}) AS [UpdatedOn]"
-    return ", [UpdatedOn] = null"
+# NOTE: No ORDER BY — matches old system's unordered loop.
+# 3 switch cases: tblORDERREQ, tblTP17REVIEW, default.
 
 for _, xf in f2p_df.iterrows():
     table_name   = xf["TableName"]
@@ -940,158 +1639,50 @@ for _, xf in f2p_df.iterrows():
     modified_on  = xf["ModifiedOn"]
     date_filter  = bool(xf["DateFilterEnabled"])
 
+    # Sig date source column names — may be None/NaN when that role
+    # does not sign this form type.
+    def col_val(col):
+        v = xf.get(col)
+        if v is None:
+            return None
+        s = str(v).strip()
+        if s == "" or s.lower() in ("nan", "none", "null"):
+            return None
+        return s
+
+    col_completed_by  = col_val("CompletedBy")
+    col_counselor     = col_val("Counselor")
+    col_doctor        = col_val("Doctor")
+    col_medical_prov  = col_val("MedicalProvider")
+    col_patient       = col_val("Patient")
+    col_provider      = col_val("Provider")
+    col_requestor     = col_val("Requestor")
+    col_staff         = col_val("Staff")
+    col_supervisor    = col_val("Supervisor")
+
+    if str(table_name).strip().lower() == "admissionassessment":
+        print("AdmissionAssessment loop values:")
+        print("Patient =", col_patient)
+        print("Staff =", col_staff)
+        print("Supervisor =", col_supervisor)
+        print("Provider =", col_provider)
+
     if not table_name or str(table_name) in ("", "nan"):
         continue
 
-    # Skip tables not present in this SAMMS version
     if table_name.lower() not in existing_tables:
         print(f"  SKIP (not in this SAMMS): {table_name}")
         continue
 
-    tname_lower = table_name.lower()
-
-    # Every case wraps its UNION in the same outer SELECT for ROW_NUMBER
-    union_wrap_open = (
-        f"\nUNION\n"
-        f"SELECT\n{meta_cols}"
-        f"  SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID,\n"
-        f"  QuestionOrderID = ROW_NUMBER() OVER(\n"
-        f"      PARTITION BY v.FormName, v.FormId, v.ClientId, v.QuestionId\n"
-        f"      ORDER BY v.QuestionId\n"
-        f"  ),\n"
-        f"  QuestionText, OptionID, AnswerValue,\n"
-        f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
-        f"FROM (\n"
-        f"  SELECT SiteCode = '{sc}', [FormName] = '{form_name}'"
-    )
-
-    if tname_lower == "adversechildhood":
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.id)"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = a.ClientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.ModifiedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
-        )
-
-    elif tname_lower == "financialhardshipapplication":
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.cltId)"
-            f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.id)"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = a.cltId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.ModifiedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
-        )
-
-    elif tname_lower == "tbltp17review":
-        # Completely custom — no standard cols, no PA join.
-        # tprReviewFrequency (UNION D) checked via existing_tables set.
-        # tblTP17REVIEW never gets a date filter — always full extract.
-        has_review_freq = "tprReviewFrequency".lower() in existing_tables  # won't work this way
-
-        # NOTE: existing_tables contains TABLE names from sys.tables, not column names.
-        # For the tprReviewFrequency column check, the old system queries sys.all_columns.
-        # Since we have no SAMMS connection in this notebook, we use a safe approach:
-        # Always include UNION D wrapped in a conditional SELECT that returns no rows
-        # when the column does not exist — using SQL Server's TRY_CAST on sys.all_columns.
-        # The column probe is embedded in the SQL itself:
-        #   WHERE EXISTS (SELECT 1 FROM [source_db].sys.all_columns WHERE object_id=OBJECT_ID('[source_db].dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')
-        # Since tprReviewFrequency appears inside a UNION SELECT with a WHERE clause
-        # that references sys.all_columns (not the column itself), SQL Server
-        # does NOT validate the column at parse time — the WHERE runs first.
-        # This is the correct SQL Server pattern for optional column UNIONs.
-        #
-        # IMPORTANT: This works because we are selecting a computed column name
-        # ('Review Frequency') not the actual column tprReviewFrequency in the
-        # EXISTS-gated UNION — the actual column reference is guarded separately.
-
-        # Build UNION A-C (always present)
-        tp_block = (
-            f"\nUNION\n"
-            f"SELECT\n{meta_cols}"
-            f"  SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID,\n"
-            f"  QuestionOrderID = ROW_NUMBER() OVER(\n"
-            f"      PARTITION BY tp.FormName, tp.FormId, tp.ClientId, tp.QuestionId\n"
-            f"      ORDER BY tp.QuestionId\n"
-            f"  ),\n"
-            f"  QuestionText, OptionID, AnswerValue,\n"
-            f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
-            f"FROM (\n"
-            # UNION A — QuestionID 1
-            f"  SELECT SiteCode='{sc}', 'TP-'+TprTYPE AS [FormName]\n"
-            f"    , '8-1-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID) AS [FormID]\n"
-            f"    , null AS PreAdmissionId, ABS(tprCLTID) AS ClientId\n"
-            f"    , 1 AS QuestionID, 1 AS QuestionOrderID\n"
-            f"    , 'Treatment Plan Type' AS QuestionText, null AS [OptionID]\n"
-            f"    , TprTYPE AS AnswerValue, tprCreatedby AS Createdby\n"
-            f"    , CONVERT(date,tprDT) AS [CreatedOn], null AS [UpdatedBy], null AS [UpdatedOn]\n"
-            f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END AS Isdeleted\n"
-            f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION B — QuestionID 2
-            f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
-            f"    , '8-2-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
-            f"    , null, ABS(tprCLTID), 2, 1, 'Treatment Phase Type', null\n"
-            f"    , tpTreatmentPhase, tprCreatedby, CONVERT(date,tprDT), null, null\n"
-            f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
-            f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION C — QuestionID 3
-            f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
-            f"    , '8-3-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
-            f"    , null, ABS(tprCLTID), 3, 1, 'Next Due', null\n"
-            f"    , CONVERT(varchar,tprNEXT), tprCreatedby, CONVERT(date,tprDT), null, null\n"
-            f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
-            f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION D — QuestionID 4 (tprReviewFrequency — guarded by EXISTS on sys.all_columns)
-            # The actual column tprReviewFrequency is referenced ONLY inside a subquery
-            # that is gated by a WHERE EXISTS check on sys.all_columns.
-            # SQL Server validates column names at compile time for static SQL, so we use
-            # a dynamic approach: embed UNION D always but gate the SAMMS table reference
-            # inside an EXISTS subquery that short-circuits before accessing the column.
-            # The safest portable pattern: use a scalar subquery for the value.
-            f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
-            f"    , '8-4-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
-            f"    , null, ABS(tprCLTID), 4, 1, 'Review Frequency', null\n"
-            f"    , (\n"
-            f"        SELECT CASE WHEN LEN(tprReviewFrequency)>6\n"
-            f"               THEN RTRIM(SUBSTRING(tprReviewFrequency,6,LEN(tprReviewFrequency)-5))\n"
-            f"               ELSE RTRIM(tprReviewFrequency) END\n"
-            f"        FROM {tbl('tblTP17REVIEW')} t2\n"
-            f"        WHERE t2.tpRID = r.tpRID AND t2.tprTPID = r.tprTPID\n"
-            f"          AND EXISTS (SELECT 1 FROM {sys_all_columns()}\n"
-            f"              WHERE object_id=OBJECT_ID('{db}.dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')\n"
-            f"      ) AS AnswerValue\n"
-            f"    , tprCreatedby, CONVERT(date,tprDT), null, null\n"
-            f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
-            f"  FROM {tbl('tblTP17REVIEW')} r\n"
-            f"  WHERE EXISTS (SELECT 1 FROM {sys_all_columns()}\n"
-            f"      WHERE object_id=OBJECT_ID('{db}.dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')\n"
-            f") tp"
-        )
-        strCmd += tp_block
-        print(f"  + tblTP17REVIEW (with tprReviewFrequency guard)")
-        continue  # skip standard date filter append below
-
-    elif tname_lower == "tblorderreq":
+    # ────────────────────────────────────────────────────────────────
+    # CASE: tblORDERREQ
+    # FormID trailing '-1' (not '-' like in FormQA).
+    # ClientId = cltID (raw, not ABS — EF layer stores ABS later).
+    # ProviderSig = ISNULL(DrSigDt, SigNurseDt) with 1900-01-01 sentinel.
+    # SupervisorSig = sigCoordinatorDt with 1900-01-01 sentinel.
+    # All other sig cols = null.
+    # ────────────────────────────────────────────────────────────────
+    if table_name == "tblORDERREQ":
         test_filter = (
             "status = 'Approved' "
             "AND Notes NOT LIKE 'Test %' AND Notes <> 'TEST' "
@@ -1100,220 +1691,336 @@ for _, xf in f2p_df.iterrows():
         block = (
             f"\nUNION\n"
             f"SELECT\n{meta_cols}"
-            f"  SiteCode, FormName, FormID, PreadmissionId, ClientId, QuestionID,\n"
-            f"  QuestionOrderID = ROW_NUMBER() OVER(\n"
-            f"      PARTITION BY v.FormName, v.FormId, v.ClientId, v.QuestionId\n"
-            f"      ORDER BY v.QuestionId\n"
-            f"  ),\n"
-            f"  QuestionText, OptionID, AnswerValue,\n"
-            f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
-            f"FROM (\n"
-            # UNION A — QuestionID 1: Effective Date
-            f"  SELECT SiteCode='{sc}', FormName='Level Justification'\n"
-            f"    , '9-1-'+CONVERT(varchar,ABS(cltID))+'-'+CONVERT(varchar,ReqNum)+'-' AS FormID\n"
-            f"    , ReqNum AS PreadmissionId, cltID AS ClientId\n"
-            f"    , 1 AS QuestionID, 'Effective Date' AS QuestionText, 0 AS OptionID\n"
-            f"    , CONVERT(varchar,EffectiveDate,101) AS AnswerValue\n"
-            f"    , Staff AS Createdby, CONVERT(date,DateAdded) AS CreatedOn\n"
-            f"    , StatusUser AS UpdatedBy, CONVERT(date,statusDate) AS UpdatedOn\n"
-            f"    , CASE WHEN cltID<0 THEN 1 ELSE 0 END AS IsDeleted\n"
-            f"  FROM {tbl('tblORDERREQ')} WHERE {test_filter}\n"
-            # UNION B — QuestionID 2: Expiration Date
-            f"  UNION SELECT SiteCode='{sc}', 'Level Justification'\n"
-            f"    , '9-2-'+CONVERT(varchar,ABS(cltID))+'-'+CONVERT(varchar,ReqNum)+'-'\n"
-            f"    , ReqNum, cltID, 2, 'Expiration Date', 0\n"
-            f"    , CONVERT(varchar,expirationdate,101)\n"
-            f"    , Staff, CONVERT(date,DateAdded)\n"
-            f"    , StatusUser, CONVERT(date,statusDate)\n"
-            f"    , CASE WHEN cltID<0 THEN 1 ELSE 0 END\n"
-            f"  FROM {tbl('tblORDERREQ')} WHERE {test_filter}\n"
-            f") v"
+            f"  SiteCode='{sc}', 'Level Justification' AS [FormName],\n"
+            f"  '9-1-' + CONVERT(varchar, ABS(cltID)) + '-' + CONVERT(varchar, ReqNum) + '-1' AS FormId,\n"
+            f"  ClientId = cltID,\n"
+            f"  [CreatedOn]  = CONVERT(date, DateAdded),\n"
+            f"  [UpdatedOn]  = CONVERT(date, statusDate),\n"
+            f"  IsDeleted    = CASE WHEN cltID < 0 THEN 1 ELSE 0 END,\n"
+            f"  CompletedBySignatureSignatureDate      = null,\n"
+            f"  CounselorSignatureSignatureDate        = null,\n"
+            f"  DoctorSignatureSignatureDate           = null,\n"
+            f"  MedicalProviderSignatureSignatureDate  = null,\n"
+            f"  PatientSignatureDate                   = null,\n"
+            f"  ProviderSignatureSignatureDate = CASE\n"
+            f"      WHEN ISNULL(CONVERT(date, DrSigDt), CONVERT(date, SigNurseDt)) IS NULL\n"
+            f"       AND status = 'Approved' THEN '1900-01-01'\n"
+            f"      ELSE ISNULL(CONVERT(date, DrSigDt), CONVERT(date, SigNurseDt)) END,\n"
+            f"  RequestorSignatureDate                 = null,\n"
+            f"  StaffSignatureDate                     = null,\n"
+            f"  SupervisorSignatureSignatureDate = CASE\n"
+            f"      WHEN CONVERT(date, sigCoordinatorDt) IS NULL AND status = 'Approved'\n"
+            f"      THEN '1900-01-01'\n"
+            f"      ELSE CONVERT(date, sigCoordinatorDt) END\n"
+            f"FROM {tbl('tblORDERREQ')}\n"
+            f"WHERE {test_filter}\n"
         )
+        if date_filter:
+            block += (
+                f"  AND (DateAdded >= '{wrkdt}'"
+                f" OR ISNULL(statusDate, DateAdded) >= '{wrkdt}')\n"
+            )
         strCmd += block
         print(f"  + tblORDERREQ (Level Justification)")
-        continue  # no date filter
+        continue
 
-    elif tname_lower == "insurancebenefitverification":
+    # ────────────────────────────────────────────────────────────────
+    # CASE: tblTP17REVIEW
+    # ClientId = tprCLTID (raw — NOT ABS, unlike FormQA).
+    # FormID = '8-1-' + ABS(tprCLTID) + '-' + tpRID + '-' + tprTPID
+    # Direct sig date columns (no AnswerSignature correlated subquery).
+    # PatientSig → tprCLIRNTSIGDate, ProviderSig → tprDRSIGDate,
+    # StaffSig   → tprCOUNSSIGDate (with compound null guard),
+    # SupervisorSig → tprSUPERSIGDate (no null guard — raw value).
+    # DateFilterEnabled: checks 7 columns.
+    # ────────────────────────────────────────────────────────────────
+    elif table_name == "tblTP17REVIEW":
         block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.id)"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = a.PreAdmissionId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.ModifiedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
+            f"\nUNION\n"
+            f"SELECT DISTINCT\n{meta_cols}"
+            f"  SiteCode, FormName, FormID, ClientId, CreatedOn, UpdatedOn, IsDeleted,\n"
+            f"  CompletedBySignatureSignatureDate,\n"
+            f"  CounselorSignatureSignatureDate,\n"
+            f"  DoctorSignatureSignatureDate,\n"
+            f"  MedicalProviderSignatureSignatureDate,\n"
+            f"  PatientSignatureDate,\n"
+            f"  ProviderSignatureSignatureDate,\n"
+            f"  RequestorSignatureDate,\n"
+            f"  StaffSignatureDate,\n"
+            f"  SupervisorSignatureSignatureDate\n"
+            f"FROM (\n"
+            f"  SELECT SiteCode='{sc}', 'TP-' + tprType AS [FormName],\n"
+            f"    '8-1-' + CONVERT(varchar, ABS(tprCLTID))"
+            f" + '-' + CONVERT(varchar, tpRID)"
+            f" + '-' + CONVERT(varchar, tprTPID) AS [FormID],\n"
+            f"    tprCLTID AS ClientId,\n"                                 # raw — NOT ABS
+            f"    CONVERT(date, tprDT) AS [CreatedOn],\n"
+            f"    null AS [UpdatedOn],\n"
+            f"    IsDeleted = CASE WHEN tprCLTID < 0 THEN 1 ELSE 0 END,\n"
+            f"    CompletedBySignatureSignatureDate     = null,\n"
+            f"    CounselorSignatureSignatureDate       = null,\n"
+            f"    DoctorSignatureSignatureDate          = null,\n"
+            f"    MedicalProviderSignatureSignatureDate = null,\n"
+            f"    PatientSignatureDate = CASE\n"
+            f"        WHEN CONVERT(date, tprCLIRNTSIGDate) IS NULL THEN '1900-01-01'\n"
+            f"        ELSE CONVERT(date, tprCLIRNTSIGDate) END,\n"
+            f"    ProviderSignatureSignatureDate = CASE\n"
+            f"        WHEN CONVERT(date, tprDRSIGDate) IS NULL THEN '1900-01-01'\n"
+            f"        ELSE CONVERT(date, tprDRSIGDate) END,\n"
+            f"    RequestorSignatureDate = null,\n"
+            # StaffSig: sentinel only when BOTH CounsSig AND SuperSig are null
+            f"    StaffSignatureDate = CASE\n"
+            f"        WHEN CONVERT(date, tprCOUNSSIGDate) IS NULL\n"
+            f"         AND CONVERT(date, tprSUPERSIGDate) IS NULL THEN '1900-01-01'\n"
+            f"        ELSE CONVERT(date, tprCOUNSSIGDate) END,\n"
+            # SupervisorSig: raw value, no null guard
+            f"    SupervisorSignatureSignatureDate = CONVERT(date, tprSUPERSIGDate)\n"
+            f"  FROM {tbl('tblTP17REVIEW')}\n"
+            f") tp\n"
         )
-
-    elif tname_lower == "referralform":
-        # UpdatedBy = a.updatedby (not ModifiedBy). DateFilterEnabled=0 — no date filter.
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.ClientId)"
-            f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.id)"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = a.ClientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.updatedby AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
-        )
+        if date_filter:
+            # 7-column date filter for TP17REVIEW
+            block += (
+                f"WHERE (CreatedOn >= '{wrkdt}'\n"
+                f"    OR ISNULL(UpdatedOn, CreatedOn) >= '{wrkdt}'\n"
+                f"    OR ProviderSignatureSignatureDate >= '{wrkdt}'\n"
+                f"    OR CompletedBySignatureSignatureDate >= '{wrkdt}'\n"
+                f"    OR PatientSignatureDate >= '{wrkdt}'\n"
+                f"    OR StaffSignatureDate >= '{wrkdt}'\n"
+                f"    OR SupervisorSignatureSignatureDate >= '{wrkdt}')\n"
+            )
         strCmd += block
-        print(f"  + {table_name} (ReferralForm — always full extract, no date filter)")
-        continue  # explicitly skip date filter append
+        print(f"  + tblTP17REVIEW (Treatment Plan)")
+        continue
 
-    elif tname_lower == "sf_understandingoftreatment":
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, pa.PatientId)"
-            f" + '-' + CONVERT(varchar, ISNULL(a.PreAdmissionId, 0))"
-            f" + '-' + CONVERT(varchar, ISNULL(a.id, 0))"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = pa.PatientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.LastUpdatedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
-        )
-
-    elif tname_lower == "sf_patientpreadmission":
-        self_join = (
-            f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.ID = pa.ID "
-            f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
-        )
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.PatientId)"
-            f" + '-' + CONVERT(varchar, ISNULL(a.ParentPreAdmissionId, 0))"
-            f" + '-' + CONVERT(varchar, ISNULL(a.id, 0))"
-            f"\n    , PreAdmissionId = a.Id, ClientId = a.PatientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.LastUpdatedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {self_join}"
-            f"\n) v"
-        )
-
-    elif tname_lower == "newperiodicreassessment":
-        self_join = (
-            f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.ID = pa.ID "
-            f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
-        )
-        block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + CONVERT(varchar, a.PatientId)"
-            f" + '-' + CONVERT(varchar, ISNULL(a.ParentPreAdmissionId, 0))"
-            f" + '-' + CONVERT(varchar, ISNULL(a.id, 0))"
-            f"\n    , PreAdmissionId = a.Id, ClientId = a.PatientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.LastUpdatedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {self_join}"
-            f"\n) v"
-        )
-
+    # ────────────────────────────────────────────────────────────────
+    # DEFAULT CASE — all other Forms2Process tables.
+    # Two nested levels:
+    #   Level A: FormID formula and ClientId source — per table name
+    #   Level B: Each of 9 sig date columns — per table name
+    #            (uses different alias for AdmissionAssessment and
+    #             NewAdmissionAssessment)
+    # ────────────────────────────────────────────────────────────────
     else:
-        # DEFAULT — covers all 65 standard forms
+        # ── Level A: FormID / ClientId ────────────────────────────
+        if table_name == "SF_PatientPreAdmission":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(pa.PatientID, 0))"
+                f" + '-' + CONVERT(varchar, ISNULL(a.ParentPreAdmissionId, 0))"
+                f" + '-' + CONVERT(varchar, ISNULL(a.id, 0))"
+            )
+            client_id_expr = "ISNULL(pa.PatientID, 0)"
+        elif table_name == "SF_DataForm":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(pa.PatientID, 0))"
+                f" + '-' + CONVERT(varchar, ISNULL(a.PreAdmissionId, 0))"
+                f" + '-' + CONVERT(varchar, ISNULL(a.id, 0))"
+            )
+            client_id_expr = "ISNULL(pa.PatientID, 0)"
+        elif table_name == "SF_UnderstandingOfTreatment":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(pa.PatientID, 0))"
+                f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, a.id)"
+            )
+            client_id_expr = "ISNULL(pa.PatientID, 0)"
+        elif table_name == "InsuranceBenefitVerification":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(pa.PatientID, 0))"
+                f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, a.id)"
+            )
+            client_id_expr = "ISNULL(pa.PatientID, 0)"
+        elif table_name == "FinancialHardshipApplication":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(a.CltID, 0))"
+                f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, a.id)"
+            )
+            client_id_expr = "ISNULL(a.CltID, 0)"
+        elif table_name == "xNewAdmissionAssessment":
+            # Uses b. alias from the NewAdmissionAssessmentASAMDimension6 join
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(b.ClientId, 0))"
+                f" + '-' + CONVERT(varchar, b.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, b.id)"
+            )
+            client_id_expr = "ISNULL(b.ClientId, 0)"
+        elif table_name == "ConsenttoTreatmentforIOPOrEOPOrOP":
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(d.PatientId, 0))"
+                f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, a.id)"
+            )
+            client_id_expr = "ISNULL(d.PatientId, 0)"
+        else:
+            # Default sub-case
+            form_id_expr = (
+                f"'{prefix}-'"
+                f" + CONVERT(varchar, ISNULL(a.ClientId, 0))"
+                f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
+                f" + '-' + CONVERT(varchar, a.id)"
+            )
+            client_id_expr = "ISNULL(a.ClientId, 0)"
+
+        # UpdatedOn fragment
+        updated_on = (
+            f"CONVERT(date, a.{modified_on})" if (modified_on and str(modified_on) not in ("", "nan", "None"))
+            else "null"
+        )
+
+        # ── Level B: 9 signature date columns ─────────────────────
+        # For AdmissionAssessment: Patient, Provider, Staff, Supervisor → aas. alias
+        # For NewAdmissionAssessment: all 9 → b. alias
+        # For MNComprehensiveAssessment: Counselor, Patient, Staff, Supervisor → b. alias
+        # SF_PatientPreAdmission: Staff → null when site is "LAB"
+        # All others: → a. alias
+        def build_sig_col(col_val, col_label, default_alias="a"):
+            """Build one signature date column fragment."""
+            if col_val is None:
+                return f"{col_label} = null"
+            alias = default_alias
+            source_table = table_name
+            if table_name == "AdmissionAssessment" and col_label in (
+                "PatientSignatureDate", "ProviderSignatureSignatureDate",
+                "StaffSignatureDate", "SupervisorSignatureSignatureDate"
+            ):
+                alias = "aas"
+                source_table = "AdmissionAssessmentSummary"
+            elif table_name == "NewAdmissionAssessment":
+                alias = "b"
+                source_table = "NewAdmissionAssessmentASAMDimension6"
+            elif table_name == "MNComprehensiveAssessment" and col_label in (
+                "CounselorSignatureSignatureDate",
+                "PatientSignatureDate",
+                "StaffSignatureDate",
+                "SupervisorSignatureSignatureDate"
+            ):
+                alias = "b"
+                source_table = "MNComprehensiveAssessmentSocialHistory"
+            # Special: SF_PatientPreAdmission + LAB site → StaffSignatureDate = null
+            if table_name == "SF_PatientPreAdmission" and col_label == "StaffSignatureDate" and p_site_code.upper() == "LAB":
+                return f"{col_label} = null"
+            resolved_col = resolve_column(source_table, col_val)
+            if resolved_col is None:
+                print(f"  WARN missing column: {source_table}.{col_val}; emitting NULL for {col_label}")
+                return f"{col_label} = null"
+            return f"{col_label} = {sig_date_expr(alias, resolved_col)}"
+
         block = (
-            f"{union_wrap_open}"
-            f"\n    , FormID = '{prefix}-'"
-            f" + ISNULL(CONVERT(varchar, a.ClientId), '0')"
-            f" + '-' + CONVERT(varchar, a.PreAdmissionId)"
-            f" + '-' + CONVERT(varchar, a.id)"
-            f"\n    , PreAdmissionId = a.PreAdmissionId, ClientId = a.ClientId"
-            f"\n    , QuestionID = 0, QuestionOrderID = 1"
-            f"\n    , QuestionText = null, [OptionID] = null, AnswerValue = null"
-            f"\n    , a.Createdby"
-            f"\n    , [CreatedOn] = CONVERT(date, a.{created_on})"
-            f"\n    , a.ModifiedBy AS [UpdatedBy]"
-            f"{updated_on_sql(modified_on)}"
-            f"\n    , {std_isdeleted}"
-            f"\n  FROM {tbl(table_name)} a {std_pa_join}"
-            f"\n) v"
+            f"\nUNION\n"
+            f"SELECT DISTINCT\n{meta_cols}"
+            f"  SiteCode='{sc}', '{form_name}' AS [FormName],\n"
+            f"  {form_id_expr} AS [FormID],\n"
+            f"  ClientId = {client_id_expr},\n"
+            f"  [CreatedOn]  = CONVERT(date, a.{created_on}),\n"
+            f"  [UpdatedOn]  = {updated_on},\n"
+            f"  {std_isdeleted},\n"
+            f"  {build_sig_col(col_completed_by,  'CompletedBySignatureSignatureDate')},\n"
+            f"  {build_sig_col(col_counselor,      'CounselorSignatureSignatureDate')},\n"
+            f"  {build_sig_col(col_doctor,         'DoctorSignatureSignatureDate')},\n"
+            f"  {build_sig_col(col_medical_prov,   'MedicalProviderSignatureSignatureDate')},\n"
+            f"  {build_sig_col(col_patient,        'PatientSignatureDate')},\n"
+            f"  {build_sig_col(col_provider,       'ProviderSignatureSignatureDate')},\n"
+            f"  {build_sig_col(col_requestor,      'RequestorSignatureDate')},\n"
+            f"  {build_sig_col(col_staff,          'StaffSignatureDate')},\n"
+            f"  {build_sig_col(col_supervisor,     'SupervisorSignatureSignatureDate')}\n"
         )
 
-    # Append date filter WHERE clause when DateFilterEnabled = 1
-    if date_filter:
-        block += (
-            f"\nWHERE ("
-            f"v.CreatedOn >= '{wrkdt}'"
-            f" OR ISNULL(v.UpdatedOn, v.CreatedOn) >= '{wrkdt}'"
-            f")"
-        )
+        # ── Join strategy ────────────────────────────────────────
+        if table_name == "SF_PatientPreAdmission":
+            # Self-join: ON a.ID = pa.ID (not a.PreAdmissionId = pa.ID)
+            block += (
+                f"FROM {tbl(table_name)} a\n"
+                f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.ID = pa.ID\n"
+                f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id\n"
+            )
+        else:
+            block += (
+                f"FROM {tbl(table_name)} a\n"
+                f"INNER JOIN {tbl('SF_PatientPreAdmission')} pa ON a.PreAdmissionId = pa.ID\n"
+                f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id\n"
+            )
 
-    strCmd += block
-    print(f"  + {table_name} (Prefix {prefix}, DateFilter={date_filter})")
+        # Additional join for AdmissionAssessment
+        # Guard: only add the INNER JOIN if AdmissionAssessmentSummary actually exists
+        # in this SAMMS version. Without the guard, sites where the primary table
+        # exists but the summary table doesn't would fail at Copy activity runtime.
+        if table_name == "AdmissionAssessment":
+            if "admissionassessmentsummary" in existing_tables:
+                block += (
+                    f"INNER JOIN {tbl('AdmissionAssessmentSummary')} aas\n"
+                    f"    ON a.Id = aas.AdmissionAssessmentId\n"
+                    f"   AND a.PreAdmissionId = aas.PreAdmissionId\n"
+                )
+            else:
+                # Summary table absent — aas sig cols will all have been set to null
+                # by column_exists() check above; join is skipped entirely.
+                print(f"  WARN: AdmissionAssessmentSummary not found — aas sig cols will be null")
 
-# ── Step 3: Wrap in DISTINCT and return ─────────────────────────────
-final_sql = f"SELECT DISTINCT * FROM ({strCmd}) z"
+        # Additional join for NewAdmissionAssessment
+        # Same guard: only add if the dimension table exists in this SAMMS version.
+        if table_name == "NewAdmissionAssessment":
+            if "newadmissionassessmentasamdimension6" in existing_tables:
+                block += (
+                    f"INNER JOIN {tbl('NewAdmissionAssessmentASAMDimension6')} b\n"
+                    f"    ON a.preadmissionID = b.preadmissionID\n"
+                    f"   AND a.ID = b.NewAdmissionAssessmentFormId\n"
+                )
+            else:
+                print(f"  WARN: NewAdmissionAssessmentASAMDimension6 not found — b sig cols will be null")
 
-print(f"\nSQL built for site {p_site_code}. Approximate length: {len(final_sql):,} chars.")
+        # Additional join for MNComprehensiveAssessment
+        # updatedProgram.cs routes Counselor/Patient/Staff/Supervisor signature dates
+        # through MNComprehensiveAssessmentSocialHistory alias b.
+        if table_name == "MNComprehensiveAssessment":
+            if "mncomprehensiveassessmentsocialhistory" in existing_tables:
+                block += (
+                    f"INNER JOIN {tbl('MNComprehensiveAssessmentSocialHistory')} b\n"
+                    f"    ON a.preadmissionID = b.preadmissionID\n"
+                    f"   AND a.Id = b.MNComprehensiveAssessmentFormId\n"
+                )
+            else:
+                print(f"  WARN: MNComprehensiveAssessmentSocialHistory not found — b sig cols will be null")
 
-# Return the SQL string to the pipeline via notebook exit value.
-# The pipeline Set Variable activity captures this as v_site_sql.
-mssparkutils.notebook.exit(final_sql)
-```
+        # Date filter WHERE clause
+        if date_filter and modified_on and str(modified_on) not in ("", "nan", "None"):
+            block += (
+                f"WHERE a.{created_on} >= '{wrkdt}'\n"
+                f"   OR ISNULL(a.{modified_on}, a.{created_on}) >= '{wrkdt}'\n"
+            )
+        elif date_filter:
+            block += f"WHERE a.{created_on} >= '{wrkdt}'\n"
 
----
+        strCmd += block
+        print(f"  + {table_name} (Prefix {prefix}, DateFilter={date_filter})")
 
-## 16. Step 11 — Create the Silver Notebook: nb_forms_bronze_to_silver
+# ── Step 3: Return the full SQL string ───────────────────────────────
+# NOTE: Unlike FormQuestionAnswers there is NO "SELECT DISTINCT * FROM (...) z"
+# wrapper. The strCmd is executed directly — this matches the old system.
+print(f"\nSQL built for site {p_site_code}. Approximate length: {len(strCmd):,} chars.")
 
-1. In your Fabric workspace, click **+ New** → **Notebook**
-2. Name it: `nb_forms_bronze_to_silver`
-3. Attach both `bhg_bronze` and `bhg_silver` to the Lakehouse panel
-4. The notebook has **three cells**
+mssparkutils.notebook.exit(strCmd)
 
----
 
-## 17. Step 12 — Silver Notebook Cell 1: Load Bronze and Prepare Source
+notebook for bronz to silver:
 
-### What Cell 1 does
-1. Reads Bronze filtered to this run's rows
-2. Deduplicates on the 7-column PK — keeps latest `_extracted_at`
-3. Normalises `FormId` to UPPER (mirrors `fqa.FormId.ToUpper()` in the old EF path)
-4. Preserves nullable `IsDeleted` exactly like the old EF path
-5. Adds nullable `IsChildForm` because the legacy SQL comments it out for the main Form path
-6. Computes `RowState`: `0` if `ClientId < 0` or `IsDeleted = 1`; `1` otherwise
-7. Drops `_site_code` from the final Silver shape so only `SiteCode` is exposed
-8. Adds audit columns (`LastModAt`, `silver_updated_at`)
-9. Loads `tbl_Forms2Process` into `f2p_df` for use in Cell 2's pre-pass
-10. Creates the Silver table on the very first run
+cell1:
 
-### Cell 1 Code
 
-```python
-from pyspark.sql.functions import col, current_timestamp, row_number, when, lit, upper
+from delta.tables import DeltaTable
+from pyspark.sql.functions import col, coalesce, current_timestamp, row_number, to_date, to_timestamp, when, lit, upper, abs as spark_abs
 from pyspark.sql.window import Window
 from datetime import datetime, timedelta
 
+# Parameters
 try: p_ingest_run_id
 except NameError: p_ingest_run_id = "test-run-001"
 
@@ -1323,13 +2030,13 @@ except NameError: p_lookback_days = 30
 try: p_reload
 except NameError: p_reload = False
 
-bronze_table = "bhg_bronze.Form.br_tblFormQA"
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+bronze_table = "bhg_bronze.Forms.br_tblFormAnswerSig"
+silver_table = "bhg_silver.pats.sl_tblFormAnswerSignatures"
 f2p_table    = "bhg_silver.ctrl.Forms2Process"
 
 print(f"Run ID: {p_ingest_run_id}")
 
-# Compute wrkdt for Cell 2 pre-pass
+# Compute wrkdt for pre-pass (Cell 2)
 if p_reload:
     wrkdt = datetime(2010, 1, 1)
 else:
@@ -1342,9 +2049,9 @@ f2p_df = (
     .select("FormName", "DateFilterEnabled")
     .toPandas()
 )
-non_date_filtered_forms = set(
-    f2p_df[f2p_df["DateFilterEnabled"] == False]["FormName"].tolist()
-)
+# Note: non_date_filtered_forms is NOT computed here â€” Cell 2 re-derives the
+# exact set it needs (with TP-* normalization) right before the pre-pass resets.
+# Computing it here would be dead code.
 
 # Read Bronze for this run
 bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
@@ -1354,32 +2061,89 @@ print(f"Bronze rows for this run: {bronze_count}")
 if bronze_count == 0:
     raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
 
-# Deduplicate on 7-column PK — keep latest _extracted_at per key
-pk_cols = ["SiteCode", "FormName", "FormId", "ClientId",
-           "PreAdmissionId", "QuestionId", "QuestionOrderId"]
+# Legacy C# uses DataRow.ToString() for string business keys, which converts
+# database NULL to an empty string. ClientId is different: old C# parses it as
+# int, so NULL ClientId is invalid and should not be merged silently.
+bad_clientid_df = bronze_df.where(col("ClientId").isNull())
+bad_clientid_count = bad_clientid_df.count()
+if bad_clientid_count > 0:
+    display(
+        bad_clientid_df
+        .select("_site_code", "_source_database", "SiteCode", "FormName", "FormId", "ClientId")
+        .limit(50)
+    )
+    raise Exception(
+        f"Found {bad_clientid_count} FormAnswerSignatures Bronze rows with NULL ClientId. "
+        "Legacy SaveAnswerSignatures parses ClientId as int, so these rows must be fixed at source or excluded."
+    )
+
+# Normalize mandatory string keys before dedupe/merge to match legacy C#.
+bronze_clean_df = (
+    bronze_df
+    .withColumn("SiteCode", coalesce(col("SiteCode").cast("string"), lit("")))
+    .withColumn("FormName", coalesce(col("FormName").cast("string"), lit("")))
+    .withColumn("FormId", upper(coalesce(col("FormId").cast("string"), lit(""))))
+)
+
+# Deduplicate on 4-column PK â€” keep latest _extracted_at
+# FormId normalised to UPPER (mirrors a.FormId.ToUpper() in old EF path)
+pk_cols = ["SiteCode", "FormName", "FormId", "ClientId"]
 
 w = Window.partitionBy(*pk_cols).orderBy(col("_extracted_at").desc())
 
 src_df = (
-    bronze_df
-    .withColumn("FormId", upper(col("FormId")))       # normalise to UPPER
+    bronze_clean_df
+    # ClientId: store as ABS, track original sign for RowState
+    .withColumn("_orig_client_id_sign", when(col("ClientId") < 0, lit(-1)).otherwise(lit(1)))
+    .withColumn("ClientId", spark_abs(col("ClientId")))     # always positive in Silver
     .withColumn("_rn", row_number().over(w))
     .where(col("_rn") == 1)
     .drop("_rn")
-    .withColumn("IsDeleted", col("IsDeleted").cast("boolean"))
-    .withColumn("IsChildForm", lit(None).cast("boolean"))
+    # RowState: 0 if original ClientId was negative OR IsDeleted=1
+    # Note: negative-sign check uses _orig_client_id_sign because ClientId is now ABS
     .withColumn(
         "RowState",
-        when((col("IsDeleted") == True) | (col("ClientId") < 0), lit(0)).otherwise(lit(1))
+        when(
+            (col("IsDeleted") == 1) | (col("_orig_client_id_sign") == -1),
+            lit(0)
+        ).otherwise(lit(1))
     )
-    .drop("_site_code")
+    .drop("_orig_client_id_sign")
     .withColumn("LastModAt",         current_timestamp())
     .withColumn("silver_updated_at", current_timestamp())
+    # Silver mirrors the old BHG_DR answer-signature table shape. These are
+    # Bronze lineage/control columns only and are not part of the old target.
+    .drop("_site_code", "_source_database", "_ingest_run_id", "_extracted_at", "_lookback_date", "IsDeleted")
 )
+
+date_cols = [
+    "CreatedOn",
+    "UpdatedOn",
+]
+
+signature_datetime_cols = [
+    "CompletedBySignatureSignatureDate",
+    "CounselorSignatureSignatureDate",
+    "DoctorSignatureSignatureDate",
+    "MedicalProviderSignatureSignatureDate",
+    "PatientSignatureDate",
+    "ProviderSignatureSignatureDate",
+    "RequestorSignatureDate",
+    "StaffSignatureDate",
+    "SupervisorSignatureSignatureDate",
+]
+
+for date_col in date_cols:
+    if date_col in src_df.columns:
+        src_df = src_df.withColumn(date_col, to_date(col(date_col)))
+
+for datetime_col in signature_datetime_cols:
+    if datetime_col in src_df.columns:
+        src_df = src_df.withColumn(datetime_col, to_timestamp(col(datetime_col)))
 
 src_count = src_df.count()
 print(f"Deduplicated source rows: {src_count}")
-src_df.createOrReplaceTempView("vw_forms_current_run")
+src_df.createOrReplaceTempView("vw_answersig_current_run")
 
 # First-ever run: create Silver table
 if not spark.catalog.tableExists(silver_table):
@@ -1392,31 +2156,38 @@ if not spark.catalog.tableExists(silver_table):
     print(f"Created Silver table: {src_count} rows inserted.")
 else:
     print(f"Silver table exists: {silver_table}")
-```
+    silver_delta_for_backfill = DeltaTable.forName(spark, silver_table)
 
----
+    # One-time guard/backfill for rows created before this C#-aligned null handling.
+    # String keys follow DataRow.ToString(); audit fields are generated by Fabric.
+    silver_delta_for_backfill.update(
+        condition=(
+            "SiteCode IS NULL OR FormName IS NULL OR FormId IS NULL "
+            "OR RowState IS NULL OR silver_created_at IS NULL"
+        ),
+        set={
+            "SiteCode": coalesce(col("SiteCode"), lit("")),
+            "FormName": coalesce(col("FormName"), lit("")),
+            "FormId": coalesce(col("FormId"), lit("")),
+            "RowState": coalesce(col("RowState"), lit(1)),
+            "silver_created_at": coalesce(col("silver_created_at"), current_timestamp())
+        }
+    )
 
-## 18. Step 13 — Silver Notebook Cell 2: Pre-Pass RowState Reset
+    existing_null_clientid_count = spark.table(silver_table).where(col("ClientId").isNull()).count()
+    if existing_null_clientid_count > 0:
+        raise Exception(
+            f"Silver contains {existing_null_clientid_count} existing rows with NULL ClientId. "
+            "Legacy SaveAnswerSignatures would not have inserted these rows. "
+            "Do a one-time cleanup/reload for those rows before continuing."
+        )
 
-### Why the pre-pass is essential
+cell2:
 
-Before merging new data, existing Silver rows within the current extraction scope are reset to `RowState = 0`. This is how the pipeline detects soft-deletes: a form deleted in SAMMS will not appear in the next extraction. The pre-pass ensures its Silver row goes to `RowState = 0`, and the MERGE in Cell 3 will not re-activate it (since it's absent from source).
-
-**Rules (from `SaveFormQuestionAnswers` in `SaveFormQAData.cs`):**
-
-| Form type | Pre-pass action |
-|---|---|
-| `DateFilterEnabled = 0` (e.g., ReferralForm) | Reset `RowState = 0` unconditionally for all rows of this form at affected sites |
-| `DateFilterEnabled = 1` (most forms) | Reset `RowState = 0` only where `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` AND `RowState = 1` |
-| `FormName` starts with `TP-` | Treated as `Treatment Plan` for Forms2Process lookup (date-gated reset) |
-
-### Cell 2 Code
-
-```python
 from delta.tables import DeltaTable
 from pyspark.sql.functions import col, lit
 
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+silver_table = "bhg_silver.pats.sl_tblFormAnswerSignatures"
 
 if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
@@ -1426,25 +2197,65 @@ wrkdt_str = wrkdt.strftime("%Y-%m-%d")
 
 # Identify sites processed in this run
 sites_this_run = (
-    spark.table("bhg_bronze.Form.br_tblFormQA")
+    spark.table("bhg_bronze.Forms.br_tblFormAnswerSig")
     .where(col("_ingest_run_id") == p_ingest_run_id)
-    .select("SiteCode").distinct()
+    .select("_site_code").distinct()
     .rdd.flatMap(lambda x: x).collect()
 )
 print(f"Sites in this run: {sites_this_run}")
 
+if not sites_this_run:
+    # Cell 1 guards bronze_count == 0, but _site_code being null across all rows
+    # could still produce an empty list here, making site_filter = "" and producing
+    # invalid SQL in the Delta update conditions below.
+    raise Exception(f"No _site_code values found in Bronze for run {p_ingest_run_id}")
+
 site_filter = " OR ".join([f"SiteCode = '{s}'" for s in sites_this_run])
 
-# Unconditional reset — non-date-filtered forms (e.g., ReferralForm)
-if non_date_filtered_forms:
-    ndf_list = ", ".join([f"'{f}'" for f in non_date_filtered_forms])
+# ── TP-* normalization ────────────────────────────────────────────────
+# Old C#: if (d.FormName.StartsWith("TP-")) formname = "Treatment Plan"
+# Silver rows from tblTP17REVIEW carry FormName like "TP-Initial", "TP-Annual".
+# Forms2Process has a single "Treatment Plan" entry that controls DateFilterEnabled
+# for ALL of them. We read that entry's DateFilterEnabled here.
+tp_row = f2p_df[f2p_df["FormName"] == "Treatment Plan"]
+tp_date_filtered = True  # default: treat TP-* as date-filtered if not found
+if not tp_row.empty:
+    tp_date_filtered = bool(tp_row.iloc[0]["DateFilterEnabled"])
+
+print(f"Treatment Plan DateFilterEnabled: {tp_date_filtered}")
+
+# ── Build the set of non-date-filtered FormNames ──────────────────────
+# Excludes "Treatment Plan" — handled separately via the TP-* LIKE pattern.
+non_date_filtered_forms_no_tp = set(
+    f2p_df[(f2p_df["DateFilterEnabled"] == False) & (f2p_df["FormName"] != "Treatment Plan")]
+    ["FormName"].tolist()
+)
+
+# ── Unconditional reset ───────────────────────────────────────────────
+# Applies to: non-date-filtered standard forms, and TP-* if "Treatment Plan"
+# is also non-date-filtered.
+uncond_parts = []
+if non_date_filtered_forms_no_tp:
+    ndf_list = ", ".join([f"'{f}'" for f in non_date_filtered_forms_no_tp])
+    uncond_parts.append(f"FormName IN ({ndf_list})")
+if not tp_date_filtered:
+    # "Treatment Plan" has DateFilterEnabled=False → reset ALL TP-* rows
+    uncond_parts.append("FormName LIKE 'TP-%'")
+
+if uncond_parts:
+    uncond_condition = " OR ".join(uncond_parts)
     silver_delta.update(
-        condition=f"({site_filter}) AND FormName IN ({ndf_list}) AND RowState = 1",
+        condition=f"({site_filter}) AND ({uncond_condition}) AND RowState = 1",
         set={"RowState": lit(0)}
     )
-    print(f"Unconditional pre-pass reset applied to: {non_date_filtered_forms}")
+    print(f"Unconditional pre-pass reset applied.")
 
-# Date-gated reset — all other forms (date-filtered + unknown + TP-* forms)
+# ── Date-gated reset ──────────────────────────────────────────────────
+# Applies to: date-filtered forms, unknown forms (not in config),
+# and TP-* rows when "Treatment Plan" has DateFilterEnabled=True.
+# The unconditionally reset rows are already at RowState=0 — re-applying
+# RowState=0 to them is a safe no-op (WHERE RowState=1 already excluded them
+# after the first update committed).
 silver_delta.update(
     condition=(
         f"({site_filter})"
@@ -1455,37 +2266,33 @@ silver_delta.update(
     set={"RowState": lit(0)}
 )
 print(f"Date-gated pre-pass reset applied (wrkdt={wrkdt_str}).")
-print("Pre-pass complete.")
-```
 
----
+# Pre-pass IS committed here (Cell 2 completes before Cell 3 starts).
+# This matches SaveAnswerSignatures which calls db.SaveChanges() immediately
+# after the pre-pass loop — before any upsert begins.
+print("Pre-pass committed. Proceeding to MERGE.")
 
-## 19. Step 14 — Silver Notebook Cell 3: Delta MERGE Into Silver
 
-### The 7-column composite PK — no RowChkSum
+cell3:
 
-FormQuestionAnswers does **not** use `RowChkSum`. The `AnswerValue` column is free-text (`nvarchar(max)`) — SQL Server's `CHECKSUM()` is unreliable on large text and can produce collisions. The old system never checksummed this table and always did a full column update on every match. This notebook follows the same pattern.
 
-**Match key:**
-```
-SiteCode + FormName + FormId(UPPER) + ClientId + PreAdmissionId + QuestionId + QuestionOrderId
-```
-
-### Cell 3 Code
-
-```python
 from delta.tables import DeltaTable
-from pyspark.sql.functions import current_timestamp
+from pyspark.sql.functions import col, current_timestamp
 
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+silver_table = "bhg_silver.pats.sl_tblFormAnswerSignatures"
 
 if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
 
 silver_delta = DeltaTable.forName(spark, silver_table)
 
-src_cols    = src_df.columns
-update_cols = [c for c in src_cols if c != "silver_created_at"]
+src_cols = src_df.columns
+
+# Update all mutable columns on a match.
+# silver_created_at is immutable — never overwritten.
+# SiteCode, FormName, FormId, ClientId are identity columns — not updated.
+identity_cols = {"silver_created_at", "SiteCode", "FormName", "FormId", "ClientId"}
+update_cols   = [c for c in src_cols if c not in identity_cols]
 
 update_set = {c: f"src.{c}" for c in update_cols}
 update_set["silver_updated_at"] = "current_timestamp()"
@@ -1498,381 +2305,77 @@ insert_values["silver_created_at"] = "current_timestamp()"
     silver_delta.alias("tgt")
     .merge(
         src_df.alias("src"),
+        # 4-column composite PK
         """
-        tgt.SiteCode         = src.SiteCode
-        AND tgt.FormName     = src.FormName
-        AND tgt.FormId       = src.FormId
-        AND tgt.ClientId     = src.ClientId
-        AND tgt.PreAdmissionId  = src.PreAdmissionId
-        AND tgt.QuestionId   = src.QuestionId
-        AND tgt.QuestionOrderId = src.QuestionOrderId
+        tgt.SiteCode = src.SiteCode
+        AND tgt.FormName = src.FormName
+        AND tgt.FormId   = src.FormId
+        AND tgt.ClientId = src.ClientId
         """
     )
-    # Matched: full update — no RowChkSum, always refresh from source
+    # Matched: full update — RowChkSum comparison guard is commented out
+    # in the old system; we always update all signature date columns.
     .whenMatchedUpdate(set=update_set)
-    # Not matched: new record — insert with silver_created_at
+    # Not matched: new form signature record
     .whenNotMatchedInsert(values=insert_values)
     .execute()
 )
 
-print("Silver MERGE for FormQuestionAnswers completed successfully.")
-```
+# Mirrors [pats].[MergeFormSignaturesPeriodicReassessments]:
+# after the full-site Periodic Reassessment merge, any older active
+# Periodic Reassessment row for those processed sites that was not present
+# in the current source set is marked inactive.
+current_pr_df = (
+    src_df
+    .where(col("FormName") == "Periodic Reassessment")
+    .select("SiteCode", "FormName", "FormId", "ClientId")
+    .distinct()
+)
+
+pr_sites = [r["SiteCode"] for r in current_pr_df.select("SiteCode").distinct().collect()]
+
+if pr_sites:
+    silver_pr_df = (
+        spark.table(silver_table)
+        .where((col("FormName") == "Periodic Reassessment") & (col("SiteCode").isin(pr_sites)) & (col("RowState") == 1))
+        .select("SiteCode", "FormName", "FormId", "ClientId")
+    )
+
+    stale_pr_df = (
+        silver_pr_df.alias("tgt")
+        .join(
+            current_pr_df.alias("src"),
+            on=["SiteCode", "FormName", "FormId", "ClientId"],
+            how="left_anti"
+        )
+        .distinct()
+    )
+
+    stale_pr_count = stale_pr_df.count()
+    if stale_pr_count:
+        (
+            silver_delta.alias("tgt")
+            .merge(
+                stale_pr_df.alias("src"),
+                """
+                tgt.SiteCode = src.SiteCode
+                AND tgt.FormName = src.FormName
+                AND tgt.FormId   = src.FormId
+                AND tgt.ClientId = src.ClientId
+                """
+            )
+            .whenMatchedUpdate(
+                set={
+                    "RowState": "0",
+                    "silver_updated_at": "current_timestamp()"
+                }
+            )
+            .execute()
+        )
+    print(f"Periodic Reassessment stale-row reset complete: {stale_pr_count} rows set inactive.")
+else:
+    print("No Periodic Reassessment source rows in this run; stale-row reset skipped.")
+
+print("Silver MERGE for FormAnswerSignatures completed successfully.")
 
----
 
-## 20. End-to-End Flow Summary
-
-```
-TRIGGER: Pipeline runs with parameters:
-  p_ingest_run_id = "FORMS-2026-05-08-001"
-  p_lookback_days = 30
-  p_reload        = false
-  p_sites         = [ {ColoradoSpringsV5}, {B01}, {B02}, ... ]
-
-STEP 1 — ForEach begins: item = ColoradoSpringsV5
-
-STEP 2 — lkp_check_form_table (Lookup)
-  → SELECT form_exists = COUNT(1) FROM [SAMMS-ColoradoSpringsV5].sys.tables
-     WHERE name = 'Form'
-  → Result: { form_exists: 1 }  → proceed to IfCondition True branch
-  → Result: { form_exists: 0 }  → IfCondition False branch (empty) → skip site
-
-STEP 3 — lkp_get_existing_tables (Lookup, True branch)
-  → SELECT name FROM [SAMMS-ColoradoSpringsV5].sys.tables
-  → Result: [{"name":"Form"},{"name":"AdmissionAssessment"}, ...75+ names...]
-
-STEP 4 — nb_forms_build_site_sql (Notebook, True branch)
-  INPUT received:
-    p_site_code            = "ColoradoSpringsV5"
-    p_source_database      = "SAMMS-ColoradoSpringsV5"
-    p_ingest_run_id        = "FORMS-2026-05-08-001"
-    p_lookback_days        = 30  → wrkdt = "2026-04-08"
-    p_existing_tables_json = '[{"name":"Form"},{"name":"AdmissionAssessment"},...]'
-
-  Reads: bhg_silver.ctrl.tbl_Forms2Process  (75 rows)
-  Builds: existing_tables set from JSON parameter
-  Generates: base UNION SQL (Form/Question/Answer)
-  Loops Forms2Process:
-    AdmissionAssessment → in existing_tables → default case → UNION appended
-    ReferralForm        → in existing_tables → referralform case → UNION, no date filter
-    tblTP17REVIEW       → in existing_tables → custom case → 3-4 UNIONs, tprReviewFrequency guarded
-    tblORDERREQ         → in existing_tables → custom case → 2 UNIONs, approved-only filter
-    FinancialHardshipAppl → in existing_tables → custom cltId case → UNION
-    MissingFormTable    → NOT in existing_tables → skip
-    ... continues for all 75 rows ...
-  Returns: complete SQL string via mssparkutils.notebook.exit()
-
-STEP 5 — sv_set_site_sql (Set Variable)
-  → v_site_sql = exitValue (full UNION SQL string)
-
-STEP 6 — cp_forms_to_bronze (Copy Activity)
-  Source: SAMMS SQL Server (via Fabric on-prem gateway)
-    query = @variables('v_site_sql')
-    [executes: SELECT DISTINCT * FROM (...all UNIONs...) z]
-  Sink: bhg_bronze.Form.br_tblFormQA  (APPEND)
-  → N rows written to Bronze tagged with _ingest_run_id
-
-STEP 7 — ForEach moves to next site (B01) → repeats Steps 2-6
-
-... continues for all clinics in p_sites ...
-
-STEP 8 — ForEach completes. All sites processed.
-
-STEP 9 — nb_forms_bronze_to_silver (Notebook)
-
-  CELL 1:
-  → Read Bronze WHERE _ingest_run_id = "FORMS-2026-05-08-001"
-  → Deduplicate on 7-column PK (keep latest)
-  → Normalise FormId to UPPER
-  → Compute RowState (0 if ClientId<0 or IsDeleted=1, else 1)
-  → Add LastModAt, silver_updated_at
-  → Load Forms2Process for pre-pass metadata
-
-  CELL 2 (Pre-pass):
-  → Identify sites in this run from Bronze
-  → Non-date-filtered forms (ReferralForm etc.):
-       UPDATE Silver SET RowState=0 WHERE SiteCode IN (...) AND FormName IN (...)
-  → All other forms (date-gated):
-       UPDATE Silver SET RowState=0
-         WHERE SiteCode IN (...) AND RowState=1
-           AND (CreatedOn >= wrkdt OR UpdatedOn >= wrkdt)
-
-  CELL 3 (MERGE):
-  → Delta MERGE src_df → bhg_silver.pats.sl_tblFormQuestionAnswers
-     MATCH on 7-column PK
-     whenMatched    → full update (no RowChkSum — always refresh)
-     whenNotMatched → insert with silver_created_at
-
-DONE: Silver is current. Soft-deleted forms at RowState=0.
-      New and updated form records at RowState=1.
-```
-
----
-
-## 21. How the Dynamic SQL Generation Works (Forms2Process)
-
-`Forms2Process` is a metadata-driven UNION builder. Each enabled row drives one UNION block in the final SQL. The SQL builder notebook is the Fabric equivalent of the C# `foreach (var xf in xForms)` loop in `Program.cs`.
-
-**What happens per Forms2Process row:**
-
-```
-tbl_Forms2Process row:
-  TableName         = "AdmissionAssessment"
-  FormName          = "Admission Assessment"
-  Prefix            = 7
-  CreatedOn         = "CreatedOn"
-  ModifiedOn        = "ModifiedOn"
-  DateFilterEnabled = 1
-
-Notebook checks: "admissionassessment" in existing_tables?
-  → YES (Lookup 2 confirmed it exists in this SAMMS)
-
-Notebook generates:
-  UNION
-  SELECT _site_code, _source_database, _ingest_run_id, ...metadata...,
-         SiteCode, FormName, FormID, ...
-  FROM (
-    SELECT SiteCode = 'ColoradoSpringsV5', [FormName] = 'Admission Assessment'
-         , FormID = '7-' + ISNULL(CONVERT(varchar, a.ClientId),'0')
-                  + '-' + CONVERT(varchar, a.PreAdmissionId)
-                  + '-' + CONVERT(varchar, a.id)
-         , PreAdmissionId = a.PreAdmissionId
-         , ClientId = a.ClientId
-         , QuestionID = 0, QuestionOrderID = 1
-         , QuestionText = null, [OptionID] = null, AnswerValue = null
-         , a.Createdby
-         , [CreatedOn] = CONVERT(date, a.CreatedOn)
-         , a.ModifiedBy AS [UpdatedBy]
-         , CONVERT(date, a.ModifiedOn) AS [UpdatedOn]
-         , IsDeleted = a.IsDeleted
-    FROM [SAMMS-ColoradoSpringsV5].dbo.[AdmissionAssessment] a
-    INNER JOIN [SAMMS-ColoradoSpringsV5].dbo.[SF_PatientPreAdmission] pa ON a.PreAdmissionId = pa.ID
-    LEFT JOIN [SAMMS-ColoradoSpringsV5].dbo.[SF_DataForms] d ON pa.DataFormId = d.Id
-  ) v
-  WHERE (v.CreatedOn >= '2026-04-08' OR ISNULL(v.UpdatedOn, v.CreatedOn) >= '2026-04-08')
-```
-
-This pattern repeats for all 75 tables, producing a single SQL string passed to the Copy activity.
-
----
-
-## 22. The Base Query — Form + FormTemplate + Question + Answer
-
-```
-dbo.Form (f)                        — one row per form instance per patient visit
-  └─ LEFT JOIN dbo.FormTemplate ft  — the form definition (name)
-       └─ LEFT JOIN dbo.Question q  — each question in the template
-            └─ LEFT JOIN dbo.Answer a — the patient's answer per question
-  INNER JOIN dbo.SF_PatientPreAdmission pa — patient pre-admission episode
-  LEFT JOIN dbo.SF_DataForms d             — data form container
-```
-
-**UNION 1** — Forms with answered questions (`a.Value IS NOT NULL`):
-- Filter: `f.CreatedOn >= wrkdt OR ISNULL(f.UpdatedOn, f.CreatedOn) >= wrkdt`
-
-**UNION 2** — Form headers with no questions (`q.Id IS NULL`):
-- Same date filter
-- These are forms that exist in the system but have no Q&A structure (existence-only records)
-
-The outer SELECT adds a synthetic `QuestionOrderId` via `ROW_NUMBER()` for any row where `q.QuestionOrderId` is `NULL`.
-
----
-
-## 23. The Forms2Process Switch Cases — All 9 Variants
-
-All cases produce the same 15-column output (plus metadata columns) so they UNION cleanly.
-
-| Case | FormID Formula | ClientId From | UpdatedBy Col | PA Join Key | Special |
-|---|---|---|---|---|---|
-| `adversechildhood` | `Prefix-PreAdmId-PreAdmId-id` | `a.ClientId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | PreAdmId used TWICE in FormID |
-| `financialhardshipapplication` | `Prefix-cltId-PreAdmId-id` | `a.cltId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | Source column is `cltId` not `ClientId` |
-| `tbltp17review` | `8-{1-4}-ABS(tprCLTID)-tpRID-tprTPID` | `ABS(tprCLTID)` | `null` | No PA join | 3–4 rows per record; tprReviewFrequency guarded by `EXISTS (sys.all_columns)` |
-| `tblorderreq` | `9-{1-2}-ABS(cltID)-ReqNum-''` | `cltID` | `StatusUser` | No PA join | 2 rows per record; filter: `Status='Approved'` + exclude test data |
-| `insurancebenefitverification` | `Prefix-PreAdmId-PreAdmId-id` | `a.PreAdmissionId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | No `ClientId` column — `PreAdmissionId` used for both slots |
-| `referralform` | `Prefix-ClientId-PreAdmId-id` | `a.ClientId` | `a.updatedby` | `a.PreAdmissionId = pa.ID` | `DateFilterEnabled=0` — no date filter, always full extract |
-| `sf_understandingoftreatment` | `Prefix-pa.PatientId-PreAdmId-id` | `pa.PatientId` | `a.LastUpdatedBy` | `a.PreAdmissionId = pa.ID` | ClientId from joined PA table, not source table |
-| `sf_patientpreadmission` | `Prefix-PatientId-ParentPAId-id` | `a.PatientId` | `a.LastUpdatedBy` | `a.ID = pa.ID` (self-join) | Record IS the PA row; `a.Id` = PreAdmissionId |
-| `newperiodicreassessment` | `Prefix-PatientId-ParentPAId-id` | `a.PatientId` | `a.LastUpdatedBy` | `a.ID = pa.ID` (self-join) | Same as `sf_patientpreadmission` |
-| **default** (65 tables) | `Prefix-ClientId-PreAdmId-id` | `a.ClientId` | `a.ModifiedBy` | `a.PreAdmissionId = pa.ID` | Standard path for all other forms |
-
----
-
-## 24. IsDeleted — Legacy Nullable Pass-Through
-
-Legacy `Program.cs` passes the source table's nullable `IsDeleted` value into `SaveFormQuestionAnswers`. It does not coalesce NULL to 0 before saving.
-
-```sql
-IsDeleted = a.IsDeleted
-```
-
-For the main `Form`/`FormTemplate`/`Question`/`Answer` path, the old SQL selects `f.IsDeleted`; `f.IsChildForm` is present in comments only and is not returned to the save method. This is why BHG_DR commonly has `IsChildForm = NULL`.
-
-**Exceptions:**
-- `tbltp17review`: `CASE WHEN tprCLTID < 0 THEN 1 ELSE 0 END`
-- `tblorderreq`: `CASE WHEN cltID < 0 THEN 1 ELSE 0 END`
-
-**How IsDeleted flows to RowState in Silver:**
-
-```python
-RowState = 0  if IsDeleted == 1   (logically deleted in source)
-RowState = 0  if ClientId < 0     (negative ClientId = void/placeholder record)
-RowState = 1  otherwise
-```
-
----
-
-## 25. RowState Pre-Pass — Why It Exists and How It Works
-
-The pre-pass resets `RowState = 0` on existing Silver rows **before** the MERGE runs. The MERGE then either re-activates a row (if it reappears in source) or leaves it at `RowState = 0` (soft-deleted because it was absent from this extraction).
-
-**Without the pre-pass:** A form deleted in SAMMS would remain at `RowState = 1` in Silver forever, because the MERGE's `whenNotMatchedBySource` branch does not fire unless explicitly coded.
-
-**Pre-pass decision table:**
-
-| Condition | Reset Applied |
-|---|---|
-| `DateFilterEnabled = 0` (e.g., ReferralForm) | Unconditional: `SET RowState = 0` for ALL rows of this form at affected sites |
-| `DateFilterEnabled = 1` | Date-gated: `SET RowState = 0` WHERE `CreatedOn >= wrkdt OR UpdatedOn >= wrkdt` AND `RowState = 1` |
-| FormName like `TP-*` | Treated as date-filtered (same as DateFilterEnabled = 1) |
-| Form not found in Forms2Process | Treated as date-filtered |
-
----
-
-## 26. The 7-Column Primary Key — No RowChkSum
-
-```
-_site_code + FormName + FormId(UPPER) + ClientId + PreAdmissionId + QuestionId + QuestionOrderId
-```
-
-**FormId is always normalised to UPPER** — the old C# EF path explicitly calls `fqa.FormId.ToUpper()` before the in-memory PK lookup. Cell 1 of the Silver notebook applies `upper(col("FormId"))` during the Bronze read to match this behaviour.
-
-**No RowChkSum:** `AnswerValue` is `nvarchar(max)` — `CHECKSUM()` on large text types is unreliable in SQL Server (can produce false matches). The old system never used a checksum for this table. Every matched Silver row gets a full column update.
-
----
-
-## 27. Lookback Window — 30 Days and ReferralForm Exception
-
-```
-Old system:   DaysBack = -15  →  formDaysBack = DaysBack - 15 = -30
-Fabric:       p_lookback_days = 30  (equivalent)
-
-Reload:       p_reload = true  →  wrkdt = 2010-01-01
-```
-
-**Date columns checked in the base query:**
-- `f.CreatedOn >= wrkdt`
-- `ISNULL(f.UpdatedOn, f.CreatedOn) >= wrkdt`
-
-**Date columns for Forms2Process tables** — the actual column names come from `tbl_Forms2Process.CreatedOn` and `tbl_Forms2Process.ModifiedOn` because they vary per table. The SQL builder notebook injects these directly: `CONVERT(date, a.{xf.CreatedOn})`.
-
-**ReferralForm (`DateFilterEnabled = 0`):** No WHERE clause is appended. All rows are always extracted regardless of wrkdt. The notebook's `continue` statement on the `referralform` case skips the date filter append explicitly.
-
----
-
-## 28. tblTP17REVIEW — Treatment Plan Special Case
-
-| Property | Value |
-|---|---|
-| PA join | None — standalone table |
-| FormName | Dynamic: `'TP-' + TprTYPE` |
-| FormID | `8-{1-4}-ABS(tprCLTID)-tpRID-tprTPID` |
-| Rows per record | 3 (or 4 if `tprReviewFrequency` column exists) |
-| IsDeleted | `CASE WHEN tprCLTID < 0 THEN 1 ELSE 0 END` |
-| Date filter | None |
-
-**tprReviewFrequency handling:** Since the SQL builder notebook cannot probe `sys.all_columns` directly (no SAMMS connection), UNION D is always included in the generated SQL but is guarded by an `EXISTS` predicate against the source database's `sys.all_columns`. For example: `EXISTS (SELECT 1 FROM [SAMMS-ColoradoSpringsV5].sys.all_columns WHERE object_id=OBJECT_ID('[SAMMS-ColoradoSpringsV5].dbo.[tblTP17REVIEW]') AND name='tprReviewFrequency')`. If the column does not exist, the EXISTS check returns false and the UNION D produces zero rows — the query still succeeds.
-
-**The 4 questions per Treatment Plan record:**
-
-| QuestionID | QuestionText | AnswerValue |
-|---|---|---|
-| 1 | `Treatment Plan Type` | `TprTYPE` |
-| 2 | `Treatment Phase Type` | `tpTreatmentPhase` |
-| 3 | `Next Due` | `CONVERT(varchar, tprNEXT)` |
-| 4 | `Review Frequency` | `RTRIM(SUBSTRING(..., 6, LEN-5))` if `>6 chars`, else raw |
-
----
-
-## 29. tblORDERREQ — Level Justification Special Case
-
-| Property | Value |
-|---|---|
-| PA join | None — standalone table |
-| FormName | Hard-coded `'Level Justification'` |
-| FormID | `9-{1-2}-ABS(cltID)-ReqNum-''` |
-| Rows per record | 2 (EffectiveDate + ExpirationDate) |
-| IsDeleted | `CASE WHEN cltID < 0 THEN 1 ELSE 0 END` |
-| Date filter | None |
-| Extraction filter | `Status = 'Approved'` AND exclude test records |
-
-`PreAdmissionId` slot is populated with `ReqNum` — there is no actual pre-admission ID for these records.
-
----
-
-## 30. Troubleshooting Guide
-
-### Site skipped — no Form table
-
-**Symptom:** Site produces no Bronze rows; `form_exists = 0` in the Lookup result.  
-**Cause:** This clinic is on an older SAMMS version that predates the form engine.  
-**Action:** Expected behaviour. No intervention needed unless the site has been upgraded.
-
----
-
-### `lkp_get_existing_tables` Lookup fails
-
-**Symptom:** Lookup activity fails with connection or timeout error.  
-**Cause:** The SAMMS SQL Server for this site is unreachable through the on-prem gateway.  
-**Fix:** Verify connection `9743b95a-fd66-4f7c-9767-e6eb0f1ecab7` is active. Check the gateway. Confirm `source_database` in `p_sites` matches the actual SQL Server database name exactly.
-
----
-
-### `nb_forms_build_site_sql` produces empty SQL or fails
-
-**Symptom:** Notebook exits with an empty string or raises an exception.  
-**Cause 1:** `bhg_silver.ctrl.tbl_Forms2Process` is empty or not loaded.  
-**Fix 1:** Populate the table from BHG_DR: `SELECT * FROM ctrl.tbl_Forms2Process WHERE Enabled=1 AND RowState=1` and load the result into the lakehouse.  
-**Cause 2:** `p_existing_tables_json` is `"[]"` — Lookup 2 returned no rows.  
-**Fix 2:** Run `SELECT name FROM sys.tables` manually against the SAMMS database to confirm it returns results.
-
----
-
-### Copy activity (`cp_forms_to_bronze`) produces 0 rows
-
-**Symptom:** Copy succeeds but writes 0 rows.  
-**Cause:** The date lookback filter (`wrkdt`) excludes all rows. No form was created or updated within `p_lookback_days` days.  
-**Fix:** Increase `p_lookback_days` to `90` or `365` for a deeper look. For a full historical load, set `p_reload = true`.
-
----
-
-### Silver MERGE is slow
-
-**Fix:** Z-order the Silver table on the most selective columns:
-```python
-spark.sql("""
-    OPTIMIZE bhg_silver.pats.sl_tblFormQuestionAnswers
-    ZORDER BY (_site_code, FormName, ClientId)
-""")
-```
-
----
-
-### Silver rows with duplicate FormId (case mismatch)
-
-**Symptom:** Same logical record appears twice — one with mixed-case `FormId`, one with UPPER.  
-**Fix:** Run once to normalise:
-```python
-spark.sql("UPDATE bhg_silver.pats.sl_tblFormQuestionAnswers SET FormId = UPPER(FormId)")
-```
-Then re-run the Silver notebook to re-merge with consistent casing.
-
----
-
-### ReferralForm rows stuck at RowState = 1 after deletion in SAMMS
-
-**Cause:** `DateFilterEnabled = 0` for ReferralForm must be set in `bhg_silver.ctrl.tbl_Forms2Process`.  
-**Fix:** Confirm `DateFilterEnabled = 0` for the `ReferralForm` row in the control table. The pre-pass unconditional reset only applies to forms where this flag is false.
-
----
-
-*End of Implementation Guide*

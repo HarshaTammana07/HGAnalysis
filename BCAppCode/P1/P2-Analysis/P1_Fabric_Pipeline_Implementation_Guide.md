@@ -356,7 +356,8 @@ The `Method` field per row carries the SAMMS source table name so `flt_active_p1
 
 | File | Purpose |
 |---|---|
-| `Scheduler/Regional_P1_P2_Source_to_Destination.md` | Full 57-table source-to-destination mapping |
+| `Regional_P1_P2_Source_to_Destination.md` | Full 57-table source-to-destination mapping |
+| `Regional_P1_Fabric_Timezone_And_Control_Tables_Flow.md` | Fabric orchestration, timezone split, meta.taskconfig design |
 | `Scheduler/Scheduler_ETL_and_Tables.md` | Timezone routing, scheduler batches |
 | `BHGTaskRunner/updatedProgram.cs` | Task runner switch — maps destination table to Save method |
 | `BHG-DR-LIB_updated/SavePAData.cs` | PA, PADimension, FinancialHardship Save methods |

@@ -11,6 +11,7 @@
 from pyspark.sql import functions as F
 from pyspark.sql.types import *
 from delta.tables import DeltaTable
+import json
 etlconfig_table = "bhg_bronze.meta.etlconfig"
 taskconfig_table = "bhg_bronze.meta.taskconfig"
 created_by = "Harsha"
@@ -19,6 +20,19 @@ trigger_type = "SCHEDULE"
 trigger_frequency = "DAILY"
 triggered_by = "Fabric"
 formqa_config_prefix = "SAMMS FormQuestionAnswers"
+formqa_dq_keys = [
+    "SiteCode",
+    "FormName",
+    "FormId",
+    "ClientId",
+    "PreAdmissionId",
+    "QuestionId",
+    "QuestionOrderId"
+]
+
+def request_body(payload):
+    return json.dumps(payload, separators=(",", ":"))
+
 # -------------------------------------------------------------------------
 # 1. etlconfig rows
 # -------------------------------------------------------------------------
@@ -58,7 +72,7 @@ etl_rows = [
         trigger_type,
         trigger_frequency,
         triggered_by,
-        1,
+        0,
         "{}",
         created_by,
         created_by
@@ -161,13 +175,19 @@ task_rows = [
         1,
         "CreatedOn,UpdatedOn",
         30,
-        "Form",
+        "Forms",
         "br_tblFormQA",
-        "/lakehouse/bhg_bronze/Form/br_tblFormQA",
+        "/lakehouse/bhg_bronze/Forms/br_tblFormQA",
         1,
         0,
         43200,
-        None,
+        request_body({
+            "full_table": "bhg_bronze.Forms.br_tblFormQA",
+            "ingest_column": "IngestRunId",
+            "site_column": "SiteCode",
+            "database_column": "SourceDatabase",
+            "dq_keys": formqa_dq_keys
+        }),
         None,
         1,
         created_by,
@@ -180,20 +200,23 @@ task_rows = [
         None,
         None,
         None,
-        "bhg_bronze.Form.br_tblFormQA",
+        "bhg_bronze.Forms.br_tblFormQA",
         0,
         None,
         "MERGE",
         1,
-        "_ingest_run_id",
+        "IngestRunId",
         30,
         "pats",
-        "sl_tblFormQuestionAnswers",
-        "/lakehouse/bhg_silver/pats/sl_tblFormQuestionAnswers",
+        "tbl_dbo_FormQuestionAnswers",
+        "/lakehouse/bhg_silver/pats/tbl_dbo_FormQuestionAnswers",
         1,
         0,
         43200,
-        None,
+        request_body({
+            "full_table": "bhg_silver.pats.tbl_dbo_FormQuestionAnswers",
+            "dq_keys": formqa_dq_keys
+        }),
         91,
         1,
         created_by,
@@ -206,7 +229,7 @@ task_rows = [
         None,
         None,
         None,
-        "bhg_silver.pats.sl_tblFormQuestionAnswers",
+        "bhg_silver.pats.tbl_dbo_FormQuestionAnswers",
         0,
         None,
         "VERSIONED_FULL_OVERWRITE",
@@ -221,7 +244,7 @@ task_rows = [
         43200,
         None,
         92,
-        1,
+        0,
         created_by,
         created_by
     )

@@ -1,0 +1,35 @@
+one bronz row  how it looks 
+
+for dose EXCUSE
+
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
+94251	7	Bronze DoseExcuse	NULL	DoseExcuse	dbo.tblDOSE_Excuse	0	NULL	FULL	0	NULL	15	bhg_Bronze.Dose	br_tblDoseExcuse	NULL	1	3	300		{
+          "full_table": "bhg_bronze.Dose.br_tblDoseExcuse",
+          "ingest_column": "IngestRunId",
+          "site_column": "SiteCode",
+          "database_column": "SourceDatabase"
+        }	NULL	0	2026-06-09 09:15:49.100748	Prasanna	2026-06-12 11:27:14.603034	Prasanna	NULL	B66A	SAMMS-Bremen	Bremen
+
+
+for dose
+
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
+94117	7	Bronze Dose	NULL	Dose	dbo.tblDOSE	0	NULL	FULL	0	NULL	15	bhg_Bronze.Dose	br_tblDose	NULL	1	3	300	{
+          "full_table": "bhg_bronze.Dose.br_tblDose",
+          "ingest_column": "IngestRunId",
+          "site_column": "SiteCode",
+          "database_column": "SourceDatabase"
+        }	NULL	0	2026-06-08 19:15:30.110500	Prasanna	2026-06-12 11:27:14.603034	Prasanna	NULL	B66A	SAMMS-Bremen	Bremen
+
+
+
+for both dose and doseexcuse silver and gold rows..
+
+
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
+94386	9	DOSE Gold Pipeline	NULL	DoseExcuse	bhg_silver.pats.tbl_dose_excuse	0	NULL	APPEND	0	NULL	0	bhg_gold.pats	DOSEExcuse	NULL	3	3	300	{"full_table":"bhg_gold.pats.DOSEExcuse","dq_keys":["SiteCode","ExID"]}	NULL	1	2026-06-09 13:34:11.243725	Prasanna	2026-07-14 13:48:29.372939	FabricMigration	NULL	NULL	NULL	NULL
+94385	8	DOSE Silver Pipeline	NULL	DoseExcuse	dbo.tblDOSE_Excuse	0	NULL	UPSERT	0	NULL	15	bhg_silver.pats	tbl_dose_excuse	NULL	2	3	300	{"full_table":"bhg_silver.pats.tbl_dose_excuse","dq_keys":["SiteCode","ExID"]}	NULL	1	2026-06-09 13:29:17.697548	Prasanna	2026-07-14 13:48:29.372939	FabricMigration	NULL	NULL	NULL	NULL
+94384	8	DOSE Silver Pipeline	NULL	Dose	dbo.tblDOSE	0	NULL	UPSERT	0	NULL	15	bhg_silver.pats	tbl_dose	NULL	2	3	300	{"full_table":"bhg_silver.pats.tbl_dose","dq_keys":["SiteCode","DoseId"]}	NULL	1	2026-06-09 13:10:31.112847	Prasanna	2026-07-14 13:48:29.372939	FabricMigration	NULL	NULL	NULL	NULL
+94387	9	DOSE Gold Pipeline	NULL	Dose	sl_tbldose	0	NULL	APPEND	0	NULL	0	bhg_gold.pats	tblDOSE	NULL	3	3	300	{"full_table":"bhg_gold.pats.tblDOSE","dq_keys":["SiteCode","DoseId"]}	NULL	1	2026-06-09 13:35:27.177485	Prasanna	2026-07-14 13:48:29.372939	FabricMigration	NULL	NULL	NULL	NULL
+
+

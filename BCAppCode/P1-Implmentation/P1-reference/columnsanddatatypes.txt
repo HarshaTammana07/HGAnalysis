@@ -1,0 +1,921 @@
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	MaxLength	NumericPrecision	NumericScale	IsNullable
+BHG_DR	ayx	tbl_PreAdmission_V6	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	ayx	tbl_PreAdmission_V6	PreAdmissionid	2	int	NULL	10	0	NO
+BHG_DR	ayx	tbl_PreAdmission_V6	Clientid	3	int	NULL	10	0	NO
+BHG_DR	ayx	tbl_PreAdmission_V6	CreatedON	4	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	Createdby	5	nvarchar	40	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PreAdmissionDate	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	RegistrationMode	7	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ReferralSourcedesc	8	varchar	800	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PrimaryReferralSourceNote	9	nvarchar	2500	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	Program	10	nvarchar	40	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	InsuranceType	11	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IntakeProgram	12	nvarchar	300	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IntakeProgramDate	13	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsCurrentlyInOpiateProgram	14	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsPatientAtPainManagementClinic	15	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsHavingLegalPrescription	16	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsAnyLegalPrescriptionForPain	17	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsAnyOngoingMedicalCondition	18	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsSuicidalThoughtWithin72Hours	19	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsHavingPlanForHowToCommitSuicide	20	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsHomicidalThoughtWithin72Hours	21	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsRecentlyReleasedFromPenal	22	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsSpecialAccommodationRequired	23	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ReasonSeekingTreatment	24	nvarchar	2000	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	AccomodationNeeded	25	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ClientAddress	26	varchar	2500	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	Comments	27	nvarchar	500	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsPatientAdmitted	28	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	AreYouCurrentlyPregnant	29	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	BringIDProof	30	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	BringInsuranceCard	31	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ClinicInfo	32	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	CurrntlyRecevingTreatmentForCondition	33	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsAnyPrescriptionForPain	34	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	IsInsurance	35	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	isOverTheCounterMedications	36	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ImmediateAssessment	37	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	ImmediateAssessment911	38	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderName1	39	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderPhone1	40	nvarchar	50	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderName2	41	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderPhone2	42	nvarchar	50	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PlanOfSuicide	43	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PlanOnSpendingTimeAtClinic	44	varchar	30	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	SAMMSProgram	45	varchar	800	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	OfficeUseWhy	46	nvarchar	50	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	OngoingMedicalConditionsWha	47	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PreAdd_Address	48	nvarchar	500	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	LastUpdatedBy	49	nvarchar	40	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	LastUpdateOn	50	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	PatientSignatureDate	51	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	DateofRelease	52	datetime	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	Version	53	nvarchar	256	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	RowChkSum	54	int	NULL	10	0	NO
+BHG_DR	ayx	tbl_PreAdmission_V6	ETLLastModAt	55	datetime	NULL	NULL	NULL	NO
+BHG_DR	ayx	tbl_PreAdmission_V6	RowState	56	bit	NULL	NULL	NULL	YES
+BHG_DR	ayx	tbl_PreAdmission_V6	cltM4ID	57	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	ctrl	tbl_3PSETUP	pID	2	int	NULL	10	0	NO
+BHG_DR	ctrl	tbl_3PSETUP	Clinic	3	varchar	200	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	Address	4	varchar	200	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	State	5	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	Zip	6	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	NPI	7	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	TaxID	8	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	Medicaid	9	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	City	10	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	DRlname	11	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	DRfname	12	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	DRnpi	13	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderAddress	14	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderCity	15	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderName	16	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderPhone	17	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderState	18	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderZip	19	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	SiteID	20	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_3PSETUP	Clia	21	varchar	20	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	strDBNotes	22	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	ProviderDesc	23	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	blHasPreloader	24	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	IndividualNPI	25	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	Taxonomy	26	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	SFTPUN	27	nvarchar	256	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	SFTPPW	28	nvarchar	256	NULL	NULL	YES
+BHG_DR	ctrl	tbl_3PSETUP	RowChkSum	29	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_3PSETUP	LastModAt	30	datetime	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	ctrl	tbl_Clinic	PKEY	2	int	NULL	10	0	NO
+BHG_DR	ctrl	tbl_Clinic	DoseWarn	3	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DoseStop	4	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Photos	5	nvarchar	150	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Bottles	6	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Overdue	7	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	BillHold	8	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	Test	9	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	TBTest	10	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Force	11	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	LastUpdated	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Note	13	ntext	1073741823	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Provider	14	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Site	15	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CLINICCODE	16	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DischargeGuest	17	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NumInventory	18	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	SCHEDUA	19	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	UAMONTHLY	20	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClinicNAME	21	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	TPAUTOMATION	22	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	RequireDarts	23	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PhysicalTestDays	24	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	ASPhysicalTest	25	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ServiceOverlapPopup	26	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	OrangeandWhite	27	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ToxProvider	28	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NumberofReceipts	29	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	PasswordEnforce	30	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PasswordLength	31	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	helpfile	32	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ScanPath	33	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DateSigStart	34	datetime	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ElecSigs	35	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CreditPriorWeek	36	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DefaultTabOrange	37	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BottleWeight	38	decimal	NULL	10	4	YES
+BHG_DR	ctrl	tbl_Clinic	spGRAVITY	39	decimal	NULL	10	4	YES
+BHG_DR	ctrl	tbl_Clinic	DoseCharge	40	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	TimeOffset	41	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	CoSign	42	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DefaultProgram	43	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClientSecurity	44	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoCheckin	45	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CheckinCheck	46	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	OrderService	47	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Residential	48	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BillDirection	49	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SmallReceipts	50	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DuplicateCheckinCheck	51	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NoPrintCheckinLabel	52	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AdDomain	53	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoSetLABELPrinter	54	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoSetReceiptPrinter	55	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClinicLetter	56	varchar	15	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClinicState	57	varchar	2	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Liquid	58	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	OtherInvType	59	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PrintDoseAmt	60	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Tabs	61	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DailyServices	62	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	clientsearchRIN	63	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClientServiceBilling	64	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DischargeClearsHolds	65	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DrugFreeOnly	66	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	halfweekcredit	67	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AllowRinZero	68	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AllowAnyRin	69	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DefaultShowHoldAtNursing	70	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	HideElecSigDates	71	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	QueSearch	72	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EducFieldIsEmpStatus	73	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoImportUA	74	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	FastDose	75	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	RecIDPrint	76	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NurseSig	77	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ORDER2CONFIRM	78	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	ORDERCONFIRM	79	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	ToxACCT	80	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	spGravityClear	81	decimal	NULL	10	4	YES
+BHG_DR	ctrl	tbl_Clinic	toxtixnum	82	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	toxTixspecial	83	varchar	500	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoOrderExpirationHolds	84	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	reqallintake	85	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NumberOfBulkLabels	86	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	UAonVISIT	87	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Diversion_Padding	88	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	WORDPATH	89	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ScanDeleteOriginal	90	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	UDSpanelRequired	91	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AutoDischargeCredit	92	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BeakerColors	93	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NumberPriorTransactionsOnReceipt	94	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	AlwaysAllowUseSavedSignature	95	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NewBottleLabels	96	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DocTemplatePath	97	varchar	200	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ReportDir	98	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	reportServer	99	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DonotallowCASCADE	100	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	isBHG	101	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	MultipleQueues	102	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	LabAcct	103	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AlwaysAskBagLabel	104	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PrepackBagLabelDefault	105	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DefaultShowHoldFront	106	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ShowFutureUAholds	107	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	OpenOnSunday	108	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ChargeBeforeDose	109	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	LandscapeLabel	110	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	sigIMGPATH	111	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	sigIMGURI	112	varchar	250	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SignBeforeDose	113	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SortClientSearchbyID	114	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	UApath	115	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AdjustmentEmail	116	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	blAdjustatDischarge	117	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Fifo_Bottle	118	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	UseCostCenter	119	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ForceCheckin	120	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	VerifyMedAdjustment	121	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PinSigs	122	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	COMBINE3PAYFEES	123	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PinBeforeSig	124	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	siglcd	125	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DictionaryPath	126	varchar	150	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	grammerpath	127	varchar	150	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DiversionType	128	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ismedmark	129	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ServiceDimsLinkToTP	130	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	advancedtesting	131	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AllowActOldOrder	132	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	FirstInitialonTOXlabel	133	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Over100check	134	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NoQuePop	135	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	offsetdoseconfirm	136	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	OrderRequestsNeedBothSigs	137	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SmallTox	138	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	toxservice	139	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Zebra	140	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	FingerPrintSig	141	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	VOregistrationpath	142	varchar	150	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	blockaptcalhold	143	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CalendarStartTime	144	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	EligPW	145	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EligUN	146	nvarchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	FiveDayCalendarWeek	147	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	multitenant	148	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	pumpwindow	149	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	RequireEmergencyContact	150	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	QueueTwice	151	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CheckUAIsPrescription	152	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableBusPass	153	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ClaimDir	154	varchar	200	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	isIHC	155	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	Phase	156	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	setEvalsOtherFocus	157	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	EnableHoldayPickupCalifornia	158	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	ZeroSSNs	159	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableTouchSig	160	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CreditDosesDischarge	161	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AllowBulkDrSigs	162	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableAlertsMedChanges	163	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableOrderAlerts	164	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableTestingAlerts	165	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableAtRiskAlerts	166	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableAdministeringClientMeds	167	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DisableServiceUnits	168	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	isMultiProgram	169	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	versionNbr	170	decimal	NULL	9	5	YES
+BHG_DR	ctrl	tbl_Clinic	LabelPrintMedTypeInsteadOfMedClass	171	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableEnrollDischargeDateInSearchGrid	172	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableServiceRevisions	173	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableBAC	174	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SammsFormsDefaultIndexNumber	175	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	enableDriveMapping	176	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	destructbottle	177	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	dontprintorders	178	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DisablePrintServiceMessageAfterSavePrompt	179	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DisableOtherAsReferralSource	180	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableInventory4and5	181	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SigPadTest	182	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableRssAlerts	183	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	iispath	184	varchar	300	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PrintAlternativeZebraAndDymoLabelVersion1	185	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	isRNP	186	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableAutoPopulateCity	187	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	IntakePacketURL	188	varchar	500	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	NoCheckinatPay	189	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableAutoHoldOnAbnormalLab	190	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	MultiQueueRefreshIntervalTimeSet	191	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	EnableSuffixMiddleInitialInFirstNameOfSearch	192	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableUserLoginAtBACqueueModeElseInitials	193	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SiteID	194	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	PrintSitesAddressDependingOnSites	195	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DoNotPrintDOE	196	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableAutoSpSAMMSBilling	197	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableCounselorSelectionInMultiProgramSectionOnly	198	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	URLassessment	199	varchar	350	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DisableTPproblemAndInOwnWords	200	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableCustomizableRequirementsForClientInfo	201	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableIntakeDischargeIncomeInputs	202	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableAutoBillingDuringEachToxPrint	203	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	isSH	204	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableBACstopDose	205	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableBACnurseHoldEvenBlowZero	206	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableSignaturesDuringPillCount	207	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableSignatureWhenAdministeringMeds	208	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CHSAMSID	209	varchar	50	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	FTS	210	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	Over20	211	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	forcefindtype	212	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	HnPUrl	213	varchar	100	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnablePrintMedTypeColorOnIDCard	214	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnablePortraitLabelDoubleSide	215	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	enableCommentsOnMultiCheckin	216	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PullPicsFromDB	217	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableCompetentCheckBoxAtDosing	218	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableActivateOrderWhenNotInSuboxoneProg	219	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnablePrintToxLandscape	220	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	EnableFlagNurseForBAC	221	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BottleReturnNote	222	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BHGMarginTH	223	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	BHGMarginTox	224	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	NoCheckinService	225	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	NoSAMMSFormHeader	226	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PrintUnitDoseLabel	227	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	AuthBasedOnProgram	228	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	LandscapeZebra	229	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	ShowBalanceAtDispense	230	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	SingleQueueRefreshIntervalTimeSet	231	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_Clinic	MultiDosingClinic	232	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	BlasterWide	233	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	PumpCalibrate	234	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	CheckVisitingPatient	235	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	RequireClientSignatureOrderRequest	236	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DischargedAllowAddPayer	237	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_Clinic	DymoDetailed	238	bit	NULL	NULL	NULL	YES
+BHG_DR	ctrl	tbl_DroDownListItems	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	ctrl	tbl_DroDownListItems	Id	2	int	NULL	10	0	NO
+BHG_DR	ctrl	tbl_DroDownListItems	DropDownListItem	3	varchar	-1	NULL	NULL	YES
+BHG_DR	ctrl	tbl_DroDownListItems	DropDownListId	4	int	NULL	10	0	YES
+BHG_DR	ctrl	tbl_DroDownListItems	ddapcode	5	char	2	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_Codes	RowChkSum	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Codes	LastModAt	3	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_Codes	cdeID	4	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Codes	cdeGroup	5	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeDesc	6	varchar	800	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeBillable	7	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeUA	8	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeIntAmt	9	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Codes	cdeLiquid	10	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeSTAFFCODE	11	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeFUND	12	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeMODAlity	13	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeDRUGFREE	14	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdePROVIDER	15	varchar	4	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeSiteNum	16	varchar	2	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	rowguid	17	uniqueidentifier	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeBillableResidential	18	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeServiceSetting	19	varchar	2	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeDischargeType	20	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeSigRequired	21	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeResidential	22	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeAllowOverlap	23	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	duiAMT	24	decimal	NULL	18	0	YES
+BHG_DR	pats	tbl_Codes	duiHourRate	25	decimal	NULL	18	2	YES
+BHG_DR	pats	tbl_Codes	blDEFAULT	26	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	WeeklyFee	27	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Codes	MustHaveBilling	28	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	Suboxoneprog	29	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cdeInsurance	30	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	DefRate	31	money	NULL	19	4	YES
+BHG_DR	pats	tbl_Codes	SiteID	32	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Codes	cdelblcolor	33	varchar	25	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cde3pdonotbill	34	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	cde3pPOSoverride	35	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	IsPrescreening	36	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	OBAT	37	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	ReqAuth	38	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Codes	IntakeProg	39	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_CustomAnswers	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_CustomAnswers	LastModAt	2	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_CustomAnswers	RowCheckSum	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomAnswers	RowSate	4	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomAnswers	caID	5	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomAnswers	caQID	6	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomAnswers	caCLTID	7	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomAnswers	caANS	8	varchar	500	NULL	NULL	YES
+BHG_DR	pats	tbl_CustomQuestions	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_CustomQuestions	LastModAt	2	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_CustomQuestions	RowCheckSum	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomQuestions	RowSate	4	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomQuestions	cID	5	int	NULL	10	0	NO
+BHG_DR	pats	tbl_CustomQuestions	cQuestion	6	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	SiteCode	1	char	20	NULL	NULL	NO
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Id	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_PreAdmissionReferralSource	PreAdmissionId	3	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ClientId	4	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	DataFormId	5	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	PrimaryReferralSource	6	varchar	35	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	SecondaryReferralSource	7	varchar	65	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ReferralSourceNote	8	varchar	800	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	CreatedBy	9	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	CreatedOn	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	LastUpdatedBy	11	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	LastUpdateOn	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	EnrollmentId	13	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Program	14	char	30	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	IsDeleted	15	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ReferralOrganization	16	varchar	400	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ReferralName	17	varchar	400	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	AccountNotInList	18	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ContactNotInList	19	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	WhyLeftTreatmentOfBHG	20	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	WhyComingBackToBHG	21	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	MostWantToDoDifferently	22	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Organization	23	varchar	400	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Name	24	varchar	400	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Email	25	varchar	400	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	Phone	26	varchar	40	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	IsPatientReadmit	27	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ReferralOrganizationID	28	varchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_PreAdmissionReferralSource	ReferralNameID	29	varchar	256	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_SERVICES	RowChkSum	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_SERVICES	sID	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_SERVICES	sSERVICE	4	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sArea	5	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sCost	6	money	NULL	19	4	YES
+BHG_DR	pats	tbl_SERVICES	sCPTCODE	7	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sREQSIG	8	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sREQTIME	9	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	blAllowOverlap	10	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	oldArea	11	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	oldSrv	12	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sFilter	13	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sReportBillable	14	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	sTimeOnly	15	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	CreatedOn	16	datetime2	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	LastModAt	17	datetime2	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_SERVICES	IsActive	18	bit	NULL	NULL	NULL	YES
+
+
+
+
+
+
+Fabric..
+
+
+
+
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	IsNullable
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	SiteCode	1	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PreAdmissionid	2	int	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	Clientid	3	int	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	CreatedON	4	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	Createdby	5	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PreAdmissionDate	6	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	RegistrationMode	7	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ReferralSourcedesc	8	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PrimaryReferralSourceNote	9	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	Program	10	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	InsuranceType	11	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IntakeProgram	12	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IntakeProgramDate	13	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsCurrentlyInOpiateProgram	14	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsPatientAtPainManagementClinic	15	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsHavingLegalPrescription	16	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsAnyLegalPrescriptionForPain	17	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsAnyOngoingMedicalCondition	18	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsSuicidalThoughtWithin72Hours	19	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsHavingPlanForHowToCommitSuicide	20	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsHomicidalThoughtWithin72Hours	21	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsRecentlyReleasedFromPenal	22	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsSpecialAccommodationRequired	23	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ReasonSeekingTreatment	24	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	AccomodationNeeded	25	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ClientAddress	26	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	Comments	27	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsPatientAdmitted	28	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	AreYouCurrentlyPregnant	29	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	BringIDProof	30	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	BringInsuranceCard	31	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ClinicInfo	32	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	CurrntlyRecevingTreatmentForCondition	33	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsAnyPrescriptionForPain	34	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	IsInsurance	35	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	isOverTheCounterMedications	36	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ImmediateAssessment	37	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ImmediateAssessment911	38	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderName1	39	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderPhone1	40	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderName2	41	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	MedicalConditionsProviderPhone2	42	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PlanOfSuicide	43	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PlanOnSpendingTimeAtClinic	44	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	SAMMSProgram	45	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	OfficeUseWhy	46	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	OngoingMedicalConditionsWha	47	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PreAdd_Address	48	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	LastUpdatedBy	49	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	LastUpdateOn	50	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	PatientSignatureDate	51	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	DateofRelease	52	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	Version	53	string	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	RowChkSum	54	int	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	ETLLastModAt	55	timestamp	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	RowState	56	boolean	TRUE
+FABRIC_SILVER	ayx	tbl_PreAdmission_V6	cltM4ID	57	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	SiteCode	1	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	pID	2	int	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Clinic	3	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Address	4	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	State	5	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Zip	6	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	NPI	7	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	TaxID	8	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Medicaid	9	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	City	10	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	DRlname	11	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	DRfname	12	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	DRnpi	13	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderAddress	14	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderCity	15	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderName	16	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderPhone	17	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderState	18	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderZip	19	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	SiteID	20	int	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Clia	21	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	strDBNotes	22	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	ProviderDesc	23	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	blHasPreloader	24	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	IndividualNPI	25	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	Taxonomy	26	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	SFTPUN	27	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	SFTPPW	28	string	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	RowChkSum	29	int	TRUE
+FABRIC_SILVER	ctrl	tbl_3PSETUP	LastModAt	30	timestamp	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SiteCode	1	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PKEY	2	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DoseWarn	3	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DoseStop	4	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Photos	5	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Bottles	6	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Overdue	7	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BillHold	8	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Test	9	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	TBTest	10	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Force	11	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LastUpdated	12	timestamp	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Note	13	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Provider	14	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Site	15	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CLINICCODE	16	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DischargeGuest	17	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NumInventory	18	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SCHEDUA	19	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UAMONTHLY	20	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClinicNAME	21	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	TPAUTOMATION	22	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RequireDarts	23	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PhysicalTestDays	24	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ASPhysicalTest	25	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ServiceOverlapPopup	26	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OrangeandWhite	27	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ToxProvider	28	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NumberofReceipts	29	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PasswordEnforce	30	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PasswordLength	31	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	helpfile	32	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ScanPath	33	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DateSigStart	34	timestamp	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ElecSigs	35	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CreditPriorWeek	36	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DefaultTabOrange	37	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BottleWeight	38	decimal(10,4)	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	spGRAVITY	39	decimal(10,4)	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DoseCharge	40	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	TimeOffset	41	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CoSign	42	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DefaultProgram	43	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClientSecurity	44	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoCheckin	45	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckinCheck	46	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OrderService	47	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Residential	48	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BillDirection	49	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SmallReceipts	50	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DuplicateCheckinCheck	51	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoPrintCheckinLabel	52	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AdDomain	53	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoSetLABELPrinter	54	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoSetReceiptPrinter	55	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClinicLetter	56	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClinicState	57	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Liquid	58	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OtherInvType	59	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PrintDoseAmt	60	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Tabs	61	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DailyServices	62	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	clientsearchRIN	63	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClientServiceBilling	64	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DischargeClearsHolds	65	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DrugFreeOnly	66	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	halfweekcredit	67	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AllowRinZero	68	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AllowAnyRin	69	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DefaultShowHoldAtNursing	70	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	HideElecSigDates	71	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	QueSearch	72	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EducFieldIsEmpStatus	73	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoImportUA	74	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FastDose	75	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RecIDPrint	76	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NurseSig	77	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ORDER2CONFIRM	78	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ORDERCONFIRM	79	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ToxACCT	80	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	spGravityClear	81	decimal(10,4)	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	toxtixnum	82	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	toxTixspecial	83	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoOrderExpirationHolds	84	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	reqallintake	85	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NumberOfBulkLabels	86	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UAonVISIT	87	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Diversion_Padding	88	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	WORDPATH	89	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ScanDeleteOriginal	90	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UDSpanelRequired	91	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AutoDischargeCredit	92	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BeakerColors	93	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NumberPriorTransactionsOnReceipt	94	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AlwaysAllowUseSavedSignature	95	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NewBottleLabels	96	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DocTemplatePath	97	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	reportServer	98	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ReportDir	99	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DonotallowCASCADE	100	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isBHG	101	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	MultipleQueues	102	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LabAcct	103	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AlwaysAskBagLabel	104	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PrepackBagLabelDefault	105	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DefaultShowHoldFront	106	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ChargeBeforeDose	107	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LandscapeLabel	108	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OpenOnSunday	109	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ShowFutureUAholds	110	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	sigIMGPATH	111	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	sigIMGURI	112	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SignBeforeDose	113	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SortClientSearchbyID	114	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UApath	115	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AdjustmentEmail	116	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	blAdjustAtDischarge	117	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Fifo_Bottle	118	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UseCostCenter	119	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ForceCheckin	120	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	VerifyMedAdjustment	121	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PinSigs	122	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	COMBINE3PAYFEES	123	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DictionaryPath	124	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	grammerpath	125	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ismedmark	126	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	pinbeforesig	127	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ServiceDimsLinkToTP	128	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	siglcd	129	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	advancedtesting	130	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AllowActOldOrder	131	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DiversionType	132	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FirstInitialonTOXlabel	133	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Over100check	134	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoQuePop	135	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	offsetdoseconfirm	136	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OrderRequestsNeedBothSigs	137	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SmallTox	138	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	toxservice	139	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Zebra	140	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	multitenant	141	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EligPW	142	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EligUN	143	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClaimDir	144	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ZeroSSNs	145	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	versionNbr	146	decimal(9,5)	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableBAC	147	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableServiceRevisions	148	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SiteID	149	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AllowBulkDrSigs	150	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BHGMarginTH	151	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BHGMarginTox	152	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	blockaptcalhold	153	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BottleReturnNote	154	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CalendarStartTime	155	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckUAIsPrescription	156	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CHSAMSID	157	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CreditDosesDischarge	158	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	destructbottle	159	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisableOtherAsReferralSource	160	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisablePrintServiceMessageAfterSavePrompt	161	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisableServiceUnits	162	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisableTPproblemAndInOwnWords	163	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DoNotPrintDOE	164	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	dontprintorders	165	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableActivateOrderWhenNotInSuboxoneProg	166	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableAdministeringClientMeds	167	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableAlertsMedChanges	168	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableAtRiskAlerts	169	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableAutoBillingDuringEachToxPrint	170	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableAutoHoldOnAbnormalLab	171	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableAutoPopulateCity	172	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableAutoSpSAMMSBilling	173	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableBACnurseHoldEvenBlowZero	174	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableBACstopDose	175	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableBusPass	176	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableCommentsOnMultiCheckin	177	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableCompetentCheckBoxAtDosing	178	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableCounselorSelectionInMultiProgramSectionOnly	179	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableCustomizableRequirementsForClientInfo	180	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableDriveMapping	181	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableEnrollDischargeDateInSearchGrid	182	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableFlagNurseForBAC	183	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableHoldayPickupCalifornia	184	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableIntakeDischargeIncomeInputs	185	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableInventory4and5	186	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableOrderAlerts	187	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnablePortraitLabelDoubleSide	188	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnablePrintMedTypeColorOnIDCard	189	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnablePrintToxLandscape	190	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableRssAlerts	191	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableSignaturesDuringPillCount	192	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableSignatureWhenAdministeringMeds	193	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableSuffixMiddleInitialInFirstNameOfSearch	194	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableTestingAlerts	195	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EnableTouchSig	196	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableUserLoginAtBACqueueModeElseInitials	197	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FingerPrintSig	198	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FiveDayCalendarWeek	199	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	forcefindtype	200	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FTS	201	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	HnPUrl	202	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	iispath	203	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	IntakePacketURL	204	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isIHC	205	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isMultiProgram	206	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isRNP	207	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isSH	208	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LabelPrintMedTypeInsteadOfMedClass	209	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	MultiQueueRefreshIntervalTimeSet	210	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoCheckinatPay	211	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Over20	212	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Phase	213	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PrintAlternativeZebraAndDymoLabelVersion1	214	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PrintSitesAddressDependingOnSites	215	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PullPicsFromDB	216	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	pumpwindow	217	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	QueueTwice	218	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RequireEmergencyContact	219	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SammsFormsDefaultIndexNumber	220	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	setEvalsOtherFocus	221	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SigPadTest	222	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	URLassessment	223	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	VOregistrationpath	224	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoCheckinService	225	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoSAMMSFormHeader	226	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PrintUnitDoseLabel	227	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AuthBasedOnProgram	228	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LandscapeZebra	229	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ShowBalanceAtDispense	230	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SingleQueueRefreshIntervalTimeSet	231	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	MultiDosingClinic	232	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	BlasterWide	233	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	PumpCalibrate	234	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckVisitingPatient	235	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RequireClientSignatureOrderRequest	236	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DischargedAllowAddPayer	237	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DymoDetailed	238	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ActivateHL7ADT	239	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	FromEmailAddress	240	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	HoursofDosing	241	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	HoursofOperation	242	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	LabPath	243	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	StateEmail	244	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	UseHL7forTox	245	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	IsCallQueue	246	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DDAPPath	247	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	eRxLocationid	248	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	eRxLocationidTest	249	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckNurseNote	250	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	WaitForPumpReply	251	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AllowBlindDose	252	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	AlwaysBlindDoseLiquid	253	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ExactMatchSearch	254	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DOBOnLabel	255	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RxOnLabel	256	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	RemovePrescriberOnLabel	257	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisableLiquidEye	258	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DisableDoorAlarm	259	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NoBupSDRLLabel	260	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	IsUAMS	261	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	isPA	262	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	intakeform	263	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableNurseAcceptCash	264	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	enableUAinBACMode	265	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	bl2by1label	266	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	EDMPATH	267	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClientAlpha	268	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	HideBalance	269	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ShowHoldsInQueueIfBACuser	270	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SDRLNew	271	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	Tool835URL	272	string	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NewControlSecurity	273	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	NumDaysCheck	274	int	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DCDoseQuestions	275	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OrderReqQuestions	276	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ShowPayerAtDispense	277	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckForPreviousWindowDose	278	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CombineMedsOnLabel	279	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SammsVersion	280	decimal(9,5)	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	CheckVersion	281	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	SDRLNewSmall	282	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	DymoSmall	283	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	OpenOnSaturday	284	boolean	TRUE
+FABRIC_SILVER	ctrl	tbl_Clinic	ClinicDEA	285	string	TRUE
+FABRIC_SILVER	ctrl	tbl_DroDownListItems	SiteCode	1	string	TRUE
+FABRIC_SILVER	ctrl	tbl_DroDownListItems	Id	2	int	TRUE
+FABRIC_SILVER	ctrl	tbl_DroDownListItems	DropDownListItem	3	string	TRUE
+FABRIC_SILVER	ctrl	tbl_DroDownListItems	DropDownListId	4	int	TRUE
+FABRIC_SILVER	ctrl	tbl_DroDownListItems	ddapcode	5	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	SiteCode	1	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	RowChkSum	2	int	TRUE
+FABRIC_SILVER	pats	tbl_Codes	LastModAt	3	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeID	4	int	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeGroup	5	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeDesc	6	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeBillable	7	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeUA	8	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeIntAmt	9	int	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeLiquid	10	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeSTAFFCODE	11	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeFUND	12	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeMODAlity	13	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeDRUGFREE	14	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdePROVIDER	15	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeSiteNum	16	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	rowguid	17	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeBillableResidential	18	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeServiceSetting	19	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeDischargeType	20	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeSigRequired	21	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeResidential	22	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeAllowOverlap	23	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	duiAMT	24	decimal(18,0)	TRUE
+FABRIC_SILVER	pats	tbl_Codes	duiHourRate	25	decimal(18,2)	TRUE
+FABRIC_SILVER	pats	tbl_Codes	blDEFAULT	26	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	WeeklyFee	27	int	TRUE
+FABRIC_SILVER	pats	tbl_Codes	MustHaveBilling	28	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	Suboxoneprog	29	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdeInsurance	30	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	DefRate	31	decimal(19,4)	TRUE
+FABRIC_SILVER	pats	tbl_Codes	SiteID	32	int	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cdelblcolor	33	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cde3pdonotbill	34	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	cde3pPOSoverride	35	string	TRUE
+FABRIC_SILVER	pats	tbl_Codes	IsPrescreening	36	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	OBAT	37	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	ReqAuth	38	boolean	TRUE
+FABRIC_SILVER	pats	tbl_Codes	IntakeProg	39	boolean	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	SiteCode	1	string	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	LastModAt	2	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	RowCheckSum	3	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	RowSate	4	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	caID	5	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	caQID	6	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	caCLTID	7	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomAnswers	caANS	8	string	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	SiteCode	1	string	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	LastModAt	2	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	RowCheckSum	3	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	RowSate	4	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	cID	5	int	TRUE
+FABRIC_SILVER	pats	tbl_CustomQuestions	cQuestion	6	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	SiteCode	1	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Id	2	int	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	PreAdmissionId	3	int	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ClientId	4	int	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	DataFormId	5	int	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	PrimaryReferralSource	6	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	SecondaryReferralSource	7	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ReferralSourceNote	8	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	CreatedBy	9	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	CreatedOn	10	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	LastUpdatedBy	11	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	LastUpdateOn	12	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	EnrollmentId	13	int	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Program	14	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	IsDeleted	15	boolean	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ReferralOrganization	16	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ReferralName	17	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	AccountNotInList	18	boolean	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ContactNotInList	19	boolean	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	WhyLeftTreatmentOfBHG	20	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	WhyComingBackToBHG	21	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	MostWantToDoDifferently	22	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Organization	23	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Name	24	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Email	25	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	Phone	26	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	IsPatientReadmit	27	boolean	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ReferralOrganizationID	28	string	TRUE
+FABRIC_SILVER	pats	tbl_PreadmissionReferralSource	ReferralNameID	29	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	SiteCode	1	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	RowChkSum	2	int	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sID	3	int	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sSERVICE	4	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sArea	5	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sCost	6	decimal(19,4)	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sCptCode	7	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sREQSIG	8	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sREQTIME	9	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	blAllowOverlap	10	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	oldArea	11	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	oldSrv	12	string	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sFilter	13	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sReportBillable	14	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	sTimeOnly	15	boolean	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	CreatedOn	16	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	LastModAt	17	timestamp	TRUE
+FABRIC_SILVER	pats	tbl_SERVICES	IsActive	18	boolean	TRUE
+

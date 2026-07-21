@@ -6,7 +6,7 @@
     "properties": {
         "activities": [
             {
-                "name": "fe_each_samms_site",
+                "name": "fe_each_samms_sites",
                 "type": "ForEach",
                 "dependsOn": [],
                 "typeProperties": {
@@ -15,7 +15,7 @@
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 5,
+                    "batchCount": 1,
                     "activities": [
                         {
                             "name": "lkp_check_form_table",
@@ -183,7 +183,7 @@
                                                 },
                                                 "p_lookback_days": {
                                                     "value": {
-                                                        "value": "@pipeline().parameters.p_lookback_days",
+                                                        "value": "@coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)",
                                                         "type": "Expression"
                                                     },
                                                     "type": "int"
@@ -270,8 +270,82 @@
                                                     "type": "LakehouseTable",
                                                     "schema": [],
                                                     "typeProperties": {
-                                                        "schema": "Form",
+                                                        "schema": "Forms",
                                                         "table": "br_tblFormQA"
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "mk_formqa_site_success",
+                                        "type": "Copy",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "cp_forms_to_bronze",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 3,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat('SELECT ''FormQuestionAnswers'' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId, GETDATE() AS MarkedAt')",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "Forms",
+                                                        "table": "br_formqa_site_success"
                                                     }
                                                 }
                                             },
@@ -290,6 +364,35 @@
                             }
                         }
                     ]
+                }
+            },
+            {
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_samms_sites",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{\"FormQuestionAnswers\":{\"status\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms_sites').error,'FormQuestionAnswers Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
                 }
             }
         ],
@@ -320,7 +423,7 @@
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-06-05T17:19:21Z"
+        "lastPublishTime": "2026-07-16T12:03:39Z"
     }
 }
 
@@ -328,13 +431,13 @@
 parent: Execute_Form_QuestionAnswer
 
 {
-    "name": "Execute_Form_QuestionAnswer",
+    "name": "pl_execute_form_questionanswers",
     "objectId": "ea25fed4-2f4b-4c1e-9a62-e504364580e2",
     "properties": {
         "activities": [
             {
-                "name": "lkp_formquestionanswers_taskconfig",
-                "type": "Lookup",
+                "name": "nb_get_FormQuestionAnswers_taskconfig",
+                "type": "TridentNotebook",
                 "dependsOn": [],
                 "policy": {
                     "timeout": "0.12:00:00",
@@ -344,29 +447,32 @@ parent: Execute_Form_QuestionAnswer
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "source": {
-                        "type": "LakehouseTableSource"
-                    },
-                    "firstRowOnly": false,
-                    "datasetSettings": {
-                        "annotations": [],
-                        "linkedService": {
-                            "name": "bhg_bronze",
-                            "properties": {
-                                "annotations": [],
-                                "type": "Lakehouse",
-                                "typeProperties": {
-                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                    "rootFolder": "Tables"
-                                }
-                            }
+                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_ids_json": {
+                            "value": "[28,29]",
+                            "type": "string"
                         },
-                        "type": "LakehouseTable",
-                        "schema": [],
-                        "typeProperties": {
-                            "schema": "meta",
-                            "table": "taskconfig"
+                        "p_methods_json": {
+                            "value": "[\"FormQuestionAnswers\"]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_source_table": {
+                            "value": "false",
+                            "type": "string"
                         }
                     }
                 }
@@ -376,7 +482,7 @@ parent: Execute_Form_QuestionAnswer
                 "type": "Filter",
                 "dependsOn": [
                     {
-                        "activity": "lkp_formquestionanswers_taskconfig",
+                        "activity": "nb_get_FormQuestionAnswers_taskconfig",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -384,7 +490,7 @@ parent: Execute_Form_QuestionAnswer
                 ],
                 "typeProperties": {
                     "items": {
-                        "value": "@activity('lkp_formquestionanswers_taskconfig').output.value",
+                        "value": "@json(activity('nb_get_FormQuestionAnswers_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -412,7 +518,7 @@ parent: Execute_Form_QuestionAnswer
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "bff040a5-e0cf-4b5f-9cae-de5f1f2055f7",
+                    "notebookId": "9f54a488-5091-480c-8066-26ab0be950d4",
                     "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
                         "p_mode": {
@@ -434,7 +540,38 @@ parent: Execute_Form_QuestionAnswer
                         "p_triggered_by": {
                             "value": "Fabric",
                             "type": "string"
+                        },
+                        "p_active_target_layers_json": {
+                            "value": "[\"BR\",\"SL\"]",
+                            "type": "string"
+                        },
+                        "p_terminal_target_name": {
+                            "value": "SL",
+                            "type": "string"
                         }
+                    }
+                }
+            },
+            {
+                "name": "set_formqa_bronze_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Invoke_legacy_Execute_AfterBronz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_bronze_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('Invoke_legacy_Execute_AfterBronz').Status,'Succeeded'), string(activity('Invoke_legacy_Execute_AfterBronz').output.properties.returnValue.v_bronze_method_results_json), '{\"FormQuestionAnswers\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"FormQuestionAnswers Bronze child pipeline failed before returning method results\"}}')",
+                        "type": "Expression"
                     }
                 }
             },
@@ -443,7 +580,7 @@ parent: Execute_Form_QuestionAnswer
                 "type": "TridentNotebook",
                 "dependsOn": [
                     {
-                        "activity": "Invoke_legacy_Executed_AfterBronz",
+                        "activity": "set_formqa_bronze_results",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -480,13 +617,297 @@ parent: Execute_Form_QuestionAnswer
                                 "type": "Expression"
                             },
                             "type": "bool"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
                         }
                     }
                 }
             },
             {
-                "name": "Prepare_FormQuestionAnswers_Versioned_Gold_Table",
+                "name": "set_formqa_silver_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "nb_forms_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('nb_forms_bronze_to_silver').Status, 'Succeeded'), activity('nb_forms_bronze_to_silver').output.result.exitValue, concat('{\"FormQuestionAnswers\":{\"method\":\"FormQuestionAnswers\",\"layer\":\"SL\",\"status\":\"',if(equals(activity('nb_forms_bronze_to_silver').Status,'Skipped'),'SKIPPED','FAILED'),'\",\"failed_stage\":\"',if(contains(variables('v_bronze_method_results_json'),'\"status\":\"FAILED\"'),'BR','SL'),'\",\"error_message\":\"',replace(replace(if(equals(activity('nb_forms_bronze_to_silver').Status,'Failed'),string(activity('nb_forms_bronze_to_silver').error),'FormQuestionAnswers Silver notebook was skipped.'),'\"',''''),'\\','\\\\'),'\"}}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if_formqa_silver_result_success",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set_formqa_silver_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(and(and(not(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"ERROR\"'))), and(and(not(contains(variables('v_silver_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_silver_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_silver_method_results_json'), '\"status\":\"ERROR\"'))))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "nb_formqa_audit_finalize_failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "9f54a488-5091-480c-8066-26ab0be950d4",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_failed_target_name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_failure_activity": {
+                                        "value": "FormQuestionAnswers_Result_Finalizer",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_formqa_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_error_message": {
+                                        "value": {
+                                            "value": "@concat('FormQuestionAnswers result contained failed or skipped details. Bronze: ', variables('v_bronze_method_results_json'), ' Silver: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    },
+                                    "p_terminal_target_name": {
+                                        "value": "SL",
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_notify_failed",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_formqa_audit_finalize_failure",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "Pipeline_Name": {
+                                        "value": "FormQuestionAnswers ETL",
+                                        "type": "string"
+                                    },
+                                    "Status": {
+                                        "value": "Failed",
+                                        "type": "string"
+                                    },
+                                    "Config_Name": {
+                                        "value": "SAMMS FormQuestionAnswers",
+                                        "type": "string"
+                                    },
+                                    "Source_System": {
+                                        "value": "Forms",
+                                        "type": "string"
+                                    },
+                                    "Target_Name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Environment_Name": {
+                                        "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                                        "type": "string"
+                                    },
+                                    "Run_Id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Description": {
+                                        "value": "FormQuestionAnswers pipeline failed or completed with partial site failures. See audit details.",
+                                        "type": "string"
+                                    },
+                                    "Error_Msg": {
+                                        "value": {
+                                            "value": "@concat('FormQuestionAnswers failed details. Bronze: ', variables('v_bronze_method_results_json'), ' Silver: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_StartTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_EndTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "nb_formqa_audit_finalize_clean_success",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "9f54a488-5091-480c-8066-26ab0be950d4",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_formqa_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    },
+                                    "p_terminal_target_name": {
+                                        "value": "SL",
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "SUCCESS",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "Prepare_FormQuestionAnswers_Gold_Table",
                 "type": "Script",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
                         "activity": "nb_forms_bronze_to_silver",
@@ -519,7 +940,7 @@ parent: Execute_Form_QuestionAnswer
                         {
                             "type": "Query",
                             "text": {
-                                "value": "@concat('DROP TABLE IF EXISTS pats.[tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.tbl_dbo_FormQuestionAnswers\nWHERE 1 = 0;')",
+                                "value": "@concat('IF OBJECT_ID(N''pats.[tbl_dbo_FormQuestionAnswers]'', N''U'') IS NULL\n    THROW 51030, ''Prepare failed: target table pats.tbl_dbo_FormQuestionAnswers does not exist.'', 1;\nTRUNCATE TABLE pats.[tbl_dbo_FormQuestionAnswers];')",
                                 "type": "Expression"
                             }
                         }
@@ -528,11 +949,13 @@ parent: Execute_Form_QuestionAnswer
                 }
             },
             {
-                "name": "Copy_silver_to_gold_version",
+                "name": "copy_formqa_silver_to_gold",
                 "type": "Copy",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
-                        "activity": "Prepare_FormQuestionAnswers_Versioned_Gold_Table",
+                        "activity": "Prepare_FormQuestionAnswers_Gold_Table",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -566,7 +989,7 @@ parent: Execute_Form_QuestionAnswer
                             "schema": [],
                             "typeProperties": {
                                 "schema": "pats",
-                                "table": "sl_tblformquestionanswers"
+                                "table": "tbl_dbo_formquestionanswers"
                             }
                         }
                     },
@@ -592,10 +1015,7 @@ parent: Execute_Form_QuestionAnswer
                             "schema": [],
                             "typeProperties": {
                                 "schema": "pats",
-                                "table": {
-                                    "value": "@concat('tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'))",
-                                    "type": "Expression"
-                                }
+                                "table": "tbl_dbo_FormQuestionAnswers"
                             }
                         }
                     },
@@ -757,11 +1177,13 @@ parent: Execute_Form_QuestionAnswer
                 }
             },
             {
-                "name": "Publish_FormQuestionAnswers_Versioned_Gold",
+                "name": "Publish_FormQuestionAnswers_Gold",
                 "type": "Script",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
-                        "activity": "Copy_silver_to_gold_version",
+                        "activity": "copy_formqa_silver_to_gold",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -791,7 +1213,7 @@ parent: Execute_Form_QuestionAnswer
                         {
                             "type": "Query",
                             "text": {
-                                "value": "@concat('DECLARE @version_count BIGINT;\nDECLARE @final_count BIGINT;\n\nSELECT @version_count = COUNT(*)\nFROM pats.[tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @version_count = 0\n    THROW 50001, ''Validation failed: pats.tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.tbl_dbo_FormQuestionAnswers'', ''U'') IS NULL\n    THROW 50002, ''Publish failed: production table pats.tbl_dbo_FormQuestionAnswers does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[tbl_dbo_FormQuestionAnswersBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.tbl_dbo_FormQuestionAnswers'', ''tbl_dbo_FormQuestionAnswersBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.[tbl_dbo_FormQuestionAnswers_v_', replace(pipeline().RunId, '-', '_'), ']'', ''tbl_dbo_FormQuestionAnswers'';\n\nSELECT @final_count = COUNT(*)\nFROM pats.tbl_dbo_FormQuestionAnswers;\n\nIF @final_count = 0\n    THROW 50003, ''Final verification failed: pats.tbl_dbo_FormQuestionAnswers is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''tbl_dbo_FormQuestionAnswersBK_%'' AND t.name <> ''tbl_dbo_FormQuestionAnswersBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''tbl_dbo_FormQuestionAnswers_v_%''\n         OR t.name = ''tbl_dbo_FormQuestionAnswers_load''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''tbl_dbo_FormQuestionAnswers'' AS TableName, @final_count AS [RowCount];')",
+                                "value": "@concat('DECLARE @formqa_final_count BIGINT;\nSELECT @formqa_final_count = COUNT(*)\nFROM pats.[tbl_dbo_FormQuestionAnswers];\nIF @formqa_final_count = 0\n    THROW 51031, ''Final verification failed: pats.tbl_dbo_FormQuestionAnswers is empty after overwrite.'', 1;\nSELECT ''tbl_dbo_FormQuestionAnswers'' AS TableName, @formqa_final_count AS [RowCount];')",
                                 "type": "Expression"
                             }
                         }
@@ -800,132 +1222,8 @@ parent: Execute_Form_QuestionAnswer
                 }
             },
             {
-                "name": "nb_formqa_audit_finalize_failure",
-                "type": "TridentNotebook",
-                "dependsOn": [
-                    {
-                        "activity": "Publish_FormQuestionAnswers_Versioned_Gold",
-                        "dependencyConditions": [
-                            "Failed",
-                            "Skipped"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "bff040a5-e0cf-4b5f-9cae-de5f1f2055f7",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "p_mode": {
-                            "value": "FINALIZE_FORMQA_FAILURE",
-                            "type": "string"
-                        },
-                        "p_failed_target_name": {
-                            "value": "ALL",
-                            "type": "string"
-                        },
-                        "p_failure_activity": {
-                            "value": "FormQuestionAnswers_Bronze_Silver_Gold_Finalizer",
-                            "type": "string"
-                        },
-                        "p_audit_context_json": {
-                            "value": {
-                                "value": "@activity('nb_formqa_audit_start').output.result.exitValue",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_ingest_run_id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_sites_json": {
-                            "value": {
-                                "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_error_message": {
-                            "value": {
-                                "value": "@string(coalesce(activity('Invoke_legacy_Executed_AfterBronz').error, activity('nb_forms_bronze_to_silver').error, activity('Prepare_FormQuestionAnswers_Versioned_Gold_Table').error, activity('Copy_silver_to_gold_version').error, activity('Publish_FormQuestionAnswers_Versioned_Gold').error, 'FormQuestionAnswers pipeline failed, but no activity error object was available.'))",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_status": {
-                            "value": "FAILED",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "nb_formqa_audit_finalize_success",
-                "type": "TridentNotebook",
-                "dependsOn": [
-                    {
-                        "activity": "Publish_FormQuestionAnswers_Versioned_Gold",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "bff040a5-e0cf-4b5f-9cae-de5f1f2055f7",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "p_mode": {
-                            "value": "FINALIZE_FORMQA_SUCCESS",
-                            "type": "string"
-                        },
-                        "p_audit_context_json": {
-                            "value": {
-                                "value": "@activity('nb_formqa_audit_start').output.result.exitValue",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_ingest_run_id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_sites_json": {
-                            "value": {
-                                "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_status": {
-                            "value": "SUCCESS",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "Invoke_legacy_Executed_AfterBronz",
-                "type": "ExecutePipeline",
+                "name": "Invoke_legacy_Execute_AfterBronz",
+                "type": "InvokePipeline",
                 "dependsOn": [
                     {
                         "activity": "nb_formqa_audit_start",
@@ -935,14 +1233,17 @@ parent: Execute_Form_QuestionAnswer
                     }
                 ],
                 "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "pipeline": {
-                        "referenceName": "d7caff4a-595e-4826-a75e-75919ed5d30f",
-                        "type": "PipelineReference"
-                    },
                     "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "d7caff4a-595e-4826-a75e-75919ed5d30f",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
                         "p_ingest_run_id": {
                             "value": "@pipeline().RunId",
@@ -965,166 +1266,9 @@ parent: Execute_Form_QuestionAnswer
                             "type": "Expression"
                         }
                     }
-                }
-            },
-            {
-                "name": "nb_notify_success",
-                "type": "TridentNotebook",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "nb_formqa_audit_finalize_success",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
                 },
-                "typeProperties": {
-                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "Pipeline_Name": {
-                            "value": "FormQuestionAnswers ETL",
-                            "type": "string"
-                        },
-                        "Status": {
-                            "value": "Succeeded",
-                            "type": "string"
-                        },
-                        "Config_Name": {
-                            "value": "SAMMS FormQuestionAnswers",
-                            "type": "string"
-                        },
-                        "Source_System": {
-                            "value": "Forms",
-                            "type": "string"
-                        },
-                        "Target_Name": {
-                            "value": "GL",
-                            "type": "string"
-                        },
-                        "Environment_Name": {
-                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
-                            "type": "string"
-                        },
-                        "Run_Id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Description": {
-                            "value": "FormQuestionAnswers pipeline completed successfully through Gold",
-                            "type": "string"
-                        },
-                        "Error_Msg": {
-                            "type": "string"
-                        },
-                        "Pipeline_StartTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_EndTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "nb_notify_failed",
-                "type": "TridentNotebook",
-                "dependsOn": [
-                    {
-                        "activity": "nb_formqa_audit_finalize_failure",
-                        "dependencyConditions": [
-                            "Failed"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "Pipeline_Name": {
-                            "value": "FormQuestionAnswers ETL",
-                            "type": "string"
-                        },
-                        "Status": {
-                            "value": "Failed",
-                            "type": "string"
-                        },
-                        "Config_Name": {
-                            "value": "SAMMS FormQuestionAnswers",
-                            "type": "string"
-                        },
-                        "Source_System": {
-                            "value": "Forms",
-                            "type": "string"
-                        },
-                        "Target_Name": {
-                            "value": "ALL",
-                            "type": "string"
-                        },
-                        "Environment_Name": {
-                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
-                            "type": "string"
-                        },
-                        "Run_Id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Description": {
-                            "value": "FormQuestionAnswers pipeline failed. See audit finalization error for details.",
-                            "type": "string"
-                        },
-                        "Error_Msg": {
-                            "value": {
-                                "value": "@string(coalesce(activity('nb_formqa_audit_finalize_failure').error, activity('Invoke_legacy_Executed_AfterBronz').error, activity('nb_forms_bronze_to_silver').error, activity('Prepare_FormQuestionAnswers_Versioned_Gold_Table').error, activity('Copy_silver_to_gold_version').error, activity('Publish_FormQuestionAnswers_Versioned_Gold').error, 'FormQuestionAnswers pipeline failed, but no activity error object was available.'))",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_StartTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_EndTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        }
-                    }
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
                 }
             }
         ],
@@ -1146,259 +1290,20 @@ parent: Execute_Form_QuestionAnswer
                 "defaultValue": false
             }
         },
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            },
+            "v_silver_method_results_json": {
+                "type": "String"
+            }
+        },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-06-11T22:55:22Z"
+        "lastPublishTime": "2026-07-10T17:14:59Z"
     }
 }
 
 
-
-Notebook for Notification:
-
-
-try: Pipeline_Name
-except NameError: Pipeline_Name = "FormQuestionAnswers ETL"
-
-try: Status
-except NameError: Status = "Succeeded"
-
-try: Config_Name
-except NameError: Config_Name = "SAMMS FormQuestionAnswers"
-
-try: Source_System
-except NameError: Source_System = "Forms"
-
-try: Target_Name
-except NameError: Target_Name = "GL"
-
-try: Environment_Name
-except NameError: Environment_Name = "BHG-DATA-PLATFORM-CORE-DEV"
-
-try: Run_Id
-except NameError: Run_Id = ""
-
-try: Description
-except NameError: Description = ""
-
-try: Error_Msg
-except NameError: Error_Msg = ""
-
-try: Pipeline_StartTime
-except NameError: Pipeline_StartTime = ""
-
-try: Pipeline_EndTime
-except NameError: Pipeline_EndTime = ""
-
-try: Teams_Webhook_Url
-except NameError:
-    Teams_Webhook_Url = "https://defaulta5fa28cad2e54dca931f1b594b88e7.e7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/67e2fd2b059d45e5b39571a7e2df9dc2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qTzglKXyn21I2PYeb-PgRdDWspqn9Taryecku4YECtg"
-
-from datetime import datetime
-import requests
-
-
-def clean_text(value):
-    if value is None:
-        return ""
-
-    text = str(value)
-
-    for marker in ["at com.microsoft", "at py4j"]:
-        if marker in text:
-            text = text.split(marker)[0]
-
-    text = (
-        text
-        .replace("|", " ")
-        .replace("\n", " ")
-        .replace("\r", " ")
-        .replace("â†µ", " ")
-        .replace("java.base", " ")
-    )
-
-    return " ".join(text.split())
-
-
-def target_layer_name(target_name):
-    target_layer_map = {
-        "BR": "Bronze",
-        "SL": "Silver",
-        "GL": "Gold",
-        "ALL": "Bronze/Silver/Gold"
-    }
-
-    return target_layer_map.get(
-        str(target_name).upper(),
-        str(target_name)
-    )
-
-
-def display_config_name(config_name):
-    return (
-        str(config_name or "")
-        .replace(" Pipeline", "")
-        .replace(" pipeline", "")
-    )
-
-
-def post_teams_message(payload):
-    response = requests.post(
-        Teams_Webhook_Url,
-        json=payload,
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
-
-    print(f"Teams Notification Status : {response.status_code}")
-
-    if response.status_code >= 400:
-        print(response.text[:2000])
-        response.raise_for_status()
-
-
-def send_teams_failure_alert(
-    pipeline_name,
-    config_name,
-    source_system,
-    target_name,
-    environment_name,
-    run_id,
-    failed_count,
-    failures
-):
-    target_layer = target_layer_name(target_name)
-    failure_text = ""
-
-    if failures:
-        for idx, failure in enumerate(failures, start=1):
-            failure_text += f"""
-
-Failure {idx}
-
-Task Config ID : {failure.get('task_config_id', '')}
-
-Task Name : {failure.get('task', '')}
-
-Error :
-{failure.get('error', '')}
-
---------------------------------------------------
-
-"""
-    else:
-        failure_text = clean_text(Error_Msg) or clean_text(Description) or "Pipeline failed. Review Fabric run history and audit tables for details."
-
-    payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "FF0000",
-        "summary": f"Pipeline Failed - {pipeline_name}",
-        "title": (
-            f"{environment_name}: Failed - "
-            f"{source_system} - "
-            f"{target_layer} - "
-            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        ),
-        "sections": [
-            {
-                "facts": [
-                    {"name": "Pipeline:", "value": str(pipeline_name)},
-                    {"name": "Config Name:", "value": display_config_name(config_name)},
-                    {"name": "Run ID:", "value": str(run_id)},
-                    {"name": "Failed Tasks:", "value": str(failed_count)},
-                    {"name": "Start Time:", "value": str(Pipeline_StartTime)},
-                    {"name": "End Time:", "value": str(Pipeline_EndTime)}
-                ]
-            },
-            {
-                "activityTitle": "Failure Details",
-                "text": failure_text[:12000]
-            }
-        ]
-    }
-
-    post_teams_message(payload)
-
-
-def send_teams_success_alert(
-    pipeline_name,
-    config_name,
-    source_system,
-    target_name,
-    environment_name,
-    run_id,
-    success_count
-):
-    target_layer = target_layer_name(target_name)
-
-    payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "00AA00",
-        "summary": f"Pipeline Succeeded - {pipeline_name}",
-        "title": (
-            f"{environment_name}: Succeeded - "
-            f"{source_system} - "
-            f"{target_layer} - "
-            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        ),
-        "sections": [
-            {
-                "facts": [
-                    {"name": "Pipeline:", "value": str(pipeline_name)},
-                    {"name": "Config Name:", "value": display_config_name(config_name)},
-                    {"name": "Run ID:", "value": str(run_id)},
-                    {"name": "Successful Tasks:", "value": str(success_count)},
-                    {"name": "Start Time:", "value": str(Pipeline_StartTime)},
-                    {"name": "End Time:", "value": str(Pipeline_EndTime)}
-                ]
-            },
-            {
-                "activityTitle": "Pipeline Details",
-                "text": clean_text(Description)[:12000]
-            }
-        ]
-    }
-
-    post_teams_message(payload)
-
-
-def fabric_task():
-    pipeline_name = Pipeline_Name or "FormQuestionAnswers ETL"
-    pipeline_status = str(Status or "Failed")
-    run_id = Run_Id or ""
-    normalized_status = pipeline_status.strip().upper()
-
-    if normalized_status in ("FAILED", "FAILURE", "ERROR"):
-        failures = [{
-            "task": Description or "FormQuestionAnswers ETL",
-            "task_config_id": "",
-            "error": clean_text(Error_Msg)
-        }]
-
-        send_teams_failure_alert(
-            pipeline_name=pipeline_name,
-            config_name=Config_Name,
-            source_system=Source_System,
-            target_name=Target_Name,
-            environment_name=Environment_Name,
-            run_id=run_id,
-            failed_count=1,
-            failures=failures
-        )
-    else:
-        send_teams_success_alert(
-            pipeline_name=pipeline_name,
-            config_name=Config_Name,
-            source_system=Source_System,
-            target_name=Target_Name,
-            environment_name=Environment_Name,
-            run_id=run_id,
-            success_count=1
-        )
-
-
-fabric_task()
 
 
 notebook for Bronz to silver:
@@ -1408,6 +1313,7 @@ cell:1
 from pyspark.sql.functions import col, coalesce, current_timestamp, row_number, when, lit, upper
 from pyspark.sql.window import Window
 from datetime import datetime, timedelta
+import json
 
 try: p_ingest_run_id
 except NameError: p_ingest_run_id = "test-run-001"
@@ -1418,11 +1324,146 @@ except NameError: p_lookback_days = 30
 try: p_reload
 except NameError: p_reload = False
 
-bronze_table = "bhg_bronze.Form.br_tblFormQA"
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+try: p_sites_json
+except NameError: p_sites_json = "[]"
+
+bronze_table = "bhg_bronze.Forms.br_tblFormQA"
+silver_table = "bhg_silver.pats.tbl_dbo_FormQuestionAnswers"
 f2p_table    = "bhg_silver.ctrl.Forms2Process"
+site_success_table = "bhg_bronze.Forms.br_formqa_site_success"
+method_name = "FormQuestionAnswers"
+final_columns = [
+    "SiteCode",
+    "FormName",
+    "FormId",
+    "ClientId",
+    "CreatedOn",
+    "CreatedBy",
+    "UpdatedOn",
+    "UpdatedBy",
+    "PreAdmissionId",
+    "IsDeleted",
+    "IsChildForm",
+    "QuestionId",
+    "QuestionOrderId",
+    "QuestionText",
+    "OptionId",
+    "AnswerValue",
+    "RowState",
+    "LastModAt"
+]
 
 print(f"Run ID: {p_ingest_run_id}")
+
+def notebook_exit(payload):
+    text = json.dumps(payload, default=str, separators=(",", ":"))
+    try:
+        mssparkutils.notebook.exit(text)
+    except NameError:
+        print(text)
+        raise SystemExit(text)
+
+def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+    body = {
+        "method": method_name,
+        "layer": "SL",
+        "status": status,
+        "rows_read": int(rows_read or 0),
+        "rows_inserted": int(rows_inserted or 0),
+        "rows_updated": int(rows_updated or 0),
+        "rows_skipped": int(rows_skipped or 0)
+    }
+    if message:
+        body["message"] = str(message)[:4000]
+    if site_results is not None:
+        body["site_results"] = site_results
+    return {method_name: body}
+
+def table_exists(table_name):
+    try:
+        spark.table(table_name).limit(0).count()
+        return True
+    except Exception:
+        return False
+
+def parse_json_list(raw):
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(str(raw))
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        return []
+
+def effective_lookback_days():
+    values = []
+    for row in parse_json_list(p_sites_json):
+        if not isinstance(row, dict):
+            continue
+        value = row.get("LookbackDays")
+        if value is None:
+            continue
+        try:
+            values.append(int(value))
+        except Exception:
+            pass
+    if values:
+        return max(values)
+    return int(p_lookback_days)
+
+p_lookback_days = effective_lookback_days()
+print(f"Effective lookback days: {p_lookback_days}")
+
+def active_site_rows():
+    rows = []
+    seen = set()
+    for row in parse_json_list(p_sites_json):
+        if not isinstance(row, dict):
+            continue
+        site_code = row.get("SiteCode")
+        database_name = row.get("DataBaseName")
+        if site_code and str(site_code) not in seen:
+            rows.append({
+                "site_code": str(site_code),
+                "database_name": str(database_name) if database_name else None
+            })
+            seen.add(str(site_code))
+    return rows
+
+def successful_sites_from_marker():
+    if not table_exists(site_success_table):
+        return []
+    marker_df = (
+        spark.table(site_success_table)
+        .where(col("IngestRunId") == lit(p_ingest_run_id))
+        .where(col("SiteCode").isNotNull())
+    )
+    if "Method" in marker_df.columns:
+        marker_df = marker_df.where(col("Method") == lit(method_name))
+    return [str(row["SiteCode"]) for row in marker_df.select("SiteCode").distinct().collect()]
+
+def build_site_results(successful_sites, failed_message=None):
+    active_sites = active_site_rows()
+    if not active_sites:
+        active_sites = [{"site_code": site, "database_name": None} for site in successful_sites]
+    successful = {str(site) for site in successful_sites if site}
+    results = []
+    for site in active_sites:
+        site_code = site["site_code"]
+        item = {
+            "site_code": site_code,
+            "database_name": site.get("database_name")
+        }
+        if site_code in successful:
+            item["status"] = "SUCCESS"
+        else:
+            item.update({
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": failed_message or "FormQuestionAnswers Bronze copy failed or did not write the site success marker."
+            })
+        results.append(item)
+    return results
 
 # Compute wrkdt for Cell 2 pre-pass
 if p_reload:
@@ -1441,19 +1482,50 @@ non_date_filtered_forms = set(
     f2p_df[f2p_df["DateFilterEnabled"] == False]["FormName"].tolist()
 )
 
-# Read Bronze for this run
-bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+# Read Bronze for this run and keep only successful sites when partial Bronze failures occur.
+bronze_df = spark.table(bronze_table).where(col("IngestRunId") == p_ingest_run_id)
+bronze_row_sites = [
+    str(row["SiteCode"])
+    for row in (
+        bronze_df
+        .where(col("SiteCode").isNotNull())
+        .select("SiteCode")
+        .distinct()
+        .collect()
+    )
+]
+marker_success_sites = successful_sites_from_marker()
+successful_sites = sorted(set(bronze_row_sites) | set(marker_success_sites))
+site_results = build_site_results(successful_sites)
+
+if successful_sites:
+    bronze_df = bronze_df.where(col("SiteCode").isin(successful_sites))
+
 bronze_count = bronze_df.count()
-print(f"Bronze rows for this run: {bronze_count}")
+print(f"Successful Bronze sites for this run: {successful_sites}")
+print(f"Bronze rows for successful sites in this run: {bronze_count}")
+
+if not successful_sites:
+    notebook_exit(result_payload(
+        "SKIPPED",
+        rows_read=0,
+        message=f"No successful Bronze sites found for FormQuestionAnswers ingest_run_id = {p_ingest_run_id}; Silver skipped.",
+        site_results=site_results
+    ))
 
 if bronze_count == 0:
-    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+    notebook_exit(result_payload(
+        "SUCCESS",
+        rows_read=0,
+        message=f"Successful Bronze site markers exist, but no Bronze rows were found for ingest_run_id = {p_ingest_run_id}.",
+        site_results=site_results
+    ))
 
-# Deduplicate on 7-column PK â€” keep latest _extracted_at per key
+# Deduplicate on 7-column PK - keep latest ExtractedAt per key
 pk_cols = ["SiteCode", "FormName", "FormId", "ClientId",
            "PreAdmissionId", "QuestionId", "QuestionOrderId"]
 
-w = Window.partitionBy(*pk_cols).orderBy(col("_extracted_at").desc())
+w = Window.partitionBy(*pk_cols).orderBy(col("ExtractedAt").desc())
 
 src_df = (
     bronze_df
@@ -1477,9 +1549,8 @@ src_df = (
         when((col("_source_isdeleted") == True) | (col("ClientId") < 0), lit(0)).otherwise(lit(1))
     )
     .drop("_source_isdeleted")
-    .drop("_site_code")
-    .withColumn("LastModAt",         current_timestamp())
-    .withColumn("silver_updated_at", current_timestamp())
+    .withColumn("LastModAt", current_timestamp())
+    .select(*final_columns)
 )
 
 src_count = src_df.count()
@@ -1490,18 +1561,50 @@ src_df.createOrReplaceTempView("vw_forms_current_run")
 if not spark.catalog.tableExists(silver_table):
     (
         src_df
-        .withColumn("silver_created_at", current_timestamp())
-        .write.format("delta").mode("overwrite")
+        .write
+        .format("delta")
+        .mode("overwrite")
         .saveAsTable(silver_table)
     )
     print(f"Created Silver table: {src_count} rows inserted.")
 else:
     print(f"Silver table exists: {silver_table}")
+
+# One-time normalization for Silver tables created before Silver became the final layer.
+existing_cols = spark.table(silver_table).columns
+if existing_cols != final_columns:
+    existing_df = spark.table(silver_table)
+    projected_cols = []
+    for c in final_columns:
+        if c in existing_df.columns:
+            projected_cols.append(col(c).alias(c))
+        elif c == "LastModAt" and "silver_updated_at" in existing_df.columns:
+            projected_cols.append(col("silver_updated_at").alias("LastModAt"))
+        else:
+            projected_cols.append(lit(None).alias(c))
+
+    normalized_df = existing_df.select(*projected_cols).cache()
+    normalized_count = normalized_df.count()
+    (
+        normalized_df
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .saveAsTable(silver_table)
+    )
+    normalized_df.unpersist()
+    print(f"Normalized FormQuestionAnswers Silver table to final schema. Rows preserved: {normalized_count}")
+
+
+
 Cell2:
+
+
 from delta.tables import DeltaTable
 from pyspark.sql.functions import col, lit
 
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+silver_table = "bhg_silver.pats.tbl_dbo_FormQuestionAnswers"
 
 if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
@@ -1511,8 +1614,7 @@ wrkdt_str = wrkdt.strftime("%Y-%m-%d")
 
 # Identify sites processed in this run
 sites_this_run = (
-    spark.table("bhg_bronze.Form.br_tblFormQA")
-    .where(col("_ingest_run_id") == p_ingest_run_id)
+    src_df
     .select("SiteCode").distinct()
     .rdd.flatMap(lambda x: x).collect()
 )
@@ -1523,9 +1625,9 @@ if not sites_this_run:
 
 site_filter = " OR ".join([f"SiteCode = '{s}'" for s in sites_this_run])
 
-# â”€â”€ TP-* normalization (SaveFormQAData.cs lines 27â€“30) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- TP-* normalization (SaveFormQAData.cs lines 27?30) ---------------
 # Silver rows from tblTP17REVIEW use FormName like "TP-Plan Review".
-# Forms2Process has one "Treatment Plan" entry â€” its DateFilterEnabled
+# Forms2Process has one "Treatment Plan" entry ? its DateFilterEnabled
 # controls pre-pass for ALL TP-* rows.
 tp_row = f2p_df[f2p_df["FormName"] == "Treatment Plan"]
 tp_date_filtered = True
@@ -1534,13 +1636,13 @@ if not tp_row.empty:
 
 print(f"Treatment Plan DateFilterEnabled: {tp_date_filtered}")
 
-# Non-date-filtered FormNames â€” exclude "Treatment Plan" (handled via TP-%)
+# Non-date-filtered FormNames ? exclude "Treatment Plan" (handled via TP-%)
 non_date_filtered_forms_no_tp = set(
     f2p_df[(f2p_df["DateFilterEnabled"] == False) & (f2p_df["FormName"] != "Treatment Plan")]
     ["FormName"].tolist()
 )
 
-# â”€â”€ Unconditional reset (DateFilterEnabled = 0) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Unconditional reset (DateFilterEnabled = 0) -----------------------
 uncond_parts = []
 if non_date_filtered_forms_no_tp:
     ndf_list = ", ".join([f"'{f}'" for f in non_date_filtered_forms_no_tp])
@@ -1556,7 +1658,7 @@ if uncond_parts:
     )
     print(f"Unconditional pre-pass reset applied.")
 
-# â”€â”€ Date-gated reset (DateFilterEnabled = 1 + not in Forms2Process) â”€â”€â”€
+# -- Date-gated reset (DateFilterEnabled = 1 + not in Forms2Process) ---
 silver_delta.update(
     condition=(
         f"({site_filter})"
@@ -1569,27 +1671,27 @@ silver_delta.update(
 print(f"Date-gated pre-pass reset applied (wrkdt={wrkdt_str}).")
 print("Pre-pass committed. Proceeding to MERGE.")
 
+
+
 cell:3
 
 from delta.tables import DeltaTable
 from pyspark.sql.functions import current_timestamp
 
-silver_table = "bhg_silver.pats.sl_tblFormQuestionAnswers"
+silver_table = "bhg_silver.pats.tbl_dbo_FormQuestionAnswers"
 
 if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
 
 silver_delta = DeltaTable.forName(spark, silver_table)
 
-src_cols    = src_df.columns
-update_cols = [c for c in src_cols if c != "silver_created_at"]
+src_cols    = final_columns
+update_cols = src_cols
 
 update_set = {c: f"src.{c}" for c in update_cols}
-update_set["silver_updated_at"] = "current_timestamp()"
 update_set["LastModAt"]         = "current_timestamp()"
 
 insert_values = {c: f"src.{c}" for c in src_cols}
-insert_values["silver_created_at"] = "current_timestamp()"
 
 (
     silver_delta.alias("tgt")
@@ -1605,23 +1707,35 @@ insert_values["silver_created_at"] = "current_timestamp()"
         AND tgt.QuestionOrderId <=> src.QuestionOrderId
         """
     )
-    # Matched: full update â€” no RowChkSum, always refresh from source
+    # Matched: full update ? no RowChkSum, always refresh from source
     .whenMatchedUpdate(set=update_set)
-    # Not matched: new record â€” insert with silver_created_at
+    # Not matched: new record ? insert final Silver row
     .whenNotMatchedInsert(values=insert_values)
     .execute()
 )
 
 print("Silver MERGE for FormQuestionAnswers completed successfully.")
 
+print("Silver MERGE for FormQuestionAnswers completed successfully.")
+
+notebook_exit(result_payload(
+    "SUCCESS",
+    rows_read=bronze_count,
+    rows_inserted=src_count,
+    site_results=site_results
+))
+
+
+
+
 notebook for nb_Forms_build_site_sql
 
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ---------------------------------------------------------------------
 # nb_forms_build_site_sql
 #
-# PURPOSE: Pure SQL string generator â€” NO SAMMS connection.
+# PURPOSE: Pure SQL string generator — NO SAMMS connection.
 #
 # READS:  bhg_silver.ctrl.tbl_Forms2Process  (Fabric lakehouse)
 # INPUT:  p_existing_tables_json, p_existing_columns_json
@@ -1631,11 +1745,11 @@ notebook for nb_Forms_build_site_sql
 #
 # OUTPUT: Full UNION SQL string via mssparkutils.notebook.exit()
 #         The Copy activity executes this string against SAMMS.
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ---------------------------------------------------------------------
 import json
 from datetime import datetime, timedelta
 
-# â”€â”€ Parameters (injected by pipeline; fallbacks for manual dev runs) â”€â”€
+# -- Parameters (injected by pipeline; fallbacks for manual dev runs) --
 try: p_site_code
 except NameError: p_site_code = "ColoradoSpringsV5"
 
@@ -1660,7 +1774,7 @@ except NameError: p_existing_tables_json = "[]"
 try: p_existing_columns_json
 except NameError: p_existing_columns_json = "[]"
 
-# â”€â”€ Build the set of tables that exist in this SAMMS database â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Build the set of tables that exist in this SAMMS database --------
 # p_existing_tables_json is the string form of the Lookup 2 output:
 #   '[{"name":"Form"},{"name":"AdmissionAssessment"},...]'
 existing_rows = json.loads(p_existing_tables_json)
@@ -1696,7 +1810,7 @@ print(f"Run ID:         {p_ingest_run_id}")
 print(f"Existing tables in SAMMS (count): {len(existing_tables)}")
 print(f"Existing source columns supplied: {len(existing_columns)}")
 
-# â”€â”€ Compute lookback date â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Compute lookback date --------------------------------------------
 if p_reload:
     wrkdt = "2010-01-01"
 else:
@@ -1706,7 +1820,7 @@ else:
 print(f"Work date:      {p_work_date}")
 print(f"Lookback date:  {wrkdt}")
 
-# â”€â”€ Read Forms2Process from bhg_silver.ctrl â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Read Forms2Process from bhg_silver.ctrl ---------------------------
 f2p_df = (
     spark.table("bhg_silver.ctrl.Forms2Process")
     .filter("Enabled = true AND RowState = true")
@@ -1726,7 +1840,7 @@ def sys_all_columns():
     """Return the source database sys.all_columns reference."""
     return f"{db}.sys.all_columns"
 
-# â”€â”€ Standard SQL fragments reused across cases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Standard SQL fragments reused across cases ---------------------
 # Forms2Process custom-table UNIONs use the same legacy compound delete check
 # as Program.cs: source row + pre-admission + data-form state.
 std_isdeleted = (
@@ -1752,19 +1866,18 @@ base_pa_join = (
     f"LEFT JOIN {tbl('SF_DataForms')} d ON pa.DataFormId = d.Id"
 )
 
-# â”€â”€ Build metadata literal columns (added to every SELECT) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Build metadata literal columns (added to every SELECT) -----------
 # These land as real columns in Bronze and carry extraction context.
 meta_cols = (
-    f"  '{sc}' AS _site_code,\n"
-    f"  '{p_source_database}' AS _source_database,\n"
-    f"  '{p_ingest_run_id}' AS _ingest_run_id,\n"
-    f"  GETDATE() AS _extracted_at,\n"
-    f"  '{wrkdt}' AS _lookback_date,\n"
+    f"  '{p_source_database}' AS SourceDatabase,\n"
+    f"  '{p_ingest_run_id}' AS IngestRunId,\n"
+    f"  GETDATE() AS ExtractedAt,\n"
+    f"  '{wrkdt}' AS LookbackDate,\n"
 )
 
-# â”€â”€ Step 1: Base query â€” Form/FormTemplate/Question/Answer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Step 1: Base query — Form/FormTemplate/Question/Answer -----------
 # UNION 1: forms with answered questions (a.Value IS NOT NULL)
-# UNION 2: forms with no questions at all (q.Id IS NULL â€” header-only)
+# UNION 2: forms with no questions at all (q.Id IS NULL — header-only)
 #
 # Outer SELECT adds QuestionOrderId via ROW_NUMBER() for rows where
 # q.QuestionOrderId is NULL (synthetic ordering for forms without it).
@@ -1834,7 +1947,7 @@ FROM (
 ) x
 """
 
-# â”€â”€ Step 2: Loop over Forms2Process â€” UNION in each custom table â”€â”€â”€â”€â”€
+# -- Step 2: Loop over Forms2Process — UNION in each custom table -----
 # For each enabled row in tbl_Forms2Process:
 #   - Check if TableName exists in this SAMMS (using existing_tables set)
 #   - Dispatch to the correct switch case
@@ -1919,7 +2032,7 @@ for _, xf in f2p_df.iterrows():
         )
 
     elif tname_lower == "tbltp17review":
-        # Completely custom â€” no standard cols, no PA join.
+        # Completely custom — no standard cols, no PA join.
         # tprReviewFrequency (UNION D) checked via p_existing_columns_json.
         # Date filtering is still applied below when Forms2Process.DateFilterEnabled = 1.
         has_review_freq = column_exists("tblTP17REVIEW", "tprReviewFrequency")
@@ -1949,7 +2062,7 @@ for _, xf in f2p_df.iterrows():
             f"  QuestionText, OptionID, AnswerValue,\n"
             f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
             f"FROM (\n"
-            # UNION A â€” QuestionID 1
+            # UNION A — QuestionID 1
             f"  SELECT SiteCode='{sc}', 'Treatment Plan' AS [FormName]\n"
             f"    , '8-1-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID) AS [FormID]\n"
             f"    , null AS PreAdmissionId, ABS(tprCLTID) AS ClientId\n"
@@ -1959,14 +2072,14 @@ for _, xf in f2p_df.iterrows():
             f"    , CONVERT(date,tprDT) AS [CreatedOn], null AS [UpdatedBy], null AS [UpdatedOn]\n"
             f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END AS Isdeleted\n"
             f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION B â€” QuestionID 2
+            # UNION B — QuestionID 2
             f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
             f"    , '8-2-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
             f"    , null, ABS(tprCLTID), 2, 1, 'Treatment Phase Type', null\n"
             f"    , tpTreatmentPhase, tprCreatedby, CONVERT(date,tprDT), null, null\n"
             f"    , CASE WHEN tprCLTID<0 THEN 1 ELSE 0 END\n"
             f"  FROM {tbl('tblTP17REVIEW')}\n"
-            # UNION C â€” QuestionID 3
+            # UNION C — QuestionID 3
             f"  UNION SELECT SiteCode='{sc}', 'TP-'+TprTYPE\n"
             f"    , '8-3-'+CONVERT(varchar,ABS(tprCLTID))+'-'+CONVERT(varchar,tpRID)+'-'+CONVERT(varchar,tprTPID)\n"
             f"    , null, ABS(tprCLTID), 3, 1, 'Next Due', null\n"
@@ -1996,7 +2109,7 @@ for _, xf in f2p_df.iterrows():
             f"  QuestionText, OptionID, AnswerValue,\n"
             f"  Createdby, CreatedOn, UpdatedBy, UpdatedOn, IsDeleted\n"
             f"FROM (\n"
-            # UNION A â€” QuestionID 1: Effective Date
+            # UNION A — QuestionID 1: Effective Date
             f"  SELECT SiteCode='{sc}', FormName='Level Justification'\n"
             f"    , '9-1-'+CONVERT(varchar,ABS(cltID))+'-'+CONVERT(varchar,ReqNum)+'-' AS FormID\n"
             f"    , ReqNum AS PreadmissionId, cltID AS ClientId\n"
@@ -2006,7 +2119,7 @@ for _, xf in f2p_df.iterrows():
             f"    , StatusUser AS UpdatedBy, CONVERT(date,statusDate) AS UpdatedOn\n"
             f"    , CASE WHEN cltID<0 THEN 1 ELSE 0 END AS IsDeleted\n"
             f"  FROM {tbl('tblORDERREQ')} WHERE {test_filter}\n"
-            # UNION B â€” QuestionID 2: Expiration Date
+            # UNION B — QuestionID 2: Expiration Date
             f"  UNION SELECT SiteCode='{sc}', 'Level Justification'\n"
             f"    , '9-2-'+CONVERT(varchar,ABS(cltID))+'-'+CONVERT(varchar,ReqNum)+'-'\n"
             f"    , ReqNum, cltID, 2, 'Expiration Date', 0\n"
@@ -2039,7 +2152,7 @@ for _, xf in f2p_df.iterrows():
         )
 
     elif tname_lower == "referralform":
-        # UpdatedBy = a.updatedby (not ModifiedBy). DateFilterEnabled=0 â€” no date filter.
+        # UpdatedBy = a.updatedby (not ModifiedBy). DateFilterEnabled=0 — no date filter.
         block = (
             f"{union_wrap_open}"
             f"\n    , FormID = '{prefix}-'"
@@ -2126,7 +2239,7 @@ for _, xf in f2p_df.iterrows():
         )
 
     else:
-        # DEFAULT â€” covers all 65 standard forms
+        # DEFAULT — covers all 65 standard forms
         block = (
             f"{union_wrap_open}"
             f"\n    , FormID = '{prefix}-'"
@@ -2157,7 +2270,7 @@ for _, xf in f2p_df.iterrows():
     strCmd += block
     print(f"  + {table_name} (Prefix {prefix}, DateFilter={date_filter})")
 
-# â”€â”€ Step 3: Wrap in DISTINCT and return â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Step 3: Wrap in DISTINCT and return -----------------------------
 final_sql = f"SELECT DISTINCT * FROM ({strCmd}) z"
 
 print(f"\nSQL built for site {p_site_code}. Approximate length: {len(final_sql):,} chars.")
@@ -2165,4 +2278,3 @@ print(f"\nSQL built for site {p_site_code}. Approximate length: {len(final_sql):
 # Return the SQL string to the pipeline via notebook exit value.
 # The pipeline Set Variable activity captures this as v_site_sql.
 mssparkutils.notebook.exit(final_sql)
-
