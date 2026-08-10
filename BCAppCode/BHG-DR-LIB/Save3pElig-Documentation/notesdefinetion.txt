@@ -1,4 +1,4 @@
-// #region -->Child ETL for pl_notes_samms_to_lakehouse
+﻿// #region -->Child ETL for pl_notes_samms_to_lakehouse
 
 {
     "name": "pl_note_saams_to_lakehouse",
@@ -52,7 +52,7 @@
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 5,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "cp_arnote_to_bronze",
@@ -180,7 +180,7 @@
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 5,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "cp_claimnote_to_bronze",
@@ -363,8 +363,8 @@
                 "type": "String"
             }
         },
-        "lastModifiedByObjectId": "41032ad8-8248-4dd3-9ac8-0281d6ef4ebd",
-        "lastPublishTime": "2026-07-16T13:39:04Z"
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-08-03T17:30:21Z"
     }
 }
 
@@ -1662,8 +1662,8 @@
                 "defaultValue": "{}"
             }
         },
-        "lastModifiedByObjectId": "41032ad8-8248-4dd3-9ac8-0281d6ef4ebd",
-        "lastPublishTime": "2026-07-16T13:45:15Z"
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-08-03T17:30:06Z"
     }
 }
 
@@ -1676,6 +1676,7 @@ Notebook nb_3parnote_bronze_to_silver
 
 Cell1:
 
+#region -->ARNote Silver Notebook Cell 1
 
 from pyspark.sql.functions import col, current_timestamp, lit, row_number
 from pyspark.sql.window import Window
@@ -1996,7 +1997,11 @@ else:
     print(f"Silver table already exists: {silver_table}")
 
 
+#endregion -->ARNote Silver Notebook Cell 1
+
 cell2:
+
+#region -->ARNote Silver Notebook Cell 2
 
 from delta.tables import DeltaTable
 
@@ -2099,11 +2104,15 @@ notebook_exit(result_payload(
     site_results=site_results
 ))
 
+#endregion -->ARNote Silver Notebook Cell 2
+
 
 
 nb_3pclaimnote_bronze_to_silver
 
 Cell1:
+
+#region -->ClaimNote Silver Notebook Cell 1
 
 from pyspark.sql.functions import col, current_timestamp, lit, row_number
 from pyspark.sql.window import Window
@@ -2337,18 +2346,14 @@ if bronze_count == 0:
         site_results=site_results
     ))
 
-# Critical: deduplicate on SiteCode + tpcnTPCID.
-# The C# Save3pClaimNote matches existing records by TpcnTpcid, NOT by tpcn
-# (the Azure PK). See Section 20 for full explanation.
-# For Fabric, we use the same match logic: SiteCode + tpcnTPCID.
-w = Window.partitionBy("SiteCode", "tpcnTPCID").orderBy(col("ExtractedAt").desc())
-
+# ClaimNote final-table parity:
+# Brian changed the legacy match from TpcnTpcid to Tpcn:
+#     tblCNs.FirstOrDefault(x => x.Tpcn == claimNote.Tpcn)
+# Fabric therefore uses SiteCode + tpcn as the Silver merge key. tpcnTPCID is
+# still retained as a normal business column, but it is no longer the match key.
 src_work_df = (
     bronze_df
-    .where(col("SiteCode").isNotNull() & col("tpcnTPCID").isNotNull())
-    .withColumn("rn", row_number().over(w))
-    .where(col("rn") == 1)
-    .drop("rn")
+    .where(col("SiteCode").isNotNull() & col("tpcn").isNotNull())
 
     # RowState logic: ClaimNote treats every returned SAMMS row as active.
     # There is no pre-reset or soft-delete condition for ClaimNote.
@@ -2356,23 +2361,32 @@ src_work_df = (
     .withColumn("LastModAt", current_timestamp())
 )
 
-src_df = src_work_df.select(
-    col("SiteCode").alias("SiteCode"),
-    col("tpcn"),
-    col("tpcnTPCID"),
-    col("tpcnDtmAdded"),
-    col("tpcnStrAdded"),
-    col("tpcnStrNote"),
-    col("tpcnStrType"),
-    col("tpcnDtTickler"),
-    col("tpcnDtTicklerRemoved"),
-    col("tpcnStrTicklerRemovedNote"),
-    col("tpcnStrTicklerRemovedUser"),
-    col("tpcnStrTicklerType"),
-    col("globalBatchId"),
-    col("RowChkSum"),
-    col("LastModAt"),
-    col("RowState")
+claimnote_source_w = Window.partitionBy("SiteCode", "tpcn").orderBy(
+    col("tpcnDtmAdded").desc_nulls_last()
+)
+
+src_df = (
+    src_work_df
+    .withColumn("__claimnote_rn", row_number().over(claimnote_source_w))
+    .where(col("__claimnote_rn") == 1)
+    .select(
+        col("SiteCode").alias("SiteCode"),
+        col("tpcn"),
+        col("tpcnTPCID"),
+        col("tpcnDtmAdded"),
+        col("tpcnStrAdded"),
+        col("tpcnStrNote"),
+        col("tpcnStrType"),
+        col("tpcnDtTickler"),
+        col("tpcnDtTicklerRemoved"),
+        col("tpcnStrTicklerRemovedNote"),
+        col("tpcnStrTicklerRemovedUser"),
+        col("tpcnStrTicklerType"),
+        col("globalBatchId"),
+        col("RowChkSum"),
+        col("LastModAt"),
+        col("RowState")
+    )
 )
 
 src_df.createOrReplaceTempView("vw_claimnote_current_run")
@@ -2423,7 +2437,11 @@ else:
     print(f"Silver table exists: {silver_table}")
 
 
+#endregion -->ClaimNote Silver Notebook Cell 1
+
 cell2:
+
+#region -->ClaimNote Silver Notebook Cell 2
 
 from delta.tables import DeltaTable
 
@@ -2473,60 +2491,68 @@ src_cols = final_columns
 update_set = {c: f"src.{c}" for c in src_cols}
 insert_values = {c: f"src.{c}" for c in src_cols}
 
-match_keys = ["SiteCode", "tpcnTPCID"]
+match_keys = ["SiteCode", "tpcn"]
+merge_condition = """
+    tgt.SiteCode = src.SiteCode
+    AND tgt.tpcn = src.tpcn
+"""
+
 if created_silver_table:
     rows_inserted = src_count
     rows_updated = 0
+    rows_skipped = 0
+    print("ClaimNote Silver table was created from current source rows; legacy MERGE/append step skipped.")
 else:
     target_keys = spark.table(silver_table).select(*match_keys).dropDuplicates()
-    rows_inserted = src_df.join(target_keys, match_keys, "left_anti").count()
+    src_insert_df = src_df.join(target_keys, match_keys, "left_anti").select(*src_cols).cache()
+    src_update_df = src_df.join(target_keys, match_keys, "inner").select(*src_cols).cache()
+
+    rows_inserted = src_insert_df.count()
     rows_updated = (
-        src_df.alias("src")
-        .join(spark.table(silver_table).alias("tgt"), match_keys, "inner")
-        .where("""
-            tgt.RowChkSum IS NULL
-            OR src.RowChkSum IS NULL
-            OR tgt.RowChkSum <> src.RowChkSum
-        """)
+        src_update_df
         .count()
     )
+    rows_skipped = 0
 
-(
-    silver_delta.alias("tgt")
-    .merge(
-        src_df.alias("src"),
-        # Critical: match on tpcnTPCID, not tpcn.
-        # The C# Save3pClaimNote line 376:
-        #   tblCNs.FirstOrDefault(x => x.TpcnTpcid == claimNote.TpcnTpcid)
-        # Uses TpcnTpcid as the match key, not the Azure PK (tpcn).
-        # Fabric MERGE must mirror this: SiteCode + tpcnTPCID
-        "tgt.SiteCode = src.SiteCode AND tgt.tpcnTPCID = src.tpcnTPCID"
-    )
+    if rows_updated > 0:
+        (
+            silver_delta.alias("tgt")
+            .merge(
+                src_update_df.alias("src"),
+                merge_condition
+            )
+            .whenMatchedUpdate(
+                condition="""
+                    tgt.RowChkSum IS NULL
+                    OR src.RowChkSum IS NULL
+                    OR tgt.RowChkSum <> src.RowChkSum
+                """,
+                set=update_set
+            )
+            .execute()
+        )
 
-    # CASE 1: Record exists AND data changed: full update
-    .whenMatchedUpdate(
-        condition="""
-            tgt.RowChkSum IS NULL
-            OR src.RowChkSum IS NULL
-            OR tgt.RowChkSum <> src.RowChkSum
-        """,
-        set=update_set
-    )
+    if rows_inserted > 0:
+        (
+            src_insert_df
+            .write
+            .format("delta")
+            .mode("append")
+            .saveAsTable(silver_table)
+        )
 
-    # CASE 2: New record: insert all columns
-    .whenNotMatchedInsert(values=insert_values)
+    src_insert_df.unpersist()
+    src_update_df.unpersist()
 
-    .execute()
-)
-
-print("ClaimNote Silver MERGE completed successfully.")
+print("ClaimNote Silver snapshot MERGE completed successfully.")
 notebook_exit(result_payload(
     "3pClaimNote",
     "SUCCESS",
     rows_read=src_count,
     rows_inserted=rows_inserted,
     rows_updated=rows_updated,
+    rows_skipped=rows_skipped,
     site_results=site_results
 ))
 
-
+#endregion -->ClaimNote Silver Notebook Cell 2

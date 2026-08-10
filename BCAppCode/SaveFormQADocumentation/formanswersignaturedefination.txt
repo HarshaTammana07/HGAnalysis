@@ -1,446 +1,354 @@
 ﻿Child: pl_answersig_samms_to_lakehouse
 
 {
-  "name": "pl_answersig_samms_to_lakehouse",
-  "objectId": "cf9e89d0-9574-439e-85b9-c022327ed022",
-  "properties": {
-    "activities": [
-      {
-        "name": "fe_each_samms_sites",
-        "type": "ForEach",
-        "dependsOn": [],
-        "typeProperties": {
-          "items": {
-            "value": "@pipeline().parameters.p_sites",
-            "type": "Expression"
-          },
-          "isSequential": false,
-          "batchCount": 1,
-          "activities": [
+    "name": "pl_answersig_samms_to_lakehouse",
+    "objectId": "cf9e89d0-9574-439e-85b9-c022327ed022",
+    "properties": {
+        "activities": [
             {
-              "name": "lkp_check_answersig_table",
-              "type": "Lookup",
-              "dependsOn": [],
-              "policy": {
-                "timeout": "0.12:00:00",
-                "retry": 0,
-                "retryIntervalInSeconds": 30,
-                "secureOutput": false,
-                "secureInput": false
-              },
-              "typeProperties": {
-                "source": {
-                  "type": "SqlServerSource",
-                  "sqlReaderQuery": {
-                    "value": "@concat(\n'SELECT answersig_exists = COUNT(1)\nFROM [', item().DataBaseName, '].sys.tables\nWHERE name = ''answersignature'''\n)",
-                    "type": "Expression"
-                  },
-                  "queryTimeout": "02:00:00",
-                  "partitionOption": "None"
-                },
-                "datasetSettings": {
-                  "annotations": [],
-                  "type": "SqlServerTable",
-                  "schema": [],
-                  "externalReferences": {
-                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                  }
+                "name": "fe_each_samms_sites",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 1,
+                    "activities": [
+                        {
+                            "name": "lkp_check_answersig_table",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT answersig_exists = COUNT(1)\nFROM [', item().DataBaseName, '].sys.tables\nWHERE name = ''answersignature'''\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_answersig_table_exists",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_answersig_table",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_answersig_table').output.firstRow.answersig_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "lkp_get_existing_tables",
+                                        "type": "Lookup",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat('SELECT name FROM [', item().DataBaseName, '].sys.tables')",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "firstRowOnly": false,
+                                            "datasetSettings": {
+                                                "annotations": [],
+                                                "type": "SqlServerTable",
+                                                "schema": [],
+                                                "externalReferences": {
+                                                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "nb_answersig_build_site_sql",
+                                        "type": "TridentNotebook",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "lkp_get_existing_columns",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 3,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "notebookId": "673e26ce-cd7a-4b79-83d3-5b5cf7a76c79",
+                                            "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                            "parameters": {
+                                                "p_site_code": {
+                                                    "value": {
+                                                        "value": "@item().SiteCode",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_source_database": {
+                                                    "value": {
+                                                        "value": "@item().DataBaseName",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_ingest_run_id": {
+                                                    "value": {
+                                                        "value": "@pipeline().parameters.p_ingest_run_id",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_lookback_days": {
+                                                    "value": {
+                                                        "value": "@coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "int"
+                                                },
+                                                "p_reload": {
+                                                    "value": {
+                                                        "value": "@pipeline().parameters.p_reload",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "bool"
+                                                },
+                                                "p_existing_tables_json": {
+                                                    "value": {
+                                                        "value": "@string(activity('lkp_get_existing_tables').output.value)",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                },
+                                                "p_existing_columns_json": {
+                                                    "value": {
+                                                        "value": "@string(activity('lkp_get_existing_columns').output.value)",
+                                                        "type": "Expression"
+                                                    },
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "cp_answersig_to_bronze",
+                                        "type": "Copy",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "nb_answersig_build_site_sql",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue\n",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "Forms",
+                                                        "table": "br_tblFormAnswerSig"
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "lkp_get_existing_columns",
+                                        "type": "Lookup",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "lkp_get_existing_tables",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT table_name = t.name, column_name = c.name\nFROM [', item().DataBaseName, '].sys.tables t\nJOIN [', item().DataBaseName, '].sys.columns c\n  ON t.object_id = c.object_id'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "firstRowOnly": false,
+                                            "datasetSettings": {
+                                                "annotations": [],
+                                                "type": "SqlServerTable",
+                                                "schema": [],
+                                                "externalReferences": {
+                                                    "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
-              }
             },
             {
-              "name": "if_answersig_table_exists",
-              "type": "IfCondition",
-              "dependsOn": [
-                {
-                  "activity": "lkp_check_answersig_table",
-                  "dependencyConditions": [
-                    "Succeeded"
-                  ]
-                }
-              ],
-              "typeProperties": {
-                "expression": {
-                  "value": "@equals(activity('lkp_check_answersig_table').output.firstRow.answersig_exists, 1)",
-                  "type": "Expression"
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_samms_sites",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
                 },
-                "ifFalseActivities": [],
-                "ifTrueActivities": [
-                  {
-                    "name": "lkp_get_existing_tables",
-                    "type": "Lookup",
-                    "dependsOn": [],
-                    "policy": {
-                      "timeout": "0.12:00:00",
-                      "retry": 0,
-                      "retryIntervalInSeconds": 30,
-                      "secureOutput": false,
-                      "secureInput": false
-                    },
-                    "typeProperties": {
-                      "source": {
-                        "type": "SqlServerSource",
-                        "sqlReaderQuery": {
-                          "value": "@concat('SELECT name FROM [', item().DataBaseName, '].sys.tables')",
-                          "type": "Expression"
-                        },
-                        "queryTimeout": "02:00:00",
-                        "partitionOption": "None"
-                      },
-                      "firstRowOnly": false,
-                      "datasetSettings": {
-                        "annotations": [],
-                        "type": "SqlServerTable",
-                        "schema": [],
-                        "externalReferences": {
-                          "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "name": "nb_answersig_build_site_sql",
-                    "type": "TridentNotebook",
-                    "dependsOn": [
-                      {
-                        "activity": "lkp_get_existing_columns",
-                        "dependencyConditions": [
-                          "Succeeded"
-                        ]
-                      }
-                    ],
-                    "policy": {
-                      "timeout": "0.12:00:00",
-                      "retry": 3,
-                      "retryIntervalInSeconds": 30,
-                      "secureOutput": false,
-                      "secureInput": false
-                    },
-                    "typeProperties": {
-                      "notebookId": "673e26ce-cd7a-4b79-83d3-5b5cf7a76c79",
-                      "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                      "parameters": {
-                        "p_site_code": {
-                          "value": {
-                            "value": "@item().SiteCode",
-                            "type": "Expression"
-                          },
-                          "type": "string"
-                        },
-                        "p_source_database": {
-                          "value": {
-                            "value": "@item().DataBaseName",
-                            "type": "Expression"
-                          },
-                          "type": "string"
-                        },
-                        "p_ingest_run_id": {
-                          "value": {
-                            "value": "@pipeline().parameters.p_ingest_run_id",
-                            "type": "Expression"
-                          },
-                          "type": "string"
-                        },
-                        "p_lookback_days": {
-                          "value": {
-                            "value": "@coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)",
-                            "type": "Expression"
-                          },
-                          "type": "int"
-                        },
-                        "p_reload": {
-                          "value": {
-                            "value": "@pipeline().parameters.p_reload",
-                            "type": "Expression"
-                          },
-                          "type": "bool"
-                        },
-                        "p_existing_tables_json": {
-                          "value": {
-                            "value": "@string(activity('lkp_get_existing_tables').output.value)",
-                            "type": "Expression"
-                          },
-                          "type": "string"
-                        },
-                        "p_existing_columns_json": {
-                          "value": {
-                            "value": "@string(activity('lkp_get_existing_columns').output.value)",
-                            "type": "Expression"
-                          },
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "name": "sv_set_answersig_sql",
-                    "type": "SetVariable",
-                    "state": "Inactive",
-                    "onInactiveMarkAs": "Succeeded",
-                    "dependsOn": [],
-                    "policy": {
-                      "secureOutput": false,
-                      "secureInput": false
-                    },
-                    "typeProperties": {
-                      "variableName": "v_answersig_sql",
-                      "value": {
-                        "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue",
-                        "type": "Expression"
-                      }
-                    }
-                  },
-                  {
-                    "name": "cp_answersig_to_bronze",
-                    "type": "Copy",
-                    "dependsOn": [
-                      {
-                        "activity": "nb_answersig_build_site_sql",
-                        "dependencyConditions": [
-                          "Succeeded"
-                        ]
-                      }
-                    ],
-                    "policy": {
-                      "timeout": "0.12:00:00",
-                      "retry": 0,
-                      "retryIntervalInSeconds": 30,
-                      "secureOutput": false,
-                      "secureInput": false
-                    },
-                    "typeProperties": {
-                      "source": {
-                        "type": "SqlServerSource",
-                        "sqlReaderQuery": {
-                          "value": "@activity('nb_answersig_build_site_sql').output.result.exitValue\n",
-                          "type": "Expression"
-                        },
-                        "queryTimeout": "02:00:00",
-                        "partitionOption": "None",
-                        "datasetSettings": {
-                          "annotations": [],
-                          "type": "SqlServerTable",
-                          "schema": [],
-                          "externalReferences": {
-                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                          }
-                        }
-                      },
-                      "sink": {
-                        "type": "LakehouseTableSink",
-                        "tableActionOption": "Append",
-                        "applyVOrder": false,
-                        "datasetSettings": {
-                          "annotations": [],
-                          "linkedService": {
-                            "name": "bhg_bronze",
-                            "properties": {
-                              "annotations": [],
-                              "type": "Lakehouse",
-                              "typeProperties": {
-                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                "rootFolder": "Tables"
-                              }
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{\"FormAnswerSignatures\":{\"status\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms_sites').error,'FormAnswerSignatures Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')"
                             }
-                          },
-                          "type": "LakehouseTable",
-                          "schema": [],
-                          "typeProperties": {
-                            "schema": "Forms",
-                            "table": "br_tblFormAnswerSig"
-                          }
                         }
-                      },
-                      "enableStaging": false,
-                      "translator": {
-                        "type": "TabularTranslator",
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                          "allowDataTruncation": true,
-                          "treatBooleanAsNumber": false
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "name": "lkp_get_existing_columns",
-                    "type": "Lookup",
-                    "dependsOn": [
-                      {
-                        "activity": "lkp_get_existing_tables",
-                        "dependencyConditions": [
-                          "Succeeded"
-                        ]
-                      }
                     ],
-                    "policy": {
-                      "timeout": "0.12:00:00",
-                      "retry": 0,
-                      "retryIntervalInSeconds": 30,
-                      "secureOutput": false,
-                      "secureInput": false
-                    },
-                    "typeProperties": {
-                      "source": {
-                        "type": "SqlServerSource",
-                        "sqlReaderQuery": {
-                          "value": "@concat(\n'SELECT table_name = t.name, column_name = c.name\nFROM [', item().DataBaseName, '].sys.tables t\nJOIN [', item().DataBaseName, '].sys.columns c\n  ON t.object_id = c.object_id'\n)",
-                          "type": "Expression"
-                        },
-                        "queryTimeout": "02:00:00",
-                        "partitionOption": "None"
-                      },
-                      "firstRowOnly": false,
-                      "datasetSettings": {
-                        "annotations": [],
-                        "type": "SqlServerTable",
-                        "schema": [],
-                        "externalReferences": {
-                          "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "policy": {
-                      "retryIntervalInSeconds": 30,
-                      "secureInput": false,
-                      "retry": 3,
-                      "timeout": "0.12:00:00",
-                      "secureOutput": false
-                    },
-                    "typeProperties": {
-                      "sink": {
-                        "tableActionOption": "Append",
-                        "applyVOrder": false,
-                        "datasetSettings": {
-                          "typeProperties": {
-                            "table": "br_answersig_site_success",
-                            "schema": "Forms"
-                          },
-                          "linkedService": {
-                            "properties": {
-                              "typeProperties": {
-                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                "rootFolder": "Tables"
-                              },
-                              "type": "Lakehouse",
-                              "annotations": []
-                            },
-                            "name": "bhg_bronze"
-                          },
-                          "type": "LakehouseTable",
-                          "schema": [],
-                          "annotations": []
-                        },
-                        "type": "LakehouseTableSink",
-                        "partitionOption": "None"
-                      },
-                      "enableStaging": false,
-                      "source": {
-                        "partitionOption": "None",
-                        "datasetSettings": {
-                          "type": "SqlServerTable",
-                          "schema": [],
-                          "annotations": [],
-                          "externalReferences": {
-                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                          }
-                        },
-                        "sqlReaderQuery": {
-                          "value": "@concat('SELECT ''FormAnswerSignatures'' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                          "type": "Expression"
-                        },
-                        "type": "SqlServerSource",
-                        "queryTimeout": "02:00:00"
-                      },
-                      "translator": {
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                          "allowDataTruncation": true,
-                          "treatBooleanAsNumber": false
-                        },
-                        "type": "TabularTranslator"
-                      }
-                    },
-                    "name": "mk_answersig_site_success",
-                    "dependsOn": [
-                      {
-                        "activity": "cp_answersig_to_bronze",
-                        "dependencyConditions": [
-                          "Succeeded"
-                        ]
-                      }
-                    ],
-                    "type": "Copy"
-                  }
-                ]
-              }
+                    "setSystemVariable": true
+                }
             }
-          ]
-        }
-      },
-      {
-        "policy": {
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "typeProperties": {
-          "variableName": "pipelineReturnValue",
-          "setSystemVariable": true,
-          "value": [
-            {
-              "key": "v_bronze_method_results_json",
-              "value": {
-                "content": "@concat('{\"FormAnswerSignatures\":{\"status\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms_sites').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms_sites').error,'FormAnswerSignatures Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')",
-                "type": "Expression"
-              }
-            }
-          ]
-        },
-        "name": "set_child_bronze_method_results",
-        "dependsOn": [
-          {
-            "activity": "fe_each_samms_sites",
-            "dependencyConditions": [
-              "Completed"
-            ]
-          }
         ],
-        "type": "SetVariable"
-      }
-    ],
-    "parameters": {
-      "p_ingest_run_id": {
-        "type": "string",
-        "defaultValue": "manual-run"
-      },
-      "p_lookback_days": {
-        "type": "int",
-        "defaultValue": 30
-      },
-      "p_sites": {
-        "type": "array",
-        "defaultValue": []
-      },
-      "p_reload": {
-        "type": "bool",
-        "defaultValue": false
-      },
-      "p_audit_context_json": {
-        "type": "string"
-      }
-    },
-    "variables": {
-      "v_answersig_sql": {
-        "type": "String"
-      }
-    },
-    "lastModifiedByObjectId": "bd4b63e3-7995-4ef5-b12f-c542b2777eef",
-    "lastPublishTime": "2026-06-16T07:20:17Z"
-  }
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 30
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_reload": {
+                "type": "bool",
+                "defaultValue": false
+            },
+            "p_audit_context_json": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "v_answersig_sql": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-07-17T18:53:37Z"
+    }
 }
 
 Parent:  Execute_Pipeline_AnswerSignature
@@ -636,6 +544,13 @@ Parent:  Execute_Pipeline_AnswerSignature
                         "p_sites_json": {
                             "value": {
                                 "value": "@string(activity('flt_active_formanswersignatures_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -921,6 +836,8 @@ Parent:  Execute_Pipeline_AnswerSignature
             {
                 "name": "Prepare_FormAnswerSignatures_Gold_Table",
                 "type": "Script",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
                         "activity": "nb_answersig_bronze_to_silver",
@@ -964,6 +881,8 @@ Parent:  Execute_Pipeline_AnswerSignature
             {
                 "name": "copy_answersig_silver_to_gold",
                 "type": "Copy",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
                         "activity": "Prepare_FormAnswerSignatures_Gold_Table",
@@ -1000,7 +919,7 @@ Parent:  Execute_Pipeline_AnswerSignature
                             "schema": [],
                             "typeProperties": {
                                 "schema": "pats",
-                                "table": "tbl_dbo_FormAnswerSignatures"
+                                "table": "tbl_dbo_formanswersignatures"
                             }
                         }
                     },
@@ -1182,6 +1101,8 @@ Parent:  Execute_Pipeline_AnswerSignature
             {
                 "name": "Publish_FormAnswerSignatures_Gold",
                 "type": "Script",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
                         "activity": "copy_answersig_silver_to_gold",
@@ -1288,7 +1209,7 @@ Parent:  Execute_Pipeline_AnswerSignature
             },
             "p_reload": {
                 "type": "bool",
-                "defaultValue": false
+                "defaultValue": true
             }
         },
         "variables": {
@@ -1300,7 +1221,7 @@ Parent:  Execute_Pipeline_AnswerSignature
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-10T17:14:59Z"
+        "lastPublishTime": "2026-07-31T13:56:34Z"
     }
 }
 
@@ -2041,10 +1962,12 @@ except NameError: p_reload = False
 try: p_sites_json
 except NameError: p_sites_json = "[]"
 
+try: p_bronze_method_results_json
+except NameError: p_bronze_method_results_json = "{}"
+
 bronze_table = "bhg_bronze.Forms.br_tblFormAnswerSig"
 silver_table = "bhg_silver.pats.tbl_dbo_FormAnswerSignatures"
 f2p_table = "bhg_silver.ctrl.Forms2Process"
-site_success_table = "bhg_bronze.Forms.br_answersig_site_success"
 method_name = "FormAnswerSignatures"
 final_columns = [
     "SiteCode",
@@ -2092,13 +2015,6 @@ def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_sk
         body["site_results"] = site_results
     return {method_name: body}
 
-def table_exists(table_name):
-    try:
-        spark.table(table_name).limit(0).count()
-        return True
-    except Exception:
-        return False
-
 def parse_json_list(raw):
     if not raw:
         return []
@@ -2107,6 +2023,26 @@ def parse_json_list(raw):
         return parsed if isinstance(parsed, list) else []
     except Exception:
         return []
+
+def parse_json_obj(raw):
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(str(raw))
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+def bronze_result():
+    parsed = parse_json_obj(p_bronze_method_results_json)
+    result = parsed.get(method_name)
+    return result if isinstance(result, dict) else {}
+
+def bronze_had_method_failure():
+    result = bronze_result()
+    status = str(result.get("status") or "").upper()
+    failed_stage = str(result.get("failed_stage") or "").upper()
+    return status in ("FAILED", "ERROR") or failed_stage == "BR"
 
 def effective_lookback_days():
     values = []
@@ -2138,27 +2074,26 @@ def active_site_rows():
             seen.add(str(site_code))
     return rows
 
-def successful_sites_from_marker():
-    if not table_exists(site_success_table):
-        return []
-    marker_df = spark.table(site_success_table).where(col("IngestRunId") == lit(p_ingest_run_id)).where(col("SiteCode").isNotNull())
-    if "Method" in marker_df.columns:
-        marker_df = marker_df.where(col("Method") == lit(method_name))
-    return [str(row["SiteCode"]) for row in marker_df.select("SiteCode").distinct().collect()]
-
-def build_site_results(successful_sites, failed_message=None):
+def build_site_results(successful_sites, site_row_counts=None, bronze_had_failure=False, failed_message=None):
     active_sites = active_site_rows()
     if not active_sites:
         active_sites = [{"site_code": site, "database_name": None} for site in successful_sites]
     successful = {str(site) for site in successful_sites if site}
+    counts = {str(k): int(v or 0) for k, v in (site_row_counts or {}).items()}
     results = []
     for site in active_sites:
         site_code = site["site_code"]
-        item = {"site_code": site_code, "database_name": site.get("database_name")}
+        item = {
+            "site_code": site_code,
+            "database_name": site.get("database_name"),
+            "rows_written": counts.get(site_code, 0)
+        }
         if site_code in successful:
             item["status"] = "SUCCESS"
+        elif bronze_had_failure:
+            item.update({"status": "FAILED", "failed_stage": "BR", "error_message": failed_message or "FormAnswerSignatures Bronze copy failed or wrote no rows for this ingest run."})
         else:
-            item.update({"status": "FAILED", "failed_stage": "BR", "error_message": failed_message or "FormAnswerSignatures Bronze copy failed or did not write the site success marker."})
+            item["status"] = "SUCCESS"
         results.append(item)
     return results
 
@@ -2167,10 +2102,24 @@ wrkdt = datetime(2010, 1, 1) if p_reload else datetime.now() - timedelta(days=in
 f2p_df = spark.table(f2p_table).filter("Enabled = true AND RowState = true").select("FormName", "DateFilterEnabled").toPandas()
 
 bronze_df = spark.table(bronze_table).where(col("IngestRunId") == p_ingest_run_id)
-bronze_row_sites = [str(row["SiteCode"]) for row in bronze_df.where(col("SiteCode").isNotNull()).select("SiteCode").distinct().collect()]
-marker_success_sites = successful_sites_from_marker()
-successful_sites = sorted(set(bronze_row_sites) | set(marker_success_sites))
-site_results = build_site_results(successful_sites)
+bronze_site_counts = {
+    str(row["SiteCode"]): int(row["row_count"])
+    for row in (
+        bronze_df
+        .where(col("SiteCode").isNotNull())
+        .groupBy("SiteCode")
+        .count()
+        .withColumnRenamed("count", "row_count")
+        .collect()
+    )
+}
+successful_sites = sorted(bronze_site_counts.keys())
+bronze_failed = bronze_had_method_failure()
+site_results = build_site_results(
+    successful_sites,
+    site_row_counts=bronze_site_counts,
+    bronze_had_failure=bronze_failed
+)
 
 if successful_sites:
     bronze_df = bronze_df.where(col("SiteCode").isin(successful_sites))
@@ -2179,11 +2128,11 @@ bronze_count = bronze_df.count()
 print(f"Successful Bronze sites for this run: {successful_sites}")
 print(f"Bronze rows for successful sites in this run: {bronze_count}")
 
-if not successful_sites:
+if bronze_failed and not successful_sites:
     notebook_exit(result_payload("SKIPPED", rows_read=0, message=f"No successful Bronze sites found for FormAnswerSignatures ingest_run_id = {p_ingest_run_id}; Silver skipped.", site_results=site_results))
 
 if bronze_count == 0:
-    notebook_exit(result_payload("SUCCESS", rows_read=0, message=f"Successful Bronze site markers exist, but no Bronze rows were found for ingest_run_id = {p_ingest_run_id}.", site_results=site_results))
+    notebook_exit(result_payload("SUCCESS", rows_read=0, message=f"Bronze completed but no FormAnswerSignatures rows were found for ingest_run_id = {p_ingest_run_id}.", site_results=site_results))
 
 bad_clientid_df = bronze_df.where(col("ClientId").isNull())
 bad_clientid_count = bad_clientid_df.count()

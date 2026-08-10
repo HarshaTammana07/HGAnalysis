@@ -1205,7 +1205,7 @@ Parent:
                 "type": "TridentNotebook",
                 "dependsOn": [
                     {
-                        "activity": "nb_update_taskconfig_loadtype",
+                        "activity": "nb_darts_reset_default_loadtype",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -1417,7 +1417,7 @@ Parent:
                 }
             },
             {
-                "name": "nb_update_taskconfig_loadtype",
+                "name": "nb_darts_reset_default_loadtype",
                 "type": "TridentNotebook",
                 "dependsOn": [
                     {
@@ -1450,7 +1450,7 @@ Parent:
                             "value": "INCREMENTAL",
                             "type": "string"
                         },
-                        "p_reset_loadtypes_json": {
+                        "p_reset_loadtype_json": {
                             "value": "[\"FULL\",\"RANGE\",\"MONTH\",\"YEAR\"]",
                             "type": "string"
                         },
@@ -1493,7 +1493,7 @@ Parent:
             }
         },
         "lastModifiedByObjectId": "41032ad8-8248-4dd3-9ac8-0281d6ef4ebd",
-        "lastPublishTime": "2026-07-10T11:41:23Z"
+        "lastPublishTime": "2026-07-17T10:15:01Z"
     }
 }
 
@@ -1661,9 +1661,6 @@ child:
                                                             "annotations": [],
                                                             "type": "SqlServerTable",
                                                             "schema": [],
-                                                            "typeProperties": {
-                                                                "database": "SAMMSGLOBAL"
-                                                            },
                                                             "externalReferences": {
                                                                 "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
                                                             }
@@ -1735,9 +1732,6 @@ child:
                                                             "annotations": [],
                                                             "type": "SqlServerTable",
                                                             "schema": [],
-                                                            "typeProperties": {
-                                                                "database": "SAMMSGLOBAL"
-                                                            },
                                                             "externalReferences": {
                                                                 "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
                                                             }
@@ -1809,9 +1803,6 @@ child:
                                                             "annotations": [],
                                                             "type": "SqlServerTable",
                                                             "schema": [],
-                                                            "typeProperties": {
-                                                                "database": "SAMMSGLOBAL"
-                                                            },
                                                             "externalReferences": {
                                                                 "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
                                                             }
@@ -1883,9 +1874,6 @@ child:
                                                             "annotations": [],
                                                             "type": "SqlServerTable",
                                                             "schema": [],
-                                                            "typeProperties": {
-                                                                "database": "SAMMSGLOBAL"
-                                                            },
                                                             "externalReferences": {
                                                                 "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
                                                             }
@@ -1957,9 +1945,6 @@ child:
                                                             "annotations": [],
                                                             "type": "SqlServerTable",
                                                             "schema": [],
-                                                            "typeProperties": {
-                                                                "database": "SAMMSGLOBAL"
-                                                            },
                                                             "externalReferences": {
                                                                 "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
                                                             }
@@ -2007,11 +1992,11 @@ child:
                                 ],
                                 "defaultActivities": [
                                     {
-                                        "name": "Fail Invalid Load",
+                                        "name": "Fail",
                                         "type": "Fail",
                                         "dependsOn": [],
                                         "typeProperties": {
-                                            "message": "Invalid load type or date filter provided",
+                                            "message": "Invalid LoadType",
                                             "errorCode": "400"
                                         }
                                     }
@@ -2039,8 +2024,8 @@ child:
                 "type": "string"
             }
         },
-        "lastModifiedByObjectId": "41032ad8-8248-4dd3-9ac8-0281d6ef4ebd",
-        "lastPublishTime": "2026-07-01T23:28:49Z"
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-08-04T19:16:57Z"
     }
 }
 

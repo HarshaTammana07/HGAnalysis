@@ -104,7 +104,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate,\n',\n'    c.[pinbeforesig] AS [_pinbeforesig_mapped],\n',\n'    c.[forcefindtype] AS [_forcefindtype_mapped],\n',\n'    c.[PumpWindow] AS [_pumpwindow_mapped],\n',\n'    c.[VORegistrationPath] AS [_VOregistrationpath_mapped],\n',\n'    c.[blockAptCalHold] AS [_blockaptcalhold_mapped],\n',\n'    c.*\n',\n'FROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n'] c\n',\n'WHERE 1 = 1\nORDER BY c.[PKEY]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate,\n',\n'    c.[pinbeforesig] AS [_pinbeforesig_mapped],\n',\n'    c.[forcefindtype] AS [_forcefindtype_mapped],\n',\n'    c.[PumpWindow] AS [_pumpwindow_mapped],\n',\n'    c.[VORegistrationPath] AS [_VOregistrationpath_mapped],\n',\n'    c.[blockAptCalHold] AS [_blockaptcalhold_mapped],\n',\n'    c.*\n',\n'FROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n'] c\n',\n'WHERE 1 = 1\nORDER BY c.[PKEY]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -2101,122 +2101,6 @@ Child json:
                                                 }
                                             }
                                         }
-                                    },
-                                    {
-                                        "name": "mk_clinic_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_clinic_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
                                     }
                                 ]
                             }
@@ -2323,7 +2207,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [3pID] AS [pID],\n    [Clinic] AS [Clinic],\n    [Address] AS [Address],\n    [State] AS [State],\n    [Zip] AS [Zip],\n    [NPI] AS [NPI],\n    [TaxID] AS [TaxID],\n    [Medicaid] AS [Medicaid],\n    [City] AS [City],\n    [DRlname] AS [DRlname],\n    [DRfname] AS [DRfname],\n    [DRnpi] AS [DRnpi],\n    [ProviderAddress] AS [ProviderAddress],\n    [ProviderCity] AS [ProviderCity],\n    [ProviderName] AS [ProviderName],\n    [ProviderPhone] AS [ProviderPhone],\n    [ProviderState] AS [ProviderState],\n    [ProviderZip] AS [ProviderZip],\n    [SiteID] AS [SiteID],\n    [Clia] AS [Clia],\n    [strDBNotes] AS [strDBNotes],\n    [ProviderDesc] AS [ProviderDesc],\n    [blHasPreloader] AS [blHasPreloader],\n    [IndividualNPI] AS [IndividualNPI],\n    [Taxonomy] AS [Taxonomy],\n    RowChkSum = CHECKSUM([3pID], [Clinic], [Address], [State], [Zip], [NPI], [TaxID], [Medicaid], [City], [DRlname], [DRfname], [DRnpi], [ProviderAddress], [ProviderCity], [ProviderName], [ProviderPhone], [ProviderState], [ProviderZip], [SiteID], [Clia], [strDBNotes], [ProviderDesc], [blHasPreloader], [IndividualNPI], [Taxonomy])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [3pID]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [3pID] AS [pID],\n    [Clinic] AS [Clinic],\n    [Address] AS [Address],\n    [State] AS [State],\n    [Zip] AS [Zip],\n    [NPI] AS [NPI],\n    [TaxID] AS [TaxID],\n    [Medicaid] AS [Medicaid],\n    [City] AS [City],\n    [DRlname] AS [DRlname],\n    [DRfname] AS [DRfname],\n    [DRnpi] AS [DRnpi],\n    [ProviderAddress] AS [ProviderAddress],\n    [ProviderCity] AS [ProviderCity],\n    [ProviderName] AS [ProviderName],\n    [ProviderPhone] AS [ProviderPhone],\n    [ProviderState] AS [ProviderState],\n    [ProviderZip] AS [ProviderZip],\n    [SiteID] AS [SiteID],\n    [Clia] AS [Clia],\n    [strDBNotes] AS [strDBNotes],\n    [ProviderDesc] AS [ProviderDesc],\n    [blHasPreloader] AS [blHasPreloader],\n    [IndividualNPI] AS [IndividualNPI],\n    [Taxonomy] AS [Taxonomy],\n    RowChkSum = CHECKSUM([3pID], [Clinic], [Address], [State], [Zip], [NPI], [TaxID], [Medicaid], [City], [DRlname], [DRfname], [DRnpi], [ProviderAddress], [ProviderCity], [ProviderName], [ProviderPhone], [ProviderState], [ProviderZip], [SiteID], [Clia], [strDBNotes], [ProviderDesc], [blHasPreloader], [IndividualNPI], [Taxonomy])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [3pID]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -2367,122 +2251,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_3p_setup_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_3p_setup_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -2596,7 +2364,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [cdeID] AS [cdeID],\n    [cdeGroup] AS [cdeGroup],\n    [cdeDesc] AS [cdeDesc],\n    [cdeBillable] AS [cdeBillable],\n    [cdeUA] AS [cdeUA],\n    [cdeIntAmt] AS [cdeIntAmt],\n    [cdeLiquid] AS [cdeLiquid],\n    [cdeSTAFFCODE] AS [cdeSTAFFCODE],\n    [cdeFUND] AS [cdeFUND],\n    [cdeMODAlity] AS [cdeMODAlity],\n    [cdeDRUGFREE] AS [cdeDRUGFREE],\n    [cdePROVIDER] AS [cdePROVIDER],\n    [cdeSiteNum] AS [cdeSiteNum],\n    [rowguid] AS [rowguid],\n    [cdeBillableResidential] AS [cdeBillableResidential],\n    [cdeServiceSetting] AS [cdeServiceSetting],\n    [cdeDischargeType] AS [cdeDischargeType],\n    [cdeSigRequired] AS [cdeSigRequired],\n    [cdeResidential] AS [cdeResidential],\n    [cdeAllowOverlap] AS [cdeAllowOverlap],\n    [duiAMT] AS [duiAMT],\n    [duiHourRate] AS [duiHourRate],\n    [blDEFAULT] AS [blDEFAULT],\n    [WeeklyFee] AS [WeeklyFee],\n    [MustHaveBilling] AS [MustHaveBilling],\n    [Suboxoneprog] AS [Suboxoneprog],\n    [cdeInsurance] AS [cdeInsurance],\n    [DefRate] AS [DefRate],\n    [SiteID] AS [SiteID],\n    [cdelblcolor] AS [cdelblcolor],\n    [cde3pdonotbill] AS [cde3pdonotbill],\n    [cde3pPOSoverride] AS [cde3pPOSoverride],\n    [IsPrescreening] AS [IsPrescreening],\n    [OBAT] AS [OBAT],\n    [ReqAuth] AS [ReqAuth],\n    [IntakeProg] AS [IntakeProg],\n    RowChkSum = CHECKSUM([cdeID], [cdeGroup], [cdeDesc], [cdeBillable], [cdeUA], [cdeIntAmt], [cdeLiquid], [cdeSTAFFCODE], [cdeFUND], [cdeMODAlity], [cdeDRUGFREE], [cdePROVIDER], [cdeSiteNum], [rowguid], [cdeBillableResidential], [cdeServiceSetting], [cdeDischargeType], [cdeSigRequired], [cdeResidential], [cdeAllowOverlap], [duiAMT], [duiHourRate], [blDEFAULT], [WeeklyFee], [MustHaveBilling], [Suboxoneprog], [cdeInsurance], [DefRate], [SiteID], [cdelblcolor], [cde3pdonotbill], [cde3pPOSoverride], [IsPrescreening], [OBAT], [ReqAuth], [IntakeProg])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [cdeID]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [cdeID] AS [cdeID],\n    [cdeGroup] AS [cdeGroup],\n    [cdeDesc] AS [cdeDesc],\n    [cdeBillable] AS [cdeBillable],\n    [cdeUA] AS [cdeUA],\n    [cdeIntAmt] AS [cdeIntAmt],\n    [cdeLiquid] AS [cdeLiquid],\n    [cdeSTAFFCODE] AS [cdeSTAFFCODE],\n    [cdeFUND] AS [cdeFUND],\n    [cdeMODAlity] AS [cdeMODAlity],\n    [cdeDRUGFREE] AS [cdeDRUGFREE],\n    [cdePROVIDER] AS [cdePROVIDER],\n    [cdeSiteNum] AS [cdeSiteNum],\n    [rowguid] AS [rowguid],\n    [cdeBillableResidential] AS [cdeBillableResidential],\n    [cdeServiceSetting] AS [cdeServiceSetting],\n    [cdeDischargeType] AS [cdeDischargeType],\n    [cdeSigRequired] AS [cdeSigRequired],\n    [cdeResidential] AS [cdeResidential],\n    [cdeAllowOverlap] AS [cdeAllowOverlap],\n    [duiAMT] AS [duiAMT],\n    [duiHourRate] AS [duiHourRate],\n    [blDEFAULT] AS [blDEFAULT],\n    [WeeklyFee] AS [WeeklyFee],\n    [MustHaveBilling] AS [MustHaveBilling],\n    [Suboxoneprog] AS [Suboxoneprog],\n    [cdeInsurance] AS [cdeInsurance],\n    [DefRate] AS [DefRate],\n    [SiteID] AS [SiteID],\n    [cdelblcolor] AS [cdelblcolor],\n    [cde3pdonotbill] AS [cde3pdonotbill],\n    [cde3pPOSoverride] AS [cde3pPOSoverride],\n    [IsPrescreening] AS [IsPrescreening],\n    [OBAT] AS [OBAT],\n    [ReqAuth] AS [ReqAuth],\n    [IntakeProg] AS [IntakeProg],\n    RowChkSum = CHECKSUM([cdeID], [cdeGroup], [cdeDesc], [cdeBillable], [cdeUA], [cdeIntAmt], [cdeLiquid], [cdeSTAFFCODE], [cdeFUND], [cdeMODAlity], [cdeDRUGFREE], [cdePROVIDER], [cdeSiteNum], [rowguid], [cdeBillableResidential], [cdeServiceSetting], [cdeDischargeType], [cdeSigRequired], [cdeResidential], [cdeAllowOverlap], [duiAMT], [duiHourRate], [blDEFAULT], [WeeklyFee], [MustHaveBilling], [Suboxoneprog], [cdeInsurance], [DefRate], [SiteID], [cdelblcolor], [cde3pdonotbill], [cde3pPOSoverride], [IsPrescreening], [OBAT], [ReqAuth], [IntakeProg])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [cdeID]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -2640,122 +2408,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_codes_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_codes_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -2869,7 +2521,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [sID] AS [sID],\n    [sSERVICE] AS [sSERVICE],\n    [sArea] AS [sArea],\n    [sCost] AS [sCost],\n    [sCPTCODE] AS [sCptCode],\n    [sREQSIG] AS [sREQSIG],\n    [sREQTIME] AS [sREQTIME],\n    [blAllowOverlap] AS [blAllowOverlap],\n    [oldArea] AS [oldArea],\n    [oldSrv] AS [oldSrv],\n    [sFilter] AS [sFilter],\n    [sReportBillable] AS [sReportBillable],\n    [sTimeOnly] AS [sTimeOnly],\n    RowChkSum = CHECKSUM([sID], [sSERVICE], [sArea], [sCost], [sCPTCODE], [sREQSIG], [sREQTIME], [blAllowOverlap], [oldArea], [oldSrv], [sFilter], [sReportBillable], [sTimeOnly])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [sID]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [sID] AS [sID],\n    [sSERVICE] AS [sSERVICE],\n    [sArea] AS [sArea],\n    [sCost] AS [sCost],\n    [sCPTCODE] AS [sCptCode],\n    [sREQSIG] AS [sREQSIG],\n    [sREQTIME] AS [sREQTIME],\n    [blAllowOverlap] AS [blAllowOverlap],\n    [oldArea] AS [oldArea],\n    [oldSrv] AS [oldSrv],\n    [sFilter] AS [sFilter],\n    [sReportBillable] AS [sReportBillable],\n    [sTimeOnly] AS [sTimeOnly],\n    RowChkSum = CHECKSUM([sID], [sSERVICE], [sArea], [sCost], [sCPTCODE], [sREQSIG], [sREQTIME], [blAllowOverlap], [oldArea], [oldSrv], [sFilter], [sReportBillable], [sTimeOnly])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [sID]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -2913,122 +2565,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_services_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_services_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -3142,7 +2678,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [DropDownListItem] AS [DropDownListItem],\n    [DropDownListId] AS [DropDownListId],\n    [ddapcode] AS [ddapcode],\n    RowChkSum = CHECKSUM([Id], [DropDownListItem], [DropDownListId], [ddapcode])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [Id]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [DropDownListItem] AS [DropDownListItem],\n    [DropDownListId] AS [DropDownListId],\n    [ddapcode] AS [ddapcode],\n    RowChkSum = CHECKSUM([Id], [DropDownListItem], [DropDownListId], [ddapcode])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [Id]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -3186,122 +2722,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_dropdown_list_items_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_dropdown_list_items_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -3415,7 +2835,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [caID] AS [caID],\n    [caQID] AS [caQID],\n    [caCLTID] AS [caCLTID],\n    [caANS] AS [caANS],\n    RowChkSum = CHECKSUM([caID], [caQID], [caCLTID], [caANS])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [caID], [caQID], [caCLTID]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [caID] AS [caID],\n    [caQID] AS [caQID],\n    [caCLTID] AS [caCLTID],\n    [caANS] AS [caANS],\n    RowChkSum = CHECKSUM([caID], [caQID], [caCLTID], [caANS])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [caID], [caQID], [caCLTID]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -3459,122 +2879,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_custom_answers_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_custom_answers_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -3688,7 +2992,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [cID] AS [cID],\n    [cQuestion] AS [cQuestion],\n    RowChkSum = CHECKSUM([cID], [cQuestion])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [cID]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [cID] AS [cID],\n    [cQuestion] AS [cQuestion],\n    RowChkSum = CHECKSUM([cID], [cQuestion])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE 1 = 1\nORDER BY [cID]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -3732,122 +3036,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_custom_questions_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_custom_questions_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -3961,7 +3149,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(pipeline().parameters.p_lookback_days),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    pp.id AS [PreAdmissionid],\n    pp.PatientID AS [Clientid],\n    clt.cltM4ID AS [cltM4ID],\n    pp.CreatedON AS [CreatedON],\n    pp.Createdby AS [Createdby],\n    pp.PreAdmissionDate AS [PreAdmissionDate],\n    RegistrationMode = CASE WHEN pp.RegistrationModeID = 0 THEN ''Phone'' WHEN pp.RegistrationModeID = 1 THEN ''Walk-In'' WHEN pp.RegistrationModeID = 2 THEN ''By Appointment'' ELSE CAST(pp.RegistrationModeID AS varchar) END,\n    tc.cdeDesc AS [ReferralSourcedesc],\n    pp.PrimaryReferralSourceNote AS [PrimaryReferralSourceNote],\n    pg.Description AS [Program],\n    pp.InsuranceType AS [InsuranceType],\n    pp.IntakeProgram AS [IntakeProgram],\n    pp.IntakeProgramDate AS [IntakeProgramDate],\n    IsCurrentlyInOpiateProgram = CASE WHEN pp.IsCurrentlyInOpiateProgram = 1 THEN ''Yes'' WHEN pp.IsCurrentlyInOpiateProgram = 0 THEN ''No'' ELSE CAST(pp.IsCurrentlyInOpiateProgram AS varchar) END,\n    IsPatientAtPainManagementClinic = CASE WHEN pp.IsPatientAtPainManagementClinic = 1 THEN ''Yes'' WHEN pp.IsPatientAtPainManagementClinic = 0 THEN ''No'' ELSE CAST(pp.IsPatientAtPainManagementClinic AS varchar) END,\n    IsHavingLegalPrescription = CASE WHEN pp.IsHavingLegalPrescription = 1 THEN ''Yes'' WHEN pp.IsHavingLegalPrescription = 0 THEN ''No'' ELSE CAST(pp.IsHavingLegalPrescription AS varchar) END,\n    IsAnyLegalPrescriptionForPain = CASE WHEN pp.IsAnyLegalPrescriptionForPain = 1 THEN ''Yes'' WHEN pp.IsAnyLegalPrescriptionForPain = 0 THEN ''No'' ELSE CAST(pp.IsAnyLegalPrescriptionForPain AS varchar) END,\n    IsAnyOngoingMedicalCondition = CASE WHEN pp.IsAnyOngoingMedicalCondition = 1 THEN ''Yes'' WHEN pp.IsAnyOngoingMedicalCondition = 0 THEN ''No'' ELSE CAST(pp.IsAnyOngoingMedicalCondition AS varchar) END,\n    IsSuicidalThoughtWithin72Hours = CASE WHEN pp.IsSuicidalThoughtWithin72Hours = 1 THEN ''Yes'' WHEN pp.IsSuicidalThoughtWithin72Hours = 0 THEN ''No'' ELSE CAST(pp.IsSuicidalThoughtWithin72Hours AS varchar) END,\n    IsHavingPlanForHowToCommitSuicide = CASE WHEN pp.IsHavingPlanForHowToCommitSuicide = 1 THEN ''Yes'' WHEN pp.IsHavingPlanForHowToCommitSuicide = 0 THEN ''No'' ELSE CAST(pp.IsHavingPlanForHowToCommitSuicide AS varchar) END,\n    IsHomicidalThoughtWithin72Hours = CASE WHEN pp.IsHomicidalThoughtWithin72Hours = 1 THEN ''Yes'' WHEN pp.IsHomicidalThoughtWithin72Hours = 0 THEN ''No'' ELSE CAST(pp.IsHomicidalThoughtWithin72Hours AS varchar) END,\n    IsRecentlyReleasedFromPenal = CASE WHEN pp.IsRecentlyReleasedFromPenal = 1 THEN ''Yes'' WHEN pp.IsRecentlyReleasedFromPenal = 0 THEN ''No'' ELSE CAST(pp.IsRecentlyReleasedFromPenal AS varchar) END,\n    IsSpecialAccommodationRequired = CASE WHEN pp.IsSpecialAccommodationRequired = 1 THEN ''Yes'' WHEN pp.IsSpecialAccommodationRequired = 0 THEN ''No'' ELSE CAST(pp.IsSpecialAccommodationRequired AS varchar) END,\n    pp.ReasonSeekingTreatment AS [ReasonSeekingTreatment],\n    pp.AccomodationNeeded AS [AccomodationNeeded],\n    pp.ClientAddress AS [ClientAddress],\n    pp.Comments AS [Comments],\n    IsPatientAdmitted = CASE WHEN pp.IsPatientAdmitted = 1 THEN ''Yes'' WHEN pp.IsPatientAdmitted = 0 THEN ''No'' ELSE CAST(pp.IsPatientAdmitted AS varchar) END,\n    AreYouCurrentlyPregnant = CASE WHEN pp.AreYouCurrentlyPregnant = 0 THEN ''Yes'' WHEN pp.AreYouCurrentlyPregnant = 1 THEN ''No'' WHEN pp.AreYouCurrentlyPregnant = 2 THEN ''Unknown'' ELSE CAST(pp.AreYouCurrentlyPregnant AS varchar) END,\n    BringIDProof = CASE WHEN pp.BringIDProof = 1 THEN ''Yes'' WHEN pp.BringIDProof = 0 THEN ''No'' ELSE CAST(pp.BringIDProof AS varchar) END,\n    BringInsuranceCard = CASE WHEN pp.BringInsuranceCard = 1 THEN ''Yes'' WHEN pp.BringInsuranceCard = 0 THEN ''No'' ELSE CAST(pp.BringInsuranceCard AS varchar) END,\n    ClinicInfo = CASE WHEN pp.ClinicInfo = 1 THEN ''Yes'' WHEN pp.ClinicInfo = 0 THEN ''No'' ELSE CAST(pp.ClinicInfo AS varchar) END,\n    CurrntlyRecevingTreatmentForCondition = CASE WHEN pp.CurrntlyRecevingTreatmentForCondition = 1 THEN ''Yes'' WHEN pp.CurrntlyRecevingTreatmentForCondition = 0 THEN ''No'' ELSE CAST(pp.CurrntlyRecevingTreatmentForCondition AS varchar) END,\n    IsAnyPrescriptionForPain = CASE WHEN pp.IsAnyPrescriptionForPain = 1 THEN ''Yes'' WHEN pp.IsAnyPrescriptionForPain = 0 THEN ''No'' ELSE CAST(pp.IsAnyPrescriptionForPain AS varchar) END,\n    IsInsurance = CASE WHEN pp.IsInsurance = 1 THEN ''Yes'' WHEN pp.IsInsurance = 0 THEN ''No'' ELSE CAST(pp.IsInsurance AS varchar) END,\n    isOverTheCounterMedications = CASE WHEN pp.isOverTheCounterMedications = 1 THEN ''Yes'' WHEN pp.isOverTheCounterMedications = 0 THEN ''No'' ELSE CAST(pp.isOverTheCounterMedications AS varchar) END,\n    pp.ImmediateAssessment AS [ImmediateAssessment],\n    pp.ImmediateAssessment911 AS [ImmediateAssessment911],\n    pp.MedicalConditionsProviderName1 AS [MedicalConditionsProviderName1],\n    pp.MedicalConditionsProviderPhone1 AS [MedicalConditionsProviderPhone1],\n    pp.MedicalConditionsProviderName2 AS [MedicalConditionsProviderName2],\n    pp.MedicalConditionsProviderPhone2 AS [MedicalConditionsProviderPhone2],\n    PlanOfSuicide = CASE WHEN pp.PlanOfSuicide = 1 THEN ''Yes'' WHEN pp.PlanOfSuicide = 0 THEN ''No'' ELSE CAST(pp.PlanOfSuicide AS varchar) END,\n    PlanOnSpendingTimeAtClinic = CASE WHEN pp.PlanOnSpendingTimeAtClinic = 1 THEN ''Yes'' WHEN pp.PlanOnSpendingTimeAtClinic = 0 THEN ''No'' ELSE CAST(pp.PlanOnSpendingTimeAtClinic AS varchar) END,\n    tc2.cdeDesc AS [SAMMSProgram],\n    pp.OfficeUseWhy AS [OfficeUseWhy],\n    pp.OngoingMedicalConditionsWha AS [OngoingMedicalConditionsWha],\n    pp.PreAdd_Address AS [PreAdd_Address],\n    pp.LastUpdatedBy AS [LastUpdatedBy],\n    pp.LastUpdateOn AS [LastUpdateOn],\n    pp.PatientSignatureDate AS [PatientSignatureDate],\n    pp.DateofRelease AS [DateofRelease],\n    pp.Version AS [Version],\n    pp.IsDeleted AS [IsDeleted],\n    RowChkSum = CHECKSUM(pp.id, pp.PatientID, pp.LastUpdatedBy, pp.LastUpdateOn, pp.PatientSignatureDate, pp.DateofRelease, pp.Version, pp.IsDeleted, clt.cltM4ID)',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n'] pp\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[SF_Program] pg ON pp.ProgramID = pg.id\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblCodes] tc ON pp.ReferralSourceID = tc.cdeID\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblCodes] tc2 ON pp.SammsProgramID = tc2.cdeID\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblClient] clt ON pp.PatientID = clt.cltID\n',\n'WHERE LEN(pp.CreatedOn) > 0 AND pp.ClientAddress NOT LIKE ''%test data%''\nORDER BY pp.PatientID, pp.ID'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    pp.id AS [PreAdmissionid],\n    pp.PatientID AS [Clientid],\n    clt.cltM4ID AS [cltM4ID],\n    pp.CreatedON AS [CreatedON],\n    pp.Createdby AS [Createdby],\n    pp.PreAdmissionDate AS [PreAdmissionDate],\n    RegistrationMode = CASE WHEN pp.RegistrationModeID = 0 THEN ''Phone'' WHEN pp.RegistrationModeID = 1 THEN ''Walk-In'' WHEN pp.RegistrationModeID = 2 THEN ''By Appointment'' ELSE CAST(pp.RegistrationModeID AS varchar) END,\n    tc.cdeDesc AS [ReferralSourcedesc],\n    pp.PrimaryReferralSourceNote AS [PrimaryReferralSourceNote],\n    pg.Description AS [Program],\n    pp.InsuranceType AS [InsuranceType],\n    pp.IntakeProgram AS [IntakeProgram],\n    pp.IntakeProgramDate AS [IntakeProgramDate],\n    IsCurrentlyInOpiateProgram = CASE WHEN pp.IsCurrentlyInOpiateProgram = 1 THEN ''Yes'' WHEN pp.IsCurrentlyInOpiateProgram = 0 THEN ''No'' ELSE CAST(pp.IsCurrentlyInOpiateProgram AS varchar) END,\n    IsPatientAtPainManagementClinic = CASE WHEN pp.IsPatientAtPainManagementClinic = 1 THEN ''Yes'' WHEN pp.IsPatientAtPainManagementClinic = 0 THEN ''No'' ELSE CAST(pp.IsPatientAtPainManagementClinic AS varchar) END,\n    IsHavingLegalPrescription = CASE WHEN pp.IsHavingLegalPrescription = 1 THEN ''Yes'' WHEN pp.IsHavingLegalPrescription = 0 THEN ''No'' ELSE CAST(pp.IsHavingLegalPrescription AS varchar) END,\n    IsAnyLegalPrescriptionForPain = CASE WHEN pp.IsAnyLegalPrescriptionForPain = 1 THEN ''Yes'' WHEN pp.IsAnyLegalPrescriptionForPain = 0 THEN ''No'' ELSE CAST(pp.IsAnyLegalPrescriptionForPain AS varchar) END,\n    IsAnyOngoingMedicalCondition = CASE WHEN pp.IsAnyOngoingMedicalCondition = 1 THEN ''Yes'' WHEN pp.IsAnyOngoingMedicalCondition = 0 THEN ''No'' ELSE CAST(pp.IsAnyOngoingMedicalCondition AS varchar) END,\n    IsSuicidalThoughtWithin72Hours = CASE WHEN pp.IsSuicidalThoughtWithin72Hours = 1 THEN ''Yes'' WHEN pp.IsSuicidalThoughtWithin72Hours = 0 THEN ''No'' ELSE CAST(pp.IsSuicidalThoughtWithin72Hours AS varchar) END,\n    IsHavingPlanForHowToCommitSuicide = CASE WHEN pp.IsHavingPlanForHowToCommitSuicide = 1 THEN ''Yes'' WHEN pp.IsHavingPlanForHowToCommitSuicide = 0 THEN ''No'' ELSE CAST(pp.IsHavingPlanForHowToCommitSuicide AS varchar) END,\n    IsHomicidalThoughtWithin72Hours = CASE WHEN pp.IsHomicidalThoughtWithin72Hours = 1 THEN ''Yes'' WHEN pp.IsHomicidalThoughtWithin72Hours = 0 THEN ''No'' ELSE CAST(pp.IsHomicidalThoughtWithin72Hours AS varchar) END,\n    IsRecentlyReleasedFromPenal = CASE WHEN pp.IsRecentlyReleasedFromPenal = 1 THEN ''Yes'' WHEN pp.IsRecentlyReleasedFromPenal = 0 THEN ''No'' ELSE CAST(pp.IsRecentlyReleasedFromPenal AS varchar) END,\n    IsSpecialAccommodationRequired = CASE WHEN pp.IsSpecialAccommodationRequired = 1 THEN ''Yes'' WHEN pp.IsSpecialAccommodationRequired = 0 THEN ''No'' ELSE CAST(pp.IsSpecialAccommodationRequired AS varchar) END,\n    pp.ReasonSeekingTreatment AS [ReasonSeekingTreatment],\n    pp.AccomodationNeeded AS [AccomodationNeeded],\n    pp.ClientAddress AS [ClientAddress],\n    pp.Comments AS [Comments],\n    IsPatientAdmitted = CASE WHEN pp.IsPatientAdmitted = 1 THEN ''Yes'' WHEN pp.IsPatientAdmitted = 0 THEN ''No'' ELSE CAST(pp.IsPatientAdmitted AS varchar) END,\n    AreYouCurrentlyPregnant = CASE WHEN pp.AreYouCurrentlyPregnant = 0 THEN ''Yes'' WHEN pp.AreYouCurrentlyPregnant = 1 THEN ''No'' WHEN pp.AreYouCurrentlyPregnant = 2 THEN ''Unknown'' ELSE CAST(pp.AreYouCurrentlyPregnant AS varchar) END,\n    BringIDProof = CASE WHEN pp.BringIDProof = 1 THEN ''Yes'' WHEN pp.BringIDProof = 0 THEN ''No'' ELSE CAST(pp.BringIDProof AS varchar) END,\n    BringInsuranceCard = CASE WHEN pp.BringInsuranceCard = 1 THEN ''Yes'' WHEN pp.BringInsuranceCard = 0 THEN ''No'' ELSE CAST(pp.BringInsuranceCard AS varchar) END,\n    ClinicInfo = CASE WHEN pp.ClinicInfo = 1 THEN ''Yes'' WHEN pp.ClinicInfo = 0 THEN ''No'' ELSE CAST(pp.ClinicInfo AS varchar) END,\n    CurrntlyRecevingTreatmentForCondition = CASE WHEN pp.CurrntlyRecevingTreatmentForCondition = 1 THEN ''Yes'' WHEN pp.CurrntlyRecevingTreatmentForCondition = 0 THEN ''No'' ELSE CAST(pp.CurrntlyRecevingTreatmentForCondition AS varchar) END,\n    IsAnyPrescriptionForPain = CASE WHEN pp.IsAnyPrescriptionForPain = 1 THEN ''Yes'' WHEN pp.IsAnyPrescriptionForPain = 0 THEN ''No'' ELSE CAST(pp.IsAnyPrescriptionForPain AS varchar) END,\n    IsInsurance = CASE WHEN pp.IsInsurance = 1 THEN ''Yes'' WHEN pp.IsInsurance = 0 THEN ''No'' ELSE CAST(pp.IsInsurance AS varchar) END,\n    isOverTheCounterMedications = CASE WHEN pp.isOverTheCounterMedications = 1 THEN ''Yes'' WHEN pp.isOverTheCounterMedications = 0 THEN ''No'' ELSE CAST(pp.isOverTheCounterMedications AS varchar) END,\n    pp.ImmediateAssessment AS [ImmediateAssessment],\n    pp.ImmediateAssessment911 AS [ImmediateAssessment911],\n    pp.MedicalConditionsProviderName1 AS [MedicalConditionsProviderName1],\n    pp.MedicalConditionsProviderPhone1 AS [MedicalConditionsProviderPhone1],\n    pp.MedicalConditionsProviderName2 AS [MedicalConditionsProviderName2],\n    pp.MedicalConditionsProviderPhone2 AS [MedicalConditionsProviderPhone2],\n    PlanOfSuicide = CASE WHEN pp.PlanOfSuicide = 1 THEN ''Yes'' WHEN pp.PlanOfSuicide = 0 THEN ''No'' ELSE CAST(pp.PlanOfSuicide AS varchar) END,\n    PlanOnSpendingTimeAtClinic = CASE WHEN pp.PlanOnSpendingTimeAtClinic = 1 THEN ''Yes'' WHEN pp.PlanOnSpendingTimeAtClinic = 0 THEN ''No'' ELSE CAST(pp.PlanOnSpendingTimeAtClinic AS varchar) END,\n    tc2.cdeDesc AS [SAMMSProgram],\n    pp.OfficeUseWhy AS [OfficeUseWhy],\n    pp.OngoingMedicalConditionsWha AS [OngoingMedicalConditionsWha],\n    pp.PreAdd_Address AS [PreAdd_Address],\n    pp.LastUpdatedBy AS [LastUpdatedBy],\n    pp.LastUpdateOn AS [LastUpdateOn],\n    pp.PatientSignatureDate AS [PatientSignatureDate],\n    pp.DateofRelease AS [DateofRelease],\n    pp.Version AS [Version],\n    pp.IsDeleted AS [IsDeleted],\n    RowChkSum = CHECKSUM(pp.id, pp.PatientID, pp.LastUpdatedBy, pp.LastUpdateOn, pp.PatientSignatureDate, pp.DateofRelease, pp.Version, pp.IsDeleted, clt.cltM4ID)',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n'] pp\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[SF_Program] pg ON pp.ProgramID = pg.id\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblCodes] tc ON pp.ReferralSourceID = tc.cdeID\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblCodes] tc2 ON pp.SammsProgramID = tc2.cdeID\n',\n'LEFT JOIN [',\nitem().DataBaseName,\n'].[dbo].[tblClient] clt ON pp.PatientID = clt.cltID\n',\n'WHERE LEN(pp.CreatedOn) > 0 AND pp.ClientAddress NOT LIKE ''%test data%''\nORDER BY pp.PatientID, pp.ID'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -4005,122 +3193,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_pre_admission_v6_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_pre_admission_v6_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -4234,7 +3306,7 @@ Child json:
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(add(pipeline().parameters.p_lookback_days, 500)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(add(pipeline().parameters.p_lookback_days, 500)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [ClientId] AS [ClientId],\n    [DataFormId] AS [DataFormId],\n    [PrimaryReferralSource] AS [PrimaryReferralSource],\n    [SecondaryReferralSource] AS [SecondaryReferralSource],\n    [ReferralSourceNote] AS [ReferralSourceNote],\n    [CreatedBy] AS [CreatedBy],\n    [CreatedOn] AS [CreatedOn],\n    [LastUpdatedBy] AS [LastUpdatedBy],\n    [LastUpdateOn] AS [LastUpdateOn],\n    [EnrollmentId] AS [EnrollmentId],\n    [Program] AS [Program],\n    [IsDeleted] AS [IsDeleted],\n    [ReferralOrganization] AS [ReferralOrganization],\n    [ReferralName] AS [ReferralName],\n    [AccountNotInList] AS [AccountNotInList],\n    [ContactNotInList] AS [ContactNotInList],\n    [WhyLeftTreatmentOfBHG] AS [WhyLeftTreatmentOfBHG],\n    [WhyComingBackToBHG] AS [WhyComingBackToBHG],\n    [MostWantToDoDifferently] AS [MostWantToDoDifferently],\n    [Organization] AS [Organization],\n    [Name] AS [Name],\n    [Email] AS [Email],\n    [Phone] AS [Phone],\n    [IsPatientReadmit] AS [IsPatientReadmit],\n    [ReferralOrganizationID] AS [ReferralOrganizationID],\n    [ReferralNameID] AS [ReferralNameID],\n    RowChkSum = CHECKSUM([Id], [PreAdmissionId], [ClientId], [DataFormId], [PrimaryReferralSource], [SecondaryReferralSource], [ReferralSourceNote], [CreatedBy], [CreatedOn], [LastUpdatedBy], [LastUpdateOn], [EnrollmentId], [Program], [IsDeleted], [ReferralOrganization], [ReferralName], [AccountNotInList], [ContactNotInList], [WhyLeftTreatmentOfBHG], [WhyComingBackToBHG], [MostWantToDoDifferently], [Organization], [Name], [Email], [Phone], [IsPatientReadmit], [ReferralOrganizationID], [ReferralNameID])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE ISNULL([LastUpdateOn], [CreatedOn]) >= DATEADD(day, -',\nstring(add(pipeline().parameters.p_lookback_days, 500)),\n', GETDATE())\nORDER BY [Id]'\n)",
+                                                    "value": "@concat(\n'SELECT\n    ''',\nitem().SiteCode,\n''' AS SiteCode,\n',\n'    ''',\nitem().DataBaseName,\n''' AS SourceDatabase,\n',\n'    ''',\nif(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id),\n''' AS IngestRunId,\n',\n'    GETDATE() AS ExtractedAt,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS SourceQueryStartDate,\n',\n'    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n',\n'    CONVERT(date, DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())) AS LookbackDate',\n',\n',\n'    [Id] AS [Id],\n    [PreAdmissionId] AS [PreAdmissionId],\n    [ClientId] AS [ClientId],\n    [DataFormId] AS [DataFormId],\n    [PrimaryReferralSource] AS [PrimaryReferralSource],\n    [SecondaryReferralSource] AS [SecondaryReferralSource],\n    [ReferralSourceNote] AS [ReferralSourceNote],\n    [CreatedBy] AS [CreatedBy],\n    [CreatedOn] AS [CreatedOn],\n    [LastUpdatedBy] AS [LastUpdatedBy],\n    [LastUpdateOn] AS [LastUpdateOn],\n    [EnrollmentId] AS [EnrollmentId],\n    [Program] AS [Program],\n    [IsDeleted] AS [IsDeleted],\n    [ReferralOrganization] AS [ReferralOrganization],\n    [ReferralName] AS [ReferralName],\n    [AccountNotInList] AS [AccountNotInList],\n    [ContactNotInList] AS [ContactNotInList],\n    [WhyLeftTreatmentOfBHG] AS [WhyLeftTreatmentOfBHG],\n    [WhyComingBackToBHG] AS [WhyComingBackToBHG],\n    [MostWantToDoDifferently] AS [MostWantToDoDifferently],\n    [Organization] AS [Organization],\n    [Name] AS [Name],\n    [Email] AS [Email],\n    [Phone] AS [Phone],\n    [IsPatientReadmit] AS [IsPatientReadmit],\n    [ReferralOrganizationID] AS [ReferralOrganizationID],\n    [ReferralNameID] AS [ReferralNameID],\n    RowChkSum = CHECKSUM([Id], [PreAdmissionId], [ClientId], [DataFormId], [PrimaryReferralSource], [SecondaryReferralSource], [ReferralSourceNote], [CreatedBy], [CreatedOn], [LastUpdatedBy], [LastUpdateOn], [EnrollmentId], [Program], [IsDeleted], [ReferralOrganization], [ReferralName], [AccountNotInList], [ContactNotInList], [WhyLeftTreatmentOfBHG], [WhyComingBackToBHG], [MostWantToDoDifferently], [Organization], [Name], [Email], [Phone], [IsPatientReadmit], [ReferralOrganizationID], [ReferralNameID])',\n'\nFROM [',\nitem().DataBaseName,\n'].[',\nsplit(string(item().SourceTable), '.')[0],\n'].[',\nsplit(string(item().SourceTable), '.')[1],\n']\n',\n'WHERE ISNULL([LastUpdateOn], [CreatedOn]) >= DATEADD(day, -',\nstring(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)),\n', GETDATE())\nORDER BY [Id]'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -4278,122 +3350,6 @@ Child json:
                                             "enableStaging": false,
                                             "translator": {
                                                 "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "name": "mk_preadmission_referral_source_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_preadmission_referral_source_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''', item().Method, ''' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "P1Reference",
-                                                        "table": "br_p1_reference_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "mappings": [
-                                                    {
-                                                        "source": {
-                                                            "name": "Method"
-                                                        },
-                                                        "sink": {
-                                                            "name": "Method"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SiteCode"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SiteCode"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "SourceDatabase"
-                                                        },
-                                                        "sink": {
-                                                            "name": "SourceDatabase"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "IngestRunId"
-                                                        },
-                                                        "sink": {
-                                                            "name": "IngestRunId"
-                                                        }
-                                                    },
-                                                    {
-                                                        "source": {
-                                                            "name": "MarkedAt"
-                                                        },
-                                                        "sink": {
-                                                            "name": "MarkedAt"
-                                                        }
-                                                    }
-                                                ],
                                                 "typeConversion": true,
                                                 "typeConversionSettings": {
                                                     "allowDataTruncation": true,
@@ -4503,7 +3459,7 @@ Child json:
                 "defaultValue": [
                     {
                         "TaskConfigId": 4653,
-                        "ConfigId": 88,
+                        "TargetName": "BR",
                         "TaskName": "P1 Reference Clinic Bronze - AHK",
                         "Method": "SaveClinic",
                         "SourceTable": "dbo.tblClinic",
@@ -4514,7 +3470,7 @@ Child json:
                     },
                     {
                         "TaskConfigId": 4889,
-                        "ConfigId": 88,
+                        "TargetName": "BR",
                         "TaskName": "P1 Reference Codes Bronze - AHK",
                         "Method": "SaveCodes",
                         "SourceTable": "dbo.tblCodes",
@@ -4533,7 +3489,7 @@ Child json:
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-07T19:19:43Z"
+        "lastPublishTime": "2026-07-24T21:36:49Z"
     }
 }
 
@@ -4558,11 +3514,15 @@ Parent Json:
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "notebookId": "b8091d01-8235-40fd-aa4e-083a9957435b",
                     "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
-                        "p_config_ids_json": {
-                            "value": "[88,90]",
+                        "p_config_name_prefix": {
+                            "value": "SAMMS P1 Reference",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\",\"SL\",\"GL\"]",
                             "type": "string"
                         },
                         "p_methods_json": {
@@ -4605,7 +3565,7 @@ Parent Json:
                         "type": "Expression"
                     },
                     "condition": {
-                        "value": "@and(and(equals(item().ConfigId, 88), equals(item().IsActive, 1)), and(or(equals(item().Method, 'SaveClinic'), or(equals(item().Method, 'Save3pSetup'), or(equals(item().Method, 'SaveCodes'), or(equals(item().Method, 'SaveServices'), or(equals(item().Method, 'SavedropDownListItems'), or(equals(item().Method, 'SaveCustomAnswers'), or(equals(item().Method, 'SaveCustomQuestions'), or(equals(item().Method, 'SavePreAdmissionV6'), equals(item().Method, 'SavePreAdminReferrals'))))))))), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
+                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(or(equals(item().Method, 'SaveClinic'), or(equals(item().Method, 'Save3pSetup'), or(equals(item().Method, 'SaveCodes'), or(equals(item().Method, 'SaveServices'), or(equals(item().Method, 'SavedropDownListItems'), or(equals(item().Method, 'SaveCustomAnswers'), or(equals(item().Method, 'SaveCustomQuestions'), or(equals(item().Method, 'SavePreAdmissionV6'), equals(item().Method, 'SavePreAdminReferrals'))))))))), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
                         "type": "Expression"
                     }
                 }
@@ -4891,7 +3851,7 @@ Parent Json:
                                     "type": "Expression"
                                 },
                                 "condition": {
-                                    "value": "@and(equals(item().ConfigId, 90), equals(item().IsActive, 1))",
+                                    "value": "@and(equals(item().TargetName, 'GL'), equals(item().IsActive, 1))",
                                     "type": "Expression"
                                 }
                             }
@@ -5032,8 +3992,6 @@ Parent Json:
             {
                 "name": "nb_p1_reference_notify_failed",
                 "type": "TridentNotebook",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
                 "dependsOn": [
                     {
                         "activity": "if_all_reference_methods_success",
@@ -5137,8 +4095,8 @@ Parent Json:
                 "defaultValue": "{}"
             }
         },
-        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-14T18:55:43Z"
+        "lastModifiedByObjectId": "bd4b63e3-7995-4ef5-b12f-c542b2777eef",
+        "lastPublishTime": "2026-07-31T09:49:20Z"
     }
 }
 
@@ -5184,6 +4142,10 @@ bronztosilverchild json(Inside):
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SaveClinic",
+                            "type": "string"
                         }
                     }
                 }
@@ -5222,6 +4184,10 @@ bronztosilverchild json(Inside):
                                 "value": "@pipeline().parameters.p_sites_json",
                                 "type": "Expression"
                             },
+                            "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "Save3pSetup",
                             "type": "string"
                         }
                     }
@@ -5262,6 +4228,10 @@ bronztosilverchild json(Inside):
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SaveCodes",
+                            "type": "string"
                         }
                     }
                 }
@@ -5300,6 +4270,10 @@ bronztosilverchild json(Inside):
                                 "value": "@pipeline().parameters.p_sites_json",
                                 "type": "Expression"
                             },
+                            "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SaveServices",
                             "type": "string"
                         }
                     }
@@ -5340,6 +4314,10 @@ bronztosilverchild json(Inside):
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SavedropDownListItems",
+                            "type": "string"
                         }
                     }
                 }
@@ -5378,6 +4356,10 @@ bronztosilverchild json(Inside):
                                 "value": "@pipeline().parameters.p_sites_json",
                                 "type": "Expression"
                             },
+                            "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SaveCustomAnswers",
                             "type": "string"
                         }
                     }
@@ -5418,6 +4400,10 @@ bronztosilverchild json(Inside):
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SaveCustomQuestions",
+                            "type": "string"
                         }
                     }
                 }
@@ -5457,6 +4443,10 @@ bronztosilverchild json(Inside):
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SavePreAdmissionV6",
+                            "type": "string"
                         }
                     }
                 }
@@ -5495,6 +4485,10 @@ bronztosilverchild json(Inside):
                                 "value": "@pipeline().parameters.p_sites_json",
                                 "type": "Expression"
                             },
+                            "type": "string"
+                        },
+                        "p_method_name": {
+                            "value": "SavePreAdminReferrals",
                             "type": "string"
                         }
                     }
@@ -5605,11 +4599,11 @@ bronztosilverchild json(Inside):
             },
             "p_sites_json": {
                 "type": "string",
-                "defaultValue": "[]"
+                "defaultValue": []
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-01T13:14:04Z"
+        "lastPublishTime": "2026-07-24T17:15:06Z"
     }
 }
 
@@ -5663,6 +4657,11 @@ try:
 except NameError:
     p_sites_json = "[]"
 
+try:
+    p_method_name
+except NameError:
+    p_method_name = ""
+
 METADATA_COLUMNS = {
     "sourcedatabase",
     "ingestrunid",
@@ -5675,7 +4674,10 @@ METADATA_COLUMNS = {
     "_site_code",
 }
 
-BRONZE_SITE_SUCCESS_TABLE = "bhg_bronze.P1Reference.br_p1_reference_site_success"
+TASKCONFIG_TABLE = "bhg_bronze.meta.taskconfig"
+ETLCONFIG_TABLE = "bhg_bronze.meta.etlconfig"
+REFERENCE_CONFIG_NAME_PREFIX = "SAMMS P1 Reference"
+REFERENCE_SILVER_TARGET_NAME = "SL"
 
 
 def notebook_exit(payload):
@@ -5742,6 +4744,109 @@ def parse_json_list(raw):
         return []
 
 
+def row_value(row, name, default=None):
+    row_dict = row.asDict(recursive=True) if hasattr(row, "asDict") else dict(row)
+    wanted = name.lower()
+    for key, value in row_dict.items():
+        if str(key).lower() == wanted:
+            return value
+    return default
+
+
+def parse_request_body(raw):
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw) if isinstance(raw, str) else raw
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
+def dq_keys_from_taskconfig(task_row):
+    request_body = parse_request_body(row_value(task_row, "RequestBody"))
+    request_keys = request_body.get("dq_keys")
+    if isinstance(request_keys, list):
+        keys = [str(key).strip() for key in request_keys if str(key).strip()]
+        if keys:
+            return keys
+
+    watermark_column = row_value(task_row, "WatermarkColumn")
+    if watermark_column:
+        keys = [key.strip() for key in str(watermark_column).split(",") if key.strip()]
+        if keys:
+            return keys
+
+    raise ValueError(f"No dq_keys/WatermarkColumn found in taskconfig for Method={row_value(task_row, 'Method')}")
+
+
+def resolve_reference_config_id(target_name):
+    target = str(target_name or "").strip().upper()
+    rows = (
+        spark.table(ETLCONFIG_TABLE)
+        .where(F.lower(F.col("ConfigName")).startswith(REFERENCE_CONFIG_NAME_PREFIX.lower()))
+        .where(F.upper(F.col("TargetName")) == F.lit(target))
+        .where(F.col("IsActive") == F.lit(1))
+        .select("ConfigId", "ConfigName", "TargetName")
+        .orderBy(F.col("ExecutionSequence").asc(), F.col("ConfigId").asc())
+        .limit(2)
+        .collect()
+    )
+    if not rows:
+        raise ValueError(
+            f"No active etlconfig row found for prefix={REFERENCE_CONFIG_NAME_PREFIX}, TargetName={target}."
+        )
+    if len(rows) > 1:
+        raise ValueError(
+            f"Expected one active etlconfig row for prefix={REFERENCE_CONFIG_NAME_PREFIX}, TargetName={target}; found {len(rows)}."
+        )
+    return int(row_value(rows[0], "ConfigId"))
+
+
+def resolve_reference_silver_metadata(method_name=None, silver_config_id=None):
+    method = str(method_name or p_method_name or "").strip()
+    if not method:
+        raise ValueError("p_method_name is required to resolve P1 Reference silver taskconfig metadata.")
+
+    silver_config_id = int(silver_config_id or resolve_reference_config_id(REFERENCE_SILVER_TARGET_NAME))
+
+    rows = (
+        spark.table(TASKCONFIG_TABLE)
+        .where(F.col("ConfigId") == F.lit(int(silver_config_id)))
+        .where(F.lower(F.col("Method")) == F.lit(method.lower()))
+        .where(F.col("IsActive") == F.lit(1))
+        .orderBy(F.col("ExecutionOrder").asc(), F.col("TaskConfigId").asc())
+        .limit(2)
+        .collect()
+    )
+
+    if not rows:
+        raise ValueError(f"No active P1 Reference silver taskconfig row found for ConfigId={silver_config_id}, Method={method}.")
+    if len(rows) > 1:
+        raise ValueError(f"Expected one active P1 Reference silver taskconfig row for Method={method}, found {len(rows)}.")
+
+    task_row = rows[0]
+    request_body = parse_request_body(row_value(task_row, "RequestBody"))
+    bronze_table = row_value(task_row, "SourceTable")
+    silver_table = request_body.get("full_table") or row_value(task_row, "TargetPath")
+    match_keys = dq_keys_from_taskconfig(task_row)
+    method_from_config = row_value(task_row, "Method") or method
+
+    if not bronze_table:
+        raise ValueError(f"Silver taskconfig SourceTable is missing for Method={method_from_config}.")
+    if not silver_table:
+        raise ValueError(f"Silver taskconfig TargetPath/RequestBody.full_table is missing for Method={method_from_config}.")
+
+    return {
+        "method_name": str(method_from_config),
+        "bronze_table": str(bronze_table),
+        "silver_table": str(silver_table),
+        "match_keys": match_keys,
+        "task_config_id": row_value(task_row, "TaskConfigId"),
+        "config_id": row_value(task_row, "ConfigId"),
+    }
+
+
 def active_site_rows_for_method(method_name):
     rows = []
     seen = set()
@@ -5800,18 +4905,6 @@ def successful_sites_from_bronze(bronze_df):
         )
     ]
     return sites, site_col
-
-
-def successful_sites_from_marker(method_name):
-    if not p_ingest_run_id or not table_exists(BRONZE_SITE_SUCCESS_TABLE):
-        return []
-    marker_df = (
-        spark.table(BRONZE_SITE_SUCCESS_TABLE)
-        .where(F.col("IngestRunId") == F.lit(p_ingest_run_id))
-        .where(F.lower(F.col("Method")) == F.lit(method_name.lower()))
-        .where(F.col("SiteCode").isNotNull())
-    )
-    return [str(row["SiteCode"]) for row in marker_df.select("SiteCode").distinct().collect()]
 
 
 def table_exists(table_name):
@@ -5948,9 +5041,8 @@ def merge_to_silver(
     try:
         bronze_had_method_failure = bronze_failed_for(method_name)
         bronze_df = load_bronze(bronze_table)
-        marker_successful_sites = successful_sites_from_marker(method_name)
         row_successful_sites, bronze_site_col = successful_sites_from_bronze(bronze_df)
-        successful_sites = sorted(set(marker_successful_sites) | set(row_successful_sites))
+        successful_sites = sorted(set(row_successful_sites))
         site_results = build_site_results(
             method_name,
             successful_sites,
@@ -6055,10 +5147,11 @@ def merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SaveClinic"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_clinic"
-SILVER_TABLE = "bhg_silver.ctrl.tbl_Clinic"
-MATCH_KEYS = ["SiteCode", "PKEY"]
+SAVE_CLINIC_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_CLINIC_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_CLINIC_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_CLINIC_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_CLINIC_CONFIG["match_keys"]
 TARGET_COLUMNS = [c.strip() for c in """
 SiteCode
 PKEY
@@ -6300,7 +5393,8 @@ DischargedAllowAddPayer
 DymoDetailed
 """.strip().splitlines()]
 
-# SaveClinic C# behavior: match by SiteCode + PKEY, no RowChkSum gate, BHG_DR target shape.
+# SaveClinic C# behavior: no RowChkSum gate, BHG_DR target shape.
+# Method, Bronze/Silver tables, and match keys come from the active SL taskconfig row.
 merge_to_silver(
     method_name=METHOD_NAME,
     bronze_table=BRONZE_TABLE,
@@ -6315,10 +5409,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "Save3pSetup"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_3p_setup"
-SILVER_TABLE = "bhg_silver.ctrl.tbl_3PSETUP"
-MATCH_KEYS = ["SiteCode", "pID"]
+SAVE_3P_SETUP_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_3P_SETUP_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_3P_SETUP_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_3P_SETUP_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_3P_SETUP_CONFIG["match_keys"]
 TARGET_COLUMNS = [
     "SiteCode", "pID", "Clinic", "Address", "State", "Zip", "NPI", "TaxID", "Medicaid", "City",
     "DRlname", "DRfname", "DRnpi", "ProviderAddress", "ProviderCity", "ProviderName", "ProviderPhone",
@@ -6349,10 +5444,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SaveCodes"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_codes"
-SILVER_TABLE = "bhg_silver.pats.tbl_Codes"
-MATCH_KEYS = ["SiteCode", "cdeID"]
+SAVE_CODES_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_CODES_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_CODES_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_CODES_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_CODES_CONFIG["match_keys"]
 TARGET_COLUMNS = [
     "SiteCode", "RowChkSum", "LastModAt", "cdeID", "cdeGroup", "cdeDesc", "cdeBillable", "cdeUA",
     "cdeIntAmt", "cdeLiquid", "cdeSTAFFCODE", "cdeFUND", "cdeMODAlity", "cdeDRUGFREE", "cdePROVIDER",
@@ -6382,10 +5478,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SaveServices"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_services"
-SILVER_TABLE = "bhg_silver.pats.tbl_SERVICES"
-MATCH_KEYS = ["SiteCode", "sID"]
+SAVE_SERVICES_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_SERVICES_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_SERVICES_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_SERVICES_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_SERVICES_CONFIG["match_keys"]
 TARGET_COLUMNS = [
     "SiteCode", "RowChkSum", "sID", "sSERVICE", "sArea", "sCost", "sCptCode", "sREQSIG", "sREQTIME",
     "blAllowOverlap", "oldArea", "oldSrv", "sFilter", "sReportBillable", "sTimeOnly", "CreatedOn",
@@ -6422,10 +5519,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SavedropDownListItems"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_dropdown_list_items"
-SILVER_TABLE = "bhg_silver.ctrl.tbl_DroDownListItems"
-MATCH_KEYS = ["SiteCode", "Id"]
+SAVE_DROPDOWN_LIST_ITEMS_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_DROPDOWN_LIST_ITEMS_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_DROPDOWN_LIST_ITEMS_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_DROPDOWN_LIST_ITEMS_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_DROPDOWN_LIST_ITEMS_CONFIG["match_keys"]
 TARGET_COLUMNS = ["SiteCode", "Id", "DropDownListItem", "DropDownListId", "ddapcode"]
 
 # SavedropDownListItems C# behavior: match by SiteCode + Id, no RowChkSum gate, update current values.
@@ -6443,10 +5541,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SaveCustomAnswers"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_custom_answers"
-SILVER_TABLE = "bhg_silver.pats.tbl_CustomAnswers"
-MATCH_KEYS = ["SiteCode", "caID", "caQID", "caCLTID"]
+SAVE_CUSTOM_ANSWERS_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_CUSTOM_ANSWERS_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_CUSTOM_ANSWERS_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_CUSTOM_ANSWERS_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_CUSTOM_ANSWERS_CONFIG["match_keys"]
 TARGET_COLUMNS = ["SiteCode", "LastModAt", "RowCheckSum", "RowSate", "caID", "caQID", "caCLTID", "caANS"]
 TRANSFORMS = {
     "RowSate": F.when(F.col("caCLTID") < F.lit(0), F.lit(0)).otherwise(F.lit(1)),
@@ -6477,10 +5576,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SaveCustomQuestions"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_custom_questions"
-SILVER_TABLE = "bhg_silver.pats.tbl_CustomQuestions"
-MATCH_KEYS = ["SiteCode", "cID"]
+SAVE_CUSTOM_QUESTIONS_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_CUSTOM_QUESTIONS_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_CUSTOM_QUESTIONS_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_CUSTOM_QUESTIONS_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_CUSTOM_QUESTIONS_CONFIG["match_keys"]
 TARGET_COLUMNS = ["SiteCode", "LastModAt", "RowCheckSum", "RowSate", "cID", "cQuestion"]
 TRANSFORMS = {
     "RowSate": F.when(F.col("cID") < F.lit(0), F.lit(0)).otherwise(F.lit(1)),
@@ -6516,10 +5616,11 @@ spark.conf.set("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY")
 spark.conf.set("spark.sql.parquet.int96RebaseModeInRead", "LEGACY")
 spark.conf.set("spark.sql.parquet.int96RebaseModeInWrite", "LEGACY")
 
-METHOD_NAME = "SavePreAdmissionV6"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_pre_admission_v6"
-SILVER_TABLE = "bhg_silver.ayx.tbl_PreAdmission_V6"
-MATCH_KEYS = ["SiteCode", "PreAdmissionid", "Clientid"]
+SAVE_PRE_ADMISSION_V6_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_PRE_ADMISSION_V6_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_PRE_ADMISSION_V6_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_PRE_ADMISSION_V6_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_PRE_ADMISSION_V6_CONFIG["match_keys"]
 TARGET_COLUMNS = [
     "SiteCode", "PreAdmissionid", "Clientid", "CreatedON", "Createdby", "PreAdmissionDate", "RegistrationMode",
     "ReferralSourcedesc", "PrimaryReferralSourceNote", "Program", "InsuranceType", "IntakeProgram", "IntakeProgramDate",
@@ -6557,10 +5658,11 @@ merge_to_silver(
 --------------------------------------------------------------------------------
 
 ```python
-METHOD_NAME = "SavePreAdminReferrals"
-BRONZE_TABLE = "bhg_bronze.P1Reference.br_samms_preadmission_referral_source"
-SILVER_TABLE = "bhg_silver.pats.tbl_PreadmissionReferralSource"
-MATCH_KEYS = ["SiteCode", "Id"]
+SAVE_PREADMIN_REFERRALS_CONFIG = resolve_reference_silver_metadata()
+METHOD_NAME = SAVE_PREADMIN_REFERRALS_CONFIG["method_name"]
+BRONZE_TABLE = SAVE_PREADMIN_REFERRALS_CONFIG["bronze_table"]
+SILVER_TABLE = SAVE_PREADMIN_REFERRALS_CONFIG["silver_table"]
+MATCH_KEYS = SAVE_PREADMIN_REFERRALS_CONFIG["match_keys"]
 TARGET_COLUMNS = [
     "SiteCode", "Id", "PreAdmissionId", "ClientId", "DataFormId", "PrimaryReferralSource",
     "SecondaryReferralSource", "ReferralSourceNote", "CreatedBy", "CreatedOn", "LastUpdatedBy",

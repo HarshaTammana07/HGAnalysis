@@ -15,7 +15,7 @@
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 1,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_form_table",
@@ -285,80 +285,6 @@
                                                 }
                                             }
                                         }
-                                    },
-                                    {
-                                        "name": "mk_formqa_site_success",
-                                        "type": "Copy",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "cp_forms_to_bronze",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 3,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "SqlServerSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "@concat('SELECT ''FormQuestionAnswers'' AS Method, ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId, GETDATE() AS MarkedAt')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None",
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "type": "SqlServerTable",
-                                                    "schema": [],
-                                                    "externalReferences": {
-                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
-                                                    }
-                                                }
-                                            },
-                                            "sink": {
-                                                "type": "LakehouseTableSink",
-                                                "tableActionOption": "Append",
-                                                "partitionOption": "None",
-                                                "applyVOrder": false,
-                                                "datasetSettings": {
-                                                    "annotations": [],
-                                                    "linkedService": {
-                                                        "name": "bhg_bronze",
-                                                        "properties": {
-                                                            "annotations": [],
-                                                            "type": "Lakehouse",
-                                                            "typeProperties": {
-                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
-                                                                "rootFolder": "Tables"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "LakehouseTable",
-                                                    "schema": [],
-                                                    "typeProperties": {
-                                                        "schema": "Forms",
-                                                        "table": "br_formqa_site_success"
-                                                    }
-                                                }
-                                            },
-                                            "enableStaging": false,
-                                            "translator": {
-                                                "type": "TabularTranslator",
-                                                "typeConversion": true,
-                                                "typeConversionSettings": {
-                                                    "allowDataTruncation": true,
-                                                    "treatBooleanAsNumber": false
-                                                }
-                                            }
-                                        }
                                     }
                                 ]
                             }
@@ -423,7 +349,7 @@
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-16T12:03:39Z"
+        "lastPublishTime": "2026-07-31T13:57:16Z"
     }
 }
 
@@ -621,6 +547,13 @@ parent: Execute_Form_QuestionAnswer
                         "p_sites_json": {
                             "value": {
                                 "value": "@string(activity('flt_active_formquestionanswers_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -1287,7 +1220,7 @@ parent: Execute_Form_QuestionAnswer
             },
             "p_reload": {
                 "type": "bool",
-                "defaultValue": false
+                "defaultValue": true
             }
         },
         "variables": {
@@ -1299,7 +1232,7 @@ parent: Execute_Form_QuestionAnswer
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-10T17:14:59Z"
+        "lastPublishTime": "2026-07-31T13:55:53Z"
     }
 }
 
@@ -1327,10 +1260,12 @@ except NameError: p_reload = False
 try: p_sites_json
 except NameError: p_sites_json = "[]"
 
+try: p_bronze_method_results_json
+except NameError: p_bronze_method_results_json = "{}"
+
 bronze_table = "bhg_bronze.Forms.br_tblFormQA"
 silver_table = "bhg_silver.pats.tbl_dbo_FormQuestionAnswers"
 f2p_table    = "bhg_silver.ctrl.Forms2Process"
-site_success_table = "bhg_bronze.Forms.br_formqa_site_success"
 method_name = "FormQuestionAnswers"
 final_columns = [
     "SiteCode",
@@ -1379,13 +1314,6 @@ def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_sk
         body["site_results"] = site_results
     return {method_name: body}
 
-def table_exists(table_name):
-    try:
-        spark.table(table_name).limit(0).count()
-        return True
-    except Exception:
-        return False
-
 def parse_json_list(raw):
     if not raw:
         return []
@@ -1394,6 +1322,26 @@ def parse_json_list(raw):
         return parsed if isinstance(parsed, list) else []
     except Exception:
         return []
+
+def parse_json_obj(raw):
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(str(raw))
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+def bronze_result():
+    parsed = parse_json_obj(p_bronze_method_results_json)
+    result = parsed.get(method_name)
+    return result if isinstance(result, dict) else {}
+
+def bronze_had_method_failure():
+    result = bronze_result()
+    status = str(result.get("status") or "").upper()
+    failed_stage = str(result.get("failed_stage") or "").upper()
+    return status in ("FAILED", "ERROR") or failed_stage == "BR"
 
 def effective_lookback_days():
     values = []
@@ -1430,38 +1378,30 @@ def active_site_rows():
             seen.add(str(site_code))
     return rows
 
-def successful_sites_from_marker():
-    if not table_exists(site_success_table):
-        return []
-    marker_df = (
-        spark.table(site_success_table)
-        .where(col("IngestRunId") == lit(p_ingest_run_id))
-        .where(col("SiteCode").isNotNull())
-    )
-    if "Method" in marker_df.columns:
-        marker_df = marker_df.where(col("Method") == lit(method_name))
-    return [str(row["SiteCode"]) for row in marker_df.select("SiteCode").distinct().collect()]
-
-def build_site_results(successful_sites, failed_message=None):
+def build_site_results(successful_sites, site_row_counts=None, bronze_had_failure=False, failed_message=None):
     active_sites = active_site_rows()
     if not active_sites:
         active_sites = [{"site_code": site, "database_name": None} for site in successful_sites]
     successful = {str(site) for site in successful_sites if site}
+    counts = {str(k): int(v or 0) for k, v in (site_row_counts or {}).items()}
     results = []
     for site in active_sites:
         site_code = site["site_code"]
         item = {
             "site_code": site_code,
-            "database_name": site.get("database_name")
+            "database_name": site.get("database_name"),
+            "rows_written": counts.get(site_code, 0)
         }
         if site_code in successful:
             item["status"] = "SUCCESS"
-        else:
+        elif bronze_had_failure:
             item.update({
                 "status": "FAILED",
                 "failed_stage": "BR",
-                "error_message": failed_message or "FormQuestionAnswers Bronze copy failed or did not write the site success marker."
+                "error_message": failed_message or "FormQuestionAnswers Bronze copy failed or wrote no rows for this ingest run."
             })
+        else:
+            item["status"] = "SUCCESS"
         results.append(item)
     return results
 
@@ -1483,33 +1423,36 @@ non_date_filtered_forms = set(
 )
 
 # Read Bronze for this run and keep only successful sites when partial Bronze failures occur.
+# If Bronze finished successfully, an active site with 0 rows is still a success.
 bronze_df = spark.table(bronze_table).where(col("IngestRunId") == p_ingest_run_id)
-bronze_row_sites = [
-    str(row["SiteCode"])
-    for row in (
-        bronze_df
-        .where(col("SiteCode").isNotNull())
-        .select("SiteCode")
-        .distinct()
-        .collect()
-    )
-]
-marker_success_sites = successful_sites_from_marker()
-successful_sites = sorted(set(bronze_row_sites) | set(marker_success_sites))
-site_results = build_site_results(successful_sites)
+site_count_rows = (
+    bronze_df
+    .where(col("SiteCode").isNotNull())
+    .groupBy("SiteCode")
+    .count()
+    .collect()
+)
+bronze_site_counts = {str(row["SiteCode"]): int(row["count"] or 0) for row in site_count_rows}
+successful_sites = sorted(bronze_site_counts.keys())
+bronze_failed = bronze_had_method_failure()
+site_results = build_site_results(
+    successful_sites,
+    bronze_site_counts,
+    bronze_had_failure=bronze_failed
+)
 
-if successful_sites:
+if bronze_failed and successful_sites:
     bronze_df = bronze_df.where(col("SiteCode").isin(successful_sites))
 
 bronze_count = bronze_df.count()
 print(f"Successful Bronze sites for this run: {successful_sites}")
 print(f"Bronze rows for successful sites in this run: {bronze_count}")
 
-if not successful_sites:
+if bronze_failed and not successful_sites:
     notebook_exit(result_payload(
         "SKIPPED",
         rows_read=0,
-        message=f"No successful Bronze sites found for FormQuestionAnswers ingest_run_id = {p_ingest_run_id}; Silver skipped.",
+        message=f"Bronze failed and no successful FormQuestionAnswers rows were found for ingest_run_id = {p_ingest_run_id}; Silver skipped.",
         site_results=site_results
     ))
 
@@ -1517,7 +1460,7 @@ if bronze_count == 0:
     notebook_exit(result_payload(
         "SUCCESS",
         rows_read=0,
-        message=f"Successful Bronze site markers exist, but no Bronze rows were found for ingest_run_id = {p_ingest_run_id}.",
+        message=f"Bronze completed but no FormQuestionAnswers rows were found for ingest_run_id = {p_ingest_run_id}.",
         site_results=site_results
     ))
 
@@ -1625,9 +1568,9 @@ if not sites_this_run:
 
 site_filter = " OR ".join([f"SiteCode = '{s}'" for s in sites_this_run])
 
-# -- TP-* normalization (SaveFormQAData.cs lines 27?30) ---------------
+# -- TP-* normalization (SaveFormQAData.cs lines 27�30) ---------------
 # Silver rows from tblTP17REVIEW use FormName like "TP-Plan Review".
-# Forms2Process has one "Treatment Plan" entry ? its DateFilterEnabled
+# Forms2Process has one "Treatment Plan" entry � its DateFilterEnabled
 # controls pre-pass for ALL TP-* rows.
 tp_row = f2p_df[f2p_df["FormName"] == "Treatment Plan"]
 tp_date_filtered = True
@@ -1636,7 +1579,7 @@ if not tp_row.empty:
 
 print(f"Treatment Plan DateFilterEnabled: {tp_date_filtered}")
 
-# Non-date-filtered FormNames ? exclude "Treatment Plan" (handled via TP-%)
+# Non-date-filtered FormNames � exclude "Treatment Plan" (handled via TP-%)
 non_date_filtered_forms_no_tp = set(
     f2p_df[(f2p_df["DateFilterEnabled"] == False) & (f2p_df["FormName"] != "Treatment Plan")]
     ["FormName"].tolist()
@@ -1707,9 +1650,9 @@ insert_values = {c: f"src.{c}" for c in src_cols}
         AND tgt.QuestionOrderId <=> src.QuestionOrderId
         """
     )
-    # Matched: full update ? no RowChkSum, always refresh from source
+    # Matched: full update � no RowChkSum, always refresh from source
     .whenMatchedUpdate(set=update_set)
-    # Not matched: new record ? insert final Silver row
+    # Not matched: new record � insert final Silver row
     .whenNotMatchedInsert(values=insert_values)
     .execute()
 )

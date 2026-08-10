@@ -70,7 +70,7 @@
                                 "source": {
                                     "type": "SqlServerSource",
                                     "sqlReaderQuery": {
-                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS _site_code,\n    ''', item().DataBaseName, ''' AS _source_database,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS _ingest_run_id,\n    GETDATE() AS _extracted_at,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE())) AS _source_query_start_date,\n    CONVERT(date, GETDATE()) AS _source_query_end_date,\n\n    dsID,\n    dsClt,\n    dsDIM1,\n    dsDIM2,\n    dsDIM3,\n    dsDIM4,\n    dsDIM5,\n    dsDIM6,\n    dsTxtSrv,\n    dsDtStart,\n    dsDtEnd,\n    dsTxtType,\n    dsdblUnits,\n    dsNoteID,\n    dsDtAdded,\n    dstxtStaff,\n    dstxtNote,\n    dsRTBNOTE,\n    DSbilled,\n    dsGROUPNUM,\n    dsPROGRAM,\n    dsUpdate,\n    dsUPDATEStaff,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists, 1),\n    'upsize_ts',\n    'CAST(NULL AS varbinary(8)) AS upsize_ts'\n),\n',\n    dsInvalidatedOn,\n    dsError,\n    dsTxtHIV,\n    dsDartsGroup,\n    repOldSrv,\n    dsSignature,\n    dsSigDate,\n    dssigdateCOSIGN,\n    dssignatureCOSIGN,\n    dsSigUser,\n    dsSigUserCosign,\n    dsSIGCLT,\n    dsSIGCLTDATE,\n    dsSIGCLTUSER,\n    dsAPTID,\n    dsuncharted,\n    dsTxDim1,\n    dsTxDim2,\n    dsTxDim3,\n    dsTxDim4,\n    dsTxDim5,\n    dsTxDim6,\n    dsDIAG,\n    dsArea,\n    dsGroupDefaultNote,\n    dsGroupEnd,\n    dsGroupIdentity,\n    dsGroupStart,\n    dsDIAG10,\n    SiteID,\n    dsDBnotes,\n    dsSigCltImg,\n    dsSignatureCoSignImg,\n    dsSignatureIMG,\n    MG,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100)) AS ServiceType'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit) AS dsTelehealthSession'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int) AS HoldId'\n),\n',\n\n    RowChkSum = CHECKSUM(\n        dsID,\n        dsClt,\n        dsDIM1,\n        dsDIM2,\n        dsDIM3,\n        dsDIM4,\n        dsDIM5,\n        dsDIM6,\n        dsTxtSrv,\n        dsDtStart,\n        dsDtEnd,\n        dsTxtType,\n        dsdblUnits,\n        dsNoteID,\n        dsDtAdded,\n        dstxtStaff,\n        DSbilled,\n        dsGROUPNUM,\n        dsPROGRAM,\n        dsUpdate,\n        dsUPDATEStaff,\n        dsInvalidatedOn,\n        dsError,\n        dsTxtHIV,\n        dsDartsGroup,\n        repOldSrv,\n        dsSigDate,\n        dssigdateCOSIGN,\n        dsSigUser,\n        dsSigUserCosign,\n        dsSIGCLTDATE,\n        dsSIGCLTUSER,\n        dsAPTID,\n        dsuncharted,\n        dsTxDim1,\n        dsTxDim2,\n        dsTxDim3,\n        dsTxDim4,\n        dsTxDim5,\n        dsTxDim6,\n        dsDIAG,\n        dsArea,\n        dsGroupDefaultNote,\n        dsGroupEnd,\n        dsGroupIdentity,\n        dsGroupStart,\n        dsDIAG10,\n        SiteID,\n        dsDBnotes,\n        MG,\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100))'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit)'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int)'\n),\n'\n    )\n\nFROM [', item().DataBaseName, '].', item().SourceTable, '\nWHERE dsClt IS NOT NULL\n  AND (\n       CONVERT(date, dsdtstart) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsDtAdded) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsUpdate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsBilled) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR CONVERT(date, dsSigDate) >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', GETDATE()))\n    OR dsClt <= 0\n  )\nORDER BY 1, 2'\n)",
+                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n    CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE())) AS SourceQueryStartDate,\n    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n\n    dsID,\n    dsClt,\n    dsDIM1,\n    dsDIM2,\n    dsDIM3,\n    dsDIM4,\n    dsDIM5,\n    dsDIM6,\n    dsTxtSrv,\n    dsDtStart,\n    dsDtEnd,\n    dsTxtType,\n    dsdblUnits,\n    dsNoteID,\n    dsDtAdded,\n    dstxtStaff,\n    dstxtNote,\n    dsRTBNOTE,\n    DSbilled,\n    dsGROUPNUM,\n    dsPROGRAM,\n    dsUpdate,\n    dsUPDATEStaff,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists, 1),\n    'upsize_ts',\n    'CAST(NULL AS varbinary(8)) AS upsize_ts'\n),\n',\n    dsInvalidatedOn,\n    dsError,\n    dsTxtHIV,\n    dsDartsGroup,\n    repOldSrv,\n    dsSignature,\n    dsSigDate,\n    dssigdateCOSIGN,\n    dssignatureCOSIGN,\n    dsSigUser,\n    dsSigUserCosign,\n    dsSIGCLT,\n    dsSIGCLTDATE,\n    dsSIGCLTUSER,\n    dsAPTID,\n    dsuncharted,\n    dsTxDim1,\n    dsTxDim2,\n    dsTxDim3,\n    dsTxDim4,\n    dsTxDim5,\n    dsTxDim6,\n    dsDIAG,\n    dsArea,\n    dsGroupDefaultNote,\n    dsGroupEnd,\n    dsGroupIdentity,\n    dsGroupStart,\n    dsDIAG10,\n    SiteID,\n    dsDBnotes,\n    dsSigCltImg,\n    dsSignatureCoSignImg,\n    dsSignatureIMG,\n    MG,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100)) AS ServiceType'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit) AS dsTelehealthSession'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int) AS HoldId'\n),\n',\n\n    RowChkSum = CHECKSUM(\n        dsID,\n        dsClt,\n        dsDIM1,\n        dsDIM2,\n        dsDIM3,\n        dsDIM4,\n        dsDIM5,\n        dsDIM6,\n        dsTxtSrv,\n        dsDtStart,\n        dsDtEnd,\n        dsTxtType,\n        dsdblUnits,\n        dsNoteID,\n        dsDtAdded,\n        dstxtStaff,\n        DSbilled,\n        dsGROUPNUM,\n        dsPROGRAM,\n        dsUpdate,\n        dsUPDATEStaff,\n        dsInvalidatedOn,\n        dsError,\n        dsTxtHIV,\n        dsDartsGroup,\n        repOldSrv,\n        dsSigDate,\n        dssigdateCOSIGN,\n        dsSigUser,\n        dsSigUserCosign,\n        dsSIGCLTDATE,\n        dsSIGCLTUSER,\n        dsAPTID,\n        dsuncharted,\n        dsTxDim1,\n        dsTxDim2,\n        dsTxDim3,\n        dsTxDim4,\n        dsTxDim5,\n        dsTxDim6,\n        dsDIAG,\n        dsArea,\n        dsGroupDefaultNote,\n        dsGroupEnd,\n        dsGroupIdentity,\n        dsGroupStart,\n        dsDIAG10,\n        SiteID,\n        dsDBnotes,\n        MG,\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100))'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit)'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int)'\n),\n'\n    )\n\nFROM [', item().DataBaseName, '].', item().SourceTable, '\nWHERE dsClt IS NOT NULL\n  AND (\n       CONVERT(date, dsdtstart) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsDtAdded) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsUpdate) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsBilled) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsSigDate) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR dsClt <= 0\n  )\nORDER BY 1, 2'\n)",
                                         "type": "Expression"
                                     },
                                     "queryTimeout": "02:00:00",
@@ -124,6 +124,35 @@
                         }
                     ]
                 }
+            },
+            {
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_samms_database_sites",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{\"DartsSrv\":{\"status\":\"',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms_database_sites').error,'DartsSrv Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
             }
         ],
         "parameters": {
@@ -144,14 +173,14 @@
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-06-19T16:07:35Z"
+        "lastPublishTime": "2026-08-04T19:16:57Z"
     }
 }
 
 ->>Parent pipline which consist of this invoke pipline
 
 {
-    "name": "Execute_DartSrv",
+    "name": "pl_execute_dartsrv",
     "objectId": "12ad712f-3d73-48e9-b4b0-826ab69e388c",
     "properties": {
         "activities": [
@@ -167,8 +196,34 @@
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                    "notebookId": "b8091d01-8235-40fd-aa4e-083a9957435b",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\",\"SL\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"DartsSrv\"]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        }
+                    }
                 }
             },
             {
@@ -188,7 +243,7 @@
                         "type": "Expression"
                     },
                     "condition": {
-                        "value": "@and(and(equals(item().ConfigId, 25), equals(item().IsActive, 1)), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null)))))",
+                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(equals(item().Method, 'DartsSrv'), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
                         "type": "Expression"
                     }
                 }
@@ -212,7 +267,7 @@
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
+                    "notebookId": "bb76a568-e7f7-4f2b-9bd7-a9e6188b00af",
                     "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
                         "p_mode": {
@@ -224,15 +279,33 @@
                             "type": "string"
                         },
                         "p_pipeline_name": {
-                            "value": "Execute_DartSrv",
+                            "value": "pl_execute_dartsrv",
                             "type": "string"
                         },
                         "p_pipeline_path": {
-                            "value": "/pipelines/Execute_DartSrv",
+                            "value": "/pipelines/pl_execute_dartsrv",
                             "type": "string"
                         },
                         "p_triggered_by": {
                             "value": "Fabric",
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_active_target_layers_json": {
+                            "value": "[\"BR\",\"SL\"]",
                             "type": "string"
                         }
                     }
@@ -240,7 +313,7 @@
             },
             {
                 "name": "Exected_AfterBronz",
-                "type": "ExecutePipeline",
+                "type": "InvokePipeline",
                 "dependsOn": [
                     {
                         "activity": "nb_darts_audit_start",
@@ -250,14 +323,17 @@
                     }
                 ],
                 "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "pipeline": {
-                        "referenceName": "b2101370-34a9-4695-bf4a-eebdb3ced50b",
-                        "type": "PipelineReference"
-                    },
                     "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "b2101370-34a9-4695-bf4a-eebdb3ced50b",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
                         "p_ingest_run_id": {
                             "value": "@pipeline().RunId",
@@ -276,6 +352,32 @@
                             "type": "Expression"
                         }
                     }
+                },
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
+                }
+            },
+            {
+                "name": "set_darts_bronze_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Exected_AfterBronz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_bronze_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('Exected_AfterBronz').Status,'Succeeded'), string(activity('Exected_AfterBronz').output.properties.returnValue.v_bronze_method_results_json), '{\"DartsSrv\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"DartsSrv Bronze child pipeline failed before returning method results\"}}')",
+                        "type": "Expression"
+                    }
                 }
             },
             {
@@ -283,7 +385,7 @@
                 "type": "TridentNotebook",
                 "dependsOn": [
                     {
-                        "activity": "Exected_AfterBronz",
+                        "activity": "set_darts_bronze_results",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -306,1244 +408,317 @@
                                 "type": "Expression"
                             },
                             "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
                         }
                     }
                 }
             },
             {
-                "name": "Prepare_DartsSrv_Versioned_Gold_Table",
-                "type": "Script",
+                "name": "set_darts_silver_results",
+                "type": "SetVariable",
                 "dependsOn": [
                     {
                         "activity": "nb_darts_bronze_to_silver",
                         "dependencyConditions": [
-                            "Succeeded"
+                            "Completed"
                         ]
                     }
                 ],
                 "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
                     "secureOutput": false,
                     "secureInput": false
                 },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
                 "typeProperties": {
-                    "scripts": [
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('nb_darts_bronze_to_silver').Status, 'Succeeded'), activity('nb_darts_bronze_to_silver').output.result.exitValue, concat('{\"DartsSrv\":{\"method\":\"DartsSrv\",\"layer\":\"SL\",\"status\":\"',if(equals(activity('nb_darts_bronze_to_silver').Status,'Skipped'),'SKIPPED','FAILED'),'\",\"failed_stage\":\"',if(contains(variables('v_bronze_method_results_json'),'\"status\":\"FAILED\"'),'BR','SL'),'\",\"error_message\":\"',replace(replace(if(equals(activity('nb_darts_bronze_to_silver').Status,'Failed'),string(activity('nb_darts_bronze_to_silver').error),'DartsSrv Silver notebook was skipped.'),'\"',''''),'\\','\\\\'),'\"}}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if_darts_silver_result_success",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set_darts_silver_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(and(and(not(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"ERROR\"'))), and(and(not(contains(variables('v_silver_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_silver_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_silver_method_results_json'), '\"status\":\"ERROR\"'))))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
                         {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('DROP TABLE IF EXISTS pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '];\n\nCREATE TABLE pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '] AS\nSELECT *\nFROM pats.gd_darts_srv\nWHERE 1 = 0;')",
-                                "type": "Expression"
+                            "name": "nb_darts_audit_finalize_failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "bb76a568-e7f7-4f2b-9bd7-a9e6188b00af",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": "pl_execute_dartsrv",
+                                        "type": "string"
+                                    },
+                                    "p_failed_target_name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_failure_activity": {
+                                        "value": "DartsSrv_Result_Finalizer",
+                                        "type": "string"
+                                    },
+                                    "p_error_message": {
+                                        "value": {
+                                            "value": "@concat('Bronze results: ', variables('v_bronze_method_results_json'), ' Silver results: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_notify_failed",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_darts_audit_finalize_failure",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "Task_Name": {
+                                        "value": "DartsSrv Pipeline",
+                                        "type": "string"
+                                    },
+                                    "Task_Config_ID": {
+                                        "value": "",
+                                        "type": "string"
+                                    },
+                                    "Target_Name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Error_Msg": {
+                                        "value": {
+                                            "value": "@concat('Bronze results: ', variables('v_bronze_method_results_json'), ' Silver results: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Description": {
+                                        "value": "DartsSrv pipeline failed. See audit error details.",
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
-                }
-            },
-            {
-                "name": "Copy_darts_silver_to_gold_version",
-                "type": "Copy",
-                "dependsOn": [
-                    {
-                        "activity": "Prepare_DartsSrv_Versioned_Gold_Table",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "source": {
-                        "type": "LakehouseTableSource",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_silver",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "Lakehouse",
-                                    "typeProperties": {
-                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
-                                        "rootFolder": "Tables"
-                                    }
-                                }
-                            },
-                            "type": "LakehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": "sl_tbldartsrv"
-                            }
-                        }
-                    },
-                    "sink": {
-                        "type": "DataWarehouseSink",
-                        "allowCopyCommand": true,
-                        "writeBehavior": "Insert",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_gold",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "DataWarehouse",
-                                    "typeProperties": {
-                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                                    }
-                                }
-                            },
-                            "type": "DataWarehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": {
-                                    "value": "@concat('gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'))",
-                                    "type": "Expression"
-                                }
-                            }
-                        }
-                    },
-                    "enableStaging": true,
-                    "translator": {
-                        "type": "TabularTranslator",
-                        "mappings": [
-                            {
-                                "source": {
-                                    "name": "_site_code",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "SiteCode",
-                                    "physicalType": "varchar",
-                                    "length": "100"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsID",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsId",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsClt",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsClt",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM1",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim1",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM2",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim2",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM3",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim3",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM4",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim4",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM5",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim5",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIM6",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsDim6",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxtSrv",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsTxtSrv",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDtStart",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsDtStart",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDtEnd",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsDtEnd",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxtType",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsTxtType",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsdblUnits",
-                                    "type": "Double",
-                                    "physicalType": "double"
-                                },
-                                "sink": {
-                                    "name": "DsdblUnits",
-                                    "physicalType": "float"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsNoteID",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsNoteId",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDtAdded",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsDtAdded",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dstxtStaff",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DstxtStaff",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dstxtNote",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DstxtNote",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsRTBNOTE",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsRtbnote",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "DSbilled",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsBilled",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsGROUPNUM",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsGroupnum",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsPROGRAM",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsProgram",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsUpdate",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsUpdate",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsUPDATEStaff",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsUpdateStaff",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsInvalidatedOn",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsInvalidatedOn",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsError",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsError",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxtHIV",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsTxtHiv",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDartsGroup",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsDartsGroup",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "repOldSrv",
-                                    "type": "Decimal",
-                                    "physicalType": "decimal",
-                                    "scale": 0,
-                                    "precision": 18
-                                },
-                                "sink": {
-                                    "name": "RepOldSrv",
-                                    "physicalType": "decimal",
-                                    "scale": 0,
-                                    "precision": 18
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSignature",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSignature",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSigDate",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsSigDate",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dssigdateCOSIGN",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsSigDateCosign",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dssignatureCOSIGN",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSignatureCosign",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSigUser",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSigUser",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSigUserCosign",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSigUserCosign",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSIGCLT",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSigClt",
-                                    "physicalType": "varchar",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSIGCLTDATE",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsSigCltDate",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSIGCLTUSER",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsSigCltUser",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsAPTID",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsAptId",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsuncharted",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsUncharted",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim1",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim1",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim2",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim2",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim3",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim3",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim4",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim4",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim5",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim5",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTxDim6",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsTxDim6",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIAG",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsDiag",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsArea",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsArea",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsGroupDefaultNote",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "DsGroupDefaultNote",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsGroupEnd",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsGroupEnd",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsGroupIdentity",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsGroupIdentity",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsGroupStart",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "DsGroupStart",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDIAG10",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsDiag10",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "SiteID",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "SiteId",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDBnotes",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "DsDbNotes",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSigCltImg",
-                                    "type": "Byte[]",
-                                    "physicalType": "binary"
-                                },
-                                "sink": {
-                                    "name": "DsSigCltImg",
-                                    "physicalType": "varbinary",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSignatureCoSignImg",
-                                    "type": "Byte[]",
-                                    "physicalType": "binary"
-                                },
-                                "sink": {
-                                    "name": "DsSignatureCoSignImg",
-                                    "physicalType": "varbinary",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsSignatureIMG",
-                                    "type": "Byte[]",
-                                    "physicalType": "binary"
-                                },
-                                "sink": {
-                                    "name": "DsSignatureImg",
-                                    "physicalType": "varbinary",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "MG",
-                                    "type": "Double",
-                                    "physicalType": "double"
-                                },
-                                "sink": {
-                                    "name": "Mg",
-                                    "physicalType": "float"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "upsize_ts",
-                                    "type": "Byte[]",
-                                    "physicalType": "binary"
-                                },
-                                "sink": {
-                                    "name": "upsize_ts",
-                                    "physicalType": "varbinary",
-                                    "length": "8000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "silver_updated_at",
-                                    "type": "DateTime",
-                                    "physicalType": "timestamp"
-                                },
-                                "sink": {
-                                    "name": "LastModAt",
-                                    "physicalType": "datetime2",
-                                    "precision": 6
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowState",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "RowState",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "ServiceType",
-                                    "type": "String",
-                                    "physicalType": "string"
-                                },
-                                "sink": {
-                                    "name": "ServiceType",
-                                    "physicalType": "varchar",
-                                    "length": "4000"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsTelehealthSession",
-                                    "type": "Boolean",
-                                    "physicalType": "boolean"
-                                },
-                                "sink": {
-                                    "name": "dsTelehealthSession",
-                                    "physicalType": "bit"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "HoldId",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "HoldId",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowChkSum",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "RowChkSum",
-                                    "physicalType": "int"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "dsDtStartYear",
-                                    "type": "Int32",
-                                    "physicalType": "integer"
-                                },
-                                "sink": {
-                                    "name": "DsDtStartYear",
-                                    "physicalType": "int"
-                                }
-                            }
-                        ],
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                            "allowDataTruncation": true,
-                            "treatBooleanAsNumber": false
-                        }
-                    }
-                }
-            },
-            {
-                "name": "Publish_DartsSrv_Versioned_Gold",
-                "type": "Script",
-                "dependsOn": [
-                    {
-                        "activity": "Copy_darts_silver_to_gold_version",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
-                "typeProperties": {
-                    "scripts": [
+                    "ifTrueActivities": [
                         {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('DECLARE @version_count BIGINT;\nDECLARE @final_count BIGINT;\n\nSELECT @version_count = COUNT(*)\nFROM pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), '];\n\nIF @version_count = 0\n    THROW 50001, ''Validation failed: pats.gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), ' is empty.'', 1;\n\nIF OBJECT_ID(''pats.gd_darts_srv'', ''U'') IS NULL\n    THROW 50002, ''Publish failed: production table pats.gd_darts_srv does not exist.'', 1;\n\nDROP TABLE IF EXISTS pats.[gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), '];\n\nEXEC sp_rename ''pats.gd_darts_srv'', ''gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), ''';\nEXEC sp_rename ''pats.[gd_darts_srv_v_', replace(pipeline().RunId, '-', '_'), ']'', ''gd_darts_srv'';\n\nSELECT @final_count = COUNT(*)\nFROM pats.gd_darts_srv;\n\nIF @final_count = 0\n    THROW 50003, ''Final verification failed: pats.gd_darts_srv is empty after table swap.'', 1;\n\nBEGIN TRY\n    DECLARE @cleanup_sql NVARCHAR(MAX);\n\n    SELECT @cleanup_sql = STRING_AGG(''DROP TABLE pats.'' + QUOTENAME(t.name), '';'' + CHAR(10))\n    FROM sys.tables t\n    INNER JOIN sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE s.name = ''pats''\n      AND (\n            (t.name LIKE ''gd_darts_srvBK_%'' AND t.name <> ''gd_darts_srvBK_', replace(pipeline().RunId, '-', '_'), ''')\n         OR t.name LIKE ''gd_darts_srv_v_%''\n         OR t.name = ''gd_darts_srv_load''\n      );\n\n    IF @cleanup_sql IS NOT NULL AND LEN(@cleanup_sql) > 0\n        EXEC sp_executesql @cleanup_sql;\nEND TRY\nBEGIN CATCH\n    PRINT ''Cleanup warning: '' + ERROR_MESSAGE();\nEND CATCH;\n\nSELECT ''gd_darts_srv'' AS TableName, @final_count AS [RowCount];')",
-                                "type": "Expression"
+                            "name": "nb_darts_audit_finalize_success",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "bb76a568-e7f7-4f2b-9bd7-a9e6188b00af",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": "pl_execute_dartsrv",
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_notify_success",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_darts_audit_finalize_success",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "Task_Name": {
+                                        "value": "DartsSrv Pipeline",
+                                        "type": "string"
+                                    },
+                                    "Task_Config_ID": {
+                                        "value": "57",
+                                        "type": "string"
+                                    },
+                                    "Target_Name": {
+                                        "value": "SL",
+                                        "type": "string"
+                                    },
+                                    "Error_Msg": {
+                                        "value": "",
+                                        "type": "string"
+                                    },
+                                    "Description": {
+                                        "value": "DartsSrv pipeline completed successfully through Silver.",
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
-                    ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
-                }
-            },
-            {
-                "name": "nb_darts_audit_finalize_failure",
-                "type": "TridentNotebook",
-                "dependsOn": [
-                    {
-                        "activity": "Publish_DartsSrv_Versioned_Gold",
-                        "dependencyConditions": [
-                            "Failed",
-                            "Skipped"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "p_mode": {
-                            "value": "FINALIZE_FAILURE",
-                            "type": "string"
-                        },
-                        "p_failed_target_name": {
-                            "value": "ALL",
-                            "type": "string"
-                        },
-                        "p_failure_activity": {
-                            "value": "Darts_Bronze_Silver_Gold_Finalizer",
-                            "type": "string"
-                        },
-                        "p_audit_context_json": {
-                            "value": {
-                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_ingest_run_id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_sites_json": {
-                            "value": {
-                                "value": "@string(activity('flt_active_darts_sites').output.value)",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_error_message": {
-                            "value": {
-                                "value": "@string(coalesce(activity('Exected_AfterBronz').error, activity('nb_darts_bronze_to_silver').error, activity('Prepare_DartsSrv_Versioned_Gold_Table').error, activity('Copy_darts_silver_to_gold_version').error, activity('Publish_DartsSrv_Versioned_Gold').error, 'Darts pipeline failed, but no activity error object was available.'))",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_status": {
-                            "value": "FAILED",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "nb_darts_audit_finalize_success",
-                "type": "TridentNotebook",
-                "dependsOn": [
-                    {
-                        "activity": "Publish_DartsSrv_Versioned_Gold",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "9d0b3480-fa72-4814-ad31-7bbec83a3301",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "p_mode": {
-                            "value": "FINALIZE_SUCCESS",
-                            "type": "string"
-                        },
-                        "p_audit_context_json": {
-                            "value": {
-                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_ingest_run_id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_sites_json": {
-                            "value": {
-                                "value": "@string(activity('flt_active_darts_sites').output.value)",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "p_status": {
-                            "value": "SUCCESS",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "nb_notify_success",
-                "type": "TridentNotebook",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "nb_darts_audit_finalize_success",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "Pipeline_Name": {
-                            "value": "DartsSrv ETL",
-                            "type": "string"
-                        },
-                        "Status": {
-                            "value": "Succeeded",
-                            "type": "string"
-                        },
-                        "Config_Name": {
-                            "value": "SAMMS DartsSrv",
-                            "type": "string"
-                        },
-                        "Source_System": {
-                            "value": "Darts",
-                            "type": "string"
-                        },
-                        "Target_Name": {
-                            "value": "GL",
-                            "type": "string"
-                        },
-                        "Environment_Name": {
-                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
-                            "type": "string"
-                        },
-                        "Run_Id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Description": {
-                            "value": "DartsSrv pipeline completed successfully through Gold",
-                            "type": "string"
-                        },
-                        "Error_Msg": {
-                            "type": "string"
-                        },
-                        "Pipeline_StartTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_EndTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "nb_notify_failed",
-                "type": "TridentNotebook",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "nb_darts_audit_finalize_failure",
-                        "dependencyConditions": [
-                            "Failed"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "Pipeline_Name": {
-                            "value": "DartsSrv ETL",
-                            "type": "string"
-                        },
-                        "Status": {
-                            "value": "Failed",
-                            "type": "string"
-                        },
-                        "Config_Name": {
-                            "value": "SAMMS DartsSrv",
-                            "type": "string"
-                        },
-                        "Source_System": {
-                            "value": "Darts",
-                            "type": "string"
-                        },
-                        "Target_Name": {
-                            "value": "ALL",
-                            "type": "string"
-                        },
-                        "Environment_Name": {
-                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
-                            "type": "string"
-                        },
-                        "Run_Id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Description": {
-                            "value": "DartsSrv pipeline failed. See audit finalization error for details.",
-                            "type": "string"
-                        },
-                        "Error_Msg": {
-                            "value": {
-                                "value": "@string(coalesce(activity('nb_darts_audit_finalize_failure').error, activity('Exected_AfterBronz').error, activity('nb_darts_bronze_to_silver').error, activity('Prepare_DartsSrv_Versioned_Gold_Table').error, activity('Copy_darts_silver_to_gold_version').error, activity('Publish_DartsSrv_Versioned_Gold').error, 'DartsSrv pipeline failed, but no activity error object was available.'))",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_StartTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_EndTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        }
-                    }
+                    ]
                 }
             }
         ],
@@ -1553,8 +728,16 @@
                 "defaultValue": 15
             }
         },
-        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-06-22T16:47:20Z"
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            },
+            "v_silver_method_results_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "41032ad8-8248-4dd3-9ac8-0281d6ef4ebd",
+        "lastPublishTime": "2026-07-17T10:15:01Z"
     }
 }
 
@@ -1562,72 +745,395 @@ nb_darts_bronze_to_silver_silver
 cell:1
 
 
+import json
+from pyspark.sql import functions as F
 from pyspark.sql.functions import col, current_timestamp, year, row_number, when
 from pyspark.sql.window import Window
 
-# The pipeline passes p_ingest_run_id as a parameter.
-# The try/except allows you to run this cell manually during development
-# without the pipeline by falling back to a hardcoded test value.
+# Pipeline parameters. Defaults keep manual notebook testing possible.
 try:
     p_ingest_run_id
 except NameError:
     p_ingest_run_id = "test-run-001"
 
-bronze_table = "bhg_bronze.Dart.br_tblDartSrv"
-silver_table = "bhg_silver.pats.sl_tbldartsrv"
+try:
+    p_bronze_method_results_json
+except NameError:
+    p_bronze_method_results_json = "{}"
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+method_name = "DartsSrv"
+default_bronze_table = "bhg_bronze.Dart.br_tblDartSrv"
+default_silver_table = "bhg_silver.pats.tbl_dartsrv"
+
+def parse_json_obj(value, default=None):
+    if default is None:
+        default = {}
+    if value is None:
+        return default
+    if isinstance(value, dict):
+        return value
+    text = str(value).strip()
+    if not text:
+        return default
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else default
+    except Exception:
+        return default
+
+def row_value(row, key, default=None):
+    if row is None:
+        return default
+    if isinstance(row, dict):
+        return row.get(key, default)
+    try:
+        return row[key]
+    except Exception:
+        return getattr(row, key, default)
+
+def layer_tasks(context, target_name):
+    layer = row_value(context, str(target_name).upper(), {})
+    tasks = row_value(layer, "tasks", [])
+    if isinstance(tasks, list):
+        return tasks
+    return []
+
+def request_body_full_table(task):
+    request_body = row_value(task, "request_body") or row_value(task, "RequestBody")
+    if not request_body:
+        metadata = row_value(task, "metadata", {})
+        return row_value(metadata, "full_table")
+    try:
+        parsed = json.loads(str(request_body))
+        if isinstance(parsed, dict):
+            return parsed.get("full_table")
+    except Exception:
+        return None
+    return None
+
+def build_full_table(layer_prefix, target_schema, target_table):
+    if not target_table:
+        return None
+    table = str(target_table).strip()
+    if "." in table and table.lower().startswith(("bhg_bronze.", "bhg_silver.")):
+        return table
+    schema = str(target_schema or "").strip()
+    if not schema:
+        return None
+    return f"{layer_prefix}.{schema}.{table}"
+
+def resolve_table_from_context(target_name, layer_prefix, default_full_table):
+    context = parse_json_obj(p_audit_context_json, {})
+    candidates = [
+        task for task in layer_tasks(context, target_name)
+        if str(row_value(task, "method") or row_value(task, "Method") or "").lower() == method_name.lower()
+    ]
+    if not candidates:
+        return default_full_table
+
+    task = candidates[0]
+    for candidate in [
+        row_value(task, "full_table"),
+        request_body_full_table(task),
+        build_full_table(
+            layer_prefix,
+            row_value(task, "target_schema") or row_value(task, "TargetSchema"),
+            row_value(task, "target_table") or row_value(task, "TargetTable")
+        )
+    ]:
+        if candidate:
+            return str(candidate)
+
+    return default_full_table
+
+bronze_table = resolve_table_from_context("BR", "bhg_bronze", default_bronze_table)
+silver_table = resolve_table_from_context("SL", "bhg_silver", default_silver_table)
+
+def method_status_from_bronze():
+    return str(bronze_result().get("status") or "").upper()
+
+def bronze_result():
+    payload = parse_json_obj(p_bronze_method_results_json, {})
+    method_payload = payload.get(method_name) or payload.get(method_name.lower()) or {}
+    return method_payload if isinstance(method_payload, dict) else {}
+
+def bronze_had_method_failure():
+    result = bronze_result()
+    status = str(result.get("status") or "").upper()
+    failed_stage = str(result.get("failed_stage") or "").upper()
+    return status in ("FAILED", "ERROR") or failed_stage == "BR"
+
+def bronze_failure_message():
+    result = bronze_result()
+    return (
+        result.get("error_message")
+        or result.get("message")
+        or "DartsSrv Bronze copy failed or wrote no rows for this ingest run."
+    )
+
+def active_site_rows():
+    context = parse_json_obj(p_audit_context_json, {})
+    rows = []
+    seen = set()
+    for task in layer_tasks(context, "BR"):
+        site_code = row_value(task, "site_code") or row_value(task, "SiteCode")
+        if not site_code:
+            continue
+        site_code = str(site_code)
+        if site_code in seen:
+            continue
+        rows.append({
+            "site_code": site_code,
+            "database_name": row_value(task, "data_base_name") or row_value(task, "DataBaseName"),
+            "site_name": row_value(task, "site_name") or row_value(task, "SiteName")
+        })
+        seen.add(site_code)
+    return rows
+
+def build_site_results(successful_sites, site_row_counts=None, bronze_had_failure=False, failed_message=None):
+    active_sites = active_site_rows()
+    if not active_sites:
+        active_sites = [{"site_code": site, "database_name": None, "site_name": None} for site in successful_sites]
+
+    successful = {str(site) for site in successful_sites if site}
+    counts = {str(k): int(v or 0) for k, v in (site_row_counts or {}).items()}
+    results = []
+    for site in active_sites:
+        site_code = site["site_code"]
+        item = {
+            "site_code": site_code,
+            "database_name": site.get("database_name"),
+            "site_name": site.get("site_name"),
+            "rows_written": counts.get(site_code, 0)
+        }
+        if site_code in successful:
+            item["status"] = "SUCCESS"
+        elif bronze_had_failure:
+            item.update({
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": failed_message or "DartsSrv Bronze copy failed or wrote no rows for this ingest run."
+            })
+        else:
+            item["status"] = "SUCCESS"
+        results.append(item)
+    return results
+
+def notebook_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+    payload = {
+        method_name: {
+            "method": method_name,
+            "layer": "SL",
+            "status": status,
+            "rows_read": int(rows_read or 0),
+            "rows_inserted": int(rows_inserted or 0),
+            "rows_updated": int(rows_updated or 0),
+            "rows_skipped": int(rows_skipped or 0)
+        }
+    }
+    if message:
+        payload[method_name]["message"] = message
+    if site_results is not None:
+        payload[method_name]["site_results"] = site_results
+    return payload
+
+def notebook_exit(payload):
+    result = json.dumps(payload)
+    print(result)
+    try:
+        mssparkutils.notebook.exit(result)
+    except NameError:
+        pass
 
 print(f"Processing ingest_run_id: {p_ingest_run_id}")
 print(f"Bronze table: {bronze_table}")
 print(f"Silver table: {silver_table}")
 
-# Read only the rows from THIS pipeline run.
-# Bronze is an append-only table with rows from many runs.
-# We filter to p_ingest_run_id so we only process today's extraction.
-bronze_df = spark.table(bronze_table).where(col("_ingest_run_id") == p_ingest_run_id)
+def first_existing_column(df, candidates, label):
+    existing = set(df.columns)
+    for candidate in candidates:
+        if candidate in existing:
+            return candidate
+    raise Exception(f"Could not find {label} column. Tried: {candidates}")
+
+raw_bronze_df = spark.table(bronze_table)
+ingest_col = first_existing_column(raw_bronze_df, ["_ingest_run_id", "IngestRunId"], "ingest/run id")
+site_col = first_existing_column(raw_bronze_df, ["_site_code", "SiteCode"], "site code")
+extracted_col = first_existing_column(raw_bronze_df, ["_extracted_at", "ExtractedAt"], "extracted timestamp")
+
+bronze_df = raw_bronze_df.where(col(ingest_col) == p_ingest_run_id)
+if "_ingest_run_id" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("_ingest_run_id", col(ingest_col))
+if "IngestRunId" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("IngestRunId", col(ingest_col))
+if "_site_code" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("_site_code", col(site_col))
+if "SiteCode" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("SiteCode", col(site_col))
+if "_extracted_at" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("_extracted_at", col(extracted_col))
+if "ExtractedAt" not in bronze_df.columns:
+    bronze_df = bronze_df.withColumn("ExtractedAt", col(extracted_col))
+
+for canonical, aliases in {
+    "_source_query_start_date": ["_source_query_start_date", "SourceQueryStartDate"],
+    "_source_query_end_date": ["_source_query_end_date", "SourceQueryEndDate"],
+    "_source_database": ["_source_database", "SourceDatabase"],
+}.items():
+    if canonical not in bronze_df.columns:
+        source_name = next((alias for alias in aliases if alias in bronze_df.columns), None)
+        if source_name:
+            bronze_df = bronze_df.withColumn(canonical, col(source_name))
 
 bronze_count = bronze_df.count()
-print(f"Bronze rows for this run: {bronze_count}")
+site_count_rows = bronze_df.groupBy("SiteCode").count().collect()
+bronze_site_counts = {str(row["SiteCode"]): int(row["count"] or 0) for row in site_count_rows if row["SiteCode"] is not None}
+successful_sites = sorted(bronze_site_counts.keys())
+bronze_failed = bronze_had_method_failure()
+site_results = build_site_results(
+    successful_sites,
+    bronze_site_counts,
+    bronze_had_failure=bronze_failed,
+    failed_message=bronze_failure_message()
+)
 
-# Safety check: if no rows found, the pipeline or copy activity failed.
-# Raising an exception here marks the notebook activity as failed in the pipeline.
+if bronze_failed and successful_sites:
+    bronze_df = bronze_df.where(col("SiteCode").isin(successful_sites))
+    bronze_count = bronze_df.count()
+
+print(f"Successful Bronze sites for this run: {successful_sites}")
+print(f"Bronze rows for successful sites in this run: {bronze_count}")
+
+if bronze_failed and not successful_sites:
+    notebook_exit(notebook_payload(
+        "SKIPPED",
+        rows_read=0,
+        message=f"Bronze failed and no successful DartsSrv rows were found for ingest_run_id = {p_ingest_run_id}; Silver skipped.",
+        site_results=site_results
+    ))
+
 if bronze_count == 0:
-    raise Exception(f"No Bronze rows found for ingest_run_id = {p_ingest_run_id}")
+    notebook_exit(notebook_payload(
+        "SUCCESS",
+        rows_read=0,
+        message=f"Bronze completed but no DartsSrv rows were found for ingest_run_id = {p_ingest_run_id}.",
+        site_results=site_results
+    ))
 
-# Deduplicate within current run.
-# Key = _site_code + dsID.
-# If the same record appears twice (e.g., due to a retry), keep the latest one.
+FINAL_SILVER_COLUMNS = [
+    "SiteCode",
+    "dsID",
+    "dsClt",
+    "dsDIM1",
+    "dsDIM2",
+    "dsDIM3",
+    "dsDIM4",
+    "dsDIM5",
+    "dsDIM6",
+    "dsTxtSrv",
+    "dsDtStart",
+    "dsDtEnd",
+    "dsTxtType",
+    "dsdblUnits",
+    "dsNoteID",
+    "dsDtAdded",
+    "dstxtStaff",
+    "dstxtNote",
+    "dsRTBNOTE",
+    "DSbilled",
+    "dsGROUPNUM",
+    "dsPROGRAM",
+    "dsUpdate",
+    "dsUPDATEStaff",
+    "upsize_ts",
+    "dsInvalidatedOn",
+    "dsError",
+    "dsTxtHIV",
+    "dsDartsGroup",
+    "repOldSrv",
+    "dsSignature",
+    "dsSigDate",
+    "dssigdateCOSIGN",
+    "dssignatureCOSIGN",
+    "dsSigUser",
+    "dsSigUserCosign",
+    "dsSIGCLT",
+    "dsSIGCLTDATE",
+    "dsSIGCLTUSER",
+    "dsAPTID",
+    "dsuncharted",
+    "dsTxDim1",
+    "dsTxDim2",
+    "dsTxDim3",
+    "dsTxDim4",
+    "dsTxDim5",
+    "dsTxDim6",
+    "dsDIAG",
+    "dsArea",
+    "dsGroupDefaultNote",
+    "dsGroupEnd",
+    "dsGroupIdentity",
+    "dsGroupStart",
+    "dsDIAG10",
+    "SiteID",
+    "dsDBnotes",
+    "dsSigCltImg",
+    "dsSignatureCoSignImg",
+    "dsSignatureIMG",
+    "MG",
+    "ServiceType",
+    "RowChkSum",
+    "dsDtStartYear",
+    "LastModAt",
+    "RowState",
+    "dsTelehealthSession",
+    "HoldId",
+]
+
+# Deduplicate within current run. Key = _site_code + dsID.
 w = Window.partitionBy("_site_code", "dsID").orderBy(col("_extracted_at").desc())
 
-src_df = (
+src_prepared_df = (
     bronze_df
     .where(col("_site_code").isNotNull() & col("dsID").isNotNull())
     .withColumn("rn", row_number().over(w))
     .where(col("rn") == 1)
     .drop("rn")
-    # Extract the year from session start date.
-    # Used for partitioning and year-based filtering in Silver.
     .withColumn("dsDtStartYear", year(col("dsDtStart")))
-    # Timestamp set every time this row is written/updated in Silver.
-    .withColumn("silver_updated_at", current_timestamp())
-    # Timestamp of when this row was last seen in a SAMMS extraction.
-    .withColumn("last_seen_at", current_timestamp())
-    # Matches the stored procedure logic: 1 = active/valid patient, 0 = placeholder (dsClt < 0).
-    .withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))
 )
 
-# Create a temp view so you can query src_df with SQL if needed for debugging.
-src_df.createOrReplaceTempView("vw_darts_current_run")
+if "LastModAt" not in src_prepared_df.columns:
+    src_prepared_df = src_prepared_df.withColumn("LastModAt", current_timestamp())
 
+if "RowState" not in src_prepared_df.columns:
+    src_prepared_df = src_prepared_df.withColumn("RowState", when(col("dsClt") >= 0, 1).otherwise(0))
+
+missing_final_columns = [c for c in FINAL_SILVER_COLUMNS if c not in src_prepared_df.columns]
+if missing_final_columns:
+    raise Exception(f"DartsSrv Silver final projection is missing required columns: {missing_final_columns}")
+
+src_df = src_prepared_df.select(*FINAL_SILVER_COLUMNS)
+src_df.createOrReplaceTempView("vw_darts_current_run")
 src_count = src_df.count()
 print(f"Prepared source rows for Silver: {src_count}")
 
-# If the Silver table does not exist yet (first-ever run), create it.
-# This uses overwrite mode to write the full initial load.
-# silver_created_at is added here and will never be overwritten in future updates.
+if src_count == 0:
+    notebook_exit(notebook_payload(
+        "SUCCESS",
+        rows_read=bronze_count,
+        rows_skipped=bronze_count,
+        message="Bronze rows existed, but no valid _site_code + dsID records remained after filtering.",
+        site_results=site_results
+    ))
+
 if not spark.catalog.tableExists(silver_table):
     (
         src_df
-        .withColumn("silver_created_at", current_timestamp())
         .write
         .format("delta")
         .mode("overwrite")
@@ -1636,11 +1142,6 @@ if not spark.catalog.tableExists(silver_table):
     print(f"Created Silver table and inserted rows: {src_count}")
 else:
     print(f"Silver table already exists: {silver_table}")
-    silver_columns = {field.name for field in spark.table(silver_table).schema.fields}
-    if "upsize_ts" not in silver_columns:
-        spark.sql(f"ALTER TABLE {silver_table} ADD COLUMNS (upsize_ts BINARY)")
-        print("Added missing Silver column: upsize_ts")
-
 
 
 cell2:
@@ -1648,18 +1149,22 @@ cell2:
 
 from delta.tables import DeltaTable
 
-silver_table = "bhg_silver.pats.sl_tbldartsrv"
+try:
+    silver_table
+except NameError:
+    silver_table = "bhg_silver.pats.tbl_dartsrv"
+
+try:
+    site_results
+except NameError:
+    site_results = None
 
 if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
 
 silver_delta = DeltaTable.forName(spark, silver_table)
-
 target_cols = [field.name for field in spark.table(silver_table).schema.fields]
 
-# Defensive cleanup:
-# If Bronze ever contains a blank/invalid column name, Delta MERGE receives an empty
-# update key and fails with: Cannot resolve `` in UPDATE clause.
 blank_src_cols = [repr(c) for c in src_df.columns if c is None or str(c).strip() == ""]
 if blank_src_cols:
     print(f"Skipping blank source columns before Silver MERGE: {blank_src_cols}")
@@ -1680,27 +1185,21 @@ skipped_non_target_cols = [
 if skipped_non_target_cols:
     print(f"Skipping source columns not present in Silver target: {skipped_non_target_cols}")
 
-# Do not overwrite original created timestamp during updates.
-update_cols = [
-    c for c in src_cols
-    if c != "silver_created_at"
-]
+required_merge_columns = ["SiteCode", "dsID", "RowChkSum"]
+missing_merge_columns = [c for c in required_merge_columns if c not in src_cols or c not in target_cols]
+if missing_merge_columns:
+    raise Exception(f"Silver MERGE is missing required final columns: {missing_merge_columns}")
 
+update_cols = list(src_cols)
 update_set = {c: f"src.`{c}`" for c in update_cols}
 
-# Preserve created timestamp for existing rows.
-update_set["silver_updated_at"] = "current_timestamp()"
-update_set["last_seen_at"] = "current_timestamp()"
-
 insert_values = {c: f"src.`{c}`" for c in src_cols}
-if "silver_created_at" in target_cols and "silver_created_at" not in insert_values:
-    insert_values["silver_created_at"] = "current_timestamp()"
 
 (
     silver_delta.alias("tgt")
     .merge(
         src_df.alias("src"),
-        "tgt._site_code = src._site_code AND tgt.dsID = src.dsID"
+        "tgt.SiteCode = src.SiteCode AND tgt.dsID = src.dsID"
     )
     .whenMatchedUpdate(
         condition="""
@@ -1710,31 +1209,13 @@ if "silver_created_at" in target_cols and "silver_created_at" not in insert_valu
         """,
         set=update_set
     )
-    .whenMatchedUpdate(
-        condition="""
-            tgt.RowChkSum = src.RowChkSum
-        """,
-        set={
-            "last_seen_at": "current_timestamp()",
-            "_ingest_run_id": "src._ingest_run_id",
-            "_extracted_at": "src._extracted_at",
-            "_source_query_start_date": "src._source_query_start_date",
-            "_source_query_end_date": "src._source_query_end_date"
-        }
-    )
     .whenNotMatchedInsert(values=insert_values)
     .execute()
 )
 
 print("Silver MERGE completed successfully.")
+notebook_exit(notebook_payload("SUCCESS", rows_read=bronze_count, rows_inserted=src_count, site_results=site_results))
 
-
-
-
-
-
-
-audit notebook:
 
 cell1:
 
@@ -1755,17 +1236,17 @@ except NameError:
 try:
     p_config_name_prefix
 except NameError:
-    p_config_name_prefix = "SAMMS Notes"
+    p_config_name_prefix = "SAMMS DartsSrv"
 
 try:
     p_pipeline_name
 except NameError:
-    p_pipeline_name = "Execute_Notes"
+    p_pipeline_name = "pl_execute_dartsrv"
 
 try:
     p_pipeline_path
 except NameError:
-    p_pipeline_path = "/pipelines/Execute_Notes"
+    p_pipeline_path = "/pipelines/pl_execute_dartsrv"
 
 try:
     p_triggered_by
@@ -1807,6 +1288,21 @@ try:
 except NameError:
     p_failure_activity = None
 
+try:
+    p_active_target_layers_json
+except NameError:
+    p_active_target_layers_json = '["BR","SL"]'
+
+try:
+    p_silver_method_results_json
+except NameError:
+    p_silver_method_results_json = "{}"
+
+try:
+    p_method_results_json
+except NameError:
+    p_method_results_json = None
+
 etlconfig_table = "bhg_bronze.meta.etlconfig"
 taskconfig_table = "bhg_bronze.meta.taskconfig"
 pipelinerun_table = "bhg_bronze.meta.pipelinerun"
@@ -1847,6 +1343,28 @@ def parse_context():
     if isinstance(p_audit_context_json, dict):
         return p_audit_context_json
     return json.loads(p_audit_context_json)
+
+def parse_json_list(value, default=None):
+    if default is None:
+        default = []
+    if value is None:
+        return default
+    if isinstance(value, list):
+        return value
+    text = str(value).strip()
+    if not text:
+        return default
+    parsed = json.loads(text)
+    if isinstance(parsed, list):
+        return parsed
+    return default
+
+ACTIVE_TARGET_LAYERS = [
+    str(target).upper()
+    for target in parse_json_list(p_active_target_layers_json, ["BR", "SL"])
+]
+if not ACTIVE_TARGET_LAYERS:
+    ACTIVE_TARGET_LAYERS = ["BR", "SL"]
 
 def parse_request_body(value):
     if value is None:
@@ -1949,6 +1467,90 @@ def task_dq_keys(task):
             keys = []
     return [str(key) for key in keys]
 
+def parse_method_results_json(*values):
+    for value in values:
+        if not value:
+            continue
+        try:
+            parsed = json.loads(value) if isinstance(value, str) else value
+            if isinstance(parsed, str):
+                parsed = json.loads(parsed)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            continue
+    return {}
+
+def is_success_status(status):
+    return str(status or "").upper() == "SUCCESS"
+
+def result_for_method(method_results, method_name):
+    if not method_results:
+        return {}
+    if method_name in method_results and isinstance(method_results[method_name], dict):
+        return method_results[method_name]
+    wanted = method_key(method_name)
+    for key, value in method_results.items():
+        if method_key(key) == wanted and isinstance(value, dict):
+            return value
+    if len(method_results) == 1:
+        only_value = next(iter(method_results.values()))
+        return only_value if isinstance(only_value, dict) else {}
+    return {}
+
+def result_count_value(value, default=0):
+    if value is None:
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        try:
+            return int(float(value))
+        except Exception:
+            return int(default)
+
+def silver_audit_counts_from_results(method_name, silver_results):
+    result = result_for_method(silver_results, method_name)
+    if not isinstance(result, dict):
+        return None
+
+    has_count_payload = any(
+        key in result
+        for key in ("rows_read", "rows_written", "rows_inserted", "rows_updated")
+    )
+    if not has_count_payload:
+        return None
+
+    rows_read = result_count_value(result.get("rows_read"), 0)
+    if "rows_written" in result:
+        rows_written = result_count_value(result.get("rows_written"), 0)
+    else:
+        rows_written = (
+            result_count_value(result.get("rows_inserted"), 0)
+            + result_count_value(result.get("rows_updated"), 0)
+        )
+    return rows_read, rows_written
+
+def site_result_map(outcome):
+    results = outcome.get("site_results") if isinstance(outcome, dict) else []
+    if not isinstance(results, list):
+        return {}
+    mapped = {}
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        site_code = item.get("site_code") or item.get("SiteCode")
+        if site_code:
+            mapped[str(site_code)] = item
+    return mapped
+
+def status_counts(statuses):
+    success = sum(1 for status in statuses if status == "SUCCESS")
+    failed = sum(1 for status in statuses if status == "FAILED")
+    skipped = sum(1 for status in statuses if status == "SKIPPED")
+    overall = "FAILED" if failed else ("SKIPPED" if skipped and not success else "SUCCESS")
+    return overall, success, failed, skipped
+
 def normalize_gold_table_name(table_name):
     name = str(table_name).strip()
     prefix = f"{gold_warehouse_prefix}."
@@ -1965,6 +1567,27 @@ def read_task_table_df(task, target_name):
     if str(target_name).upper() == "GL":
         return read_gold_df(table_name)
     return spark.table(table_name)
+
+def filter_task_df_to_ingest(df, task, ingest_run_id):
+    filtered_df = df
+    if not ingest_run_id:
+        return filtered_df
+    existing_by_lower = {str(c).lower(): c for c in df.columns}
+    for candidate in [task_ingest_column(task), "IngestRunId", "_ingest_run_id"]:
+        actual_col = existing_by_lower.get(str(candidate).lower())
+        if actual_col:
+            filtered_df = filtered_df.where(F.col(actual_col) == F.lit(ingest_run_id))
+            break
+
+    site_value = row_value(task, "site_code") or row_value(task, "SiteCode")
+    if site_value:
+        for candidate in [task_site_column(task), "SiteCode", "_site_code"]:
+            actual_col = existing_by_lower.get(str(candidate).lower())
+            if actual_col:
+                filtered_df = filtered_df.where(F.col(actual_col) == F.lit(str(site_value)))
+                break
+
+    return filtered_df
 
 def layer_task_for_method(layer, method):
     for task in layer_tasks(layer):
@@ -2063,14 +1686,22 @@ def read_gold_df(table_name):
     )
 
 def dq_counts_for_df(df, key_cols):
+    existing_by_lower = {str(c).lower(): c for c in df.columns}
+    resolved_key_cols = []
+    for key_col in key_cols:
+        resolved_col = existing_by_lower.get(str(key_col).lower())
+        if not resolved_col:
+            raise Exception(f"DQ key column {key_col} was not found in table columns: {df.columns}")
+        resolved_key_cols.append(resolved_col)
+
     row_count = df.count()
     null_cond = None
-    for c in key_cols:
+    for c in resolved_key_cols:
         cond = F.col(c).isNull()
         null_cond = cond if null_cond is None else (null_cond | cond)
     null_count = df.where(null_cond).count() if null_cond is not None else 0
     duplicate_count = (
-        df.groupBy(*key_cols)
+        df.groupBy(*resolved_key_cols)
         .count()
         .where(F.col("count") > 1)
         .count()
@@ -2106,8 +1737,23 @@ def build_bronze_count_context(br_layer, ingest_run_id):
 
     for group_key in grouped_tasks:
         method, table_name, ingest_col, site_col, database_col = group_key
-        df = spark.table(table_name).where(F.col(ingest_col) == F.lit(ingest_run_id))
-        available_cols = set(df.columns)
+        raw_df = spark.table(table_name)
+        available_cols = set(raw_df.columns)
+        actual_ingest_col = next(
+            (candidate for candidate in [ingest_col, "_ingest_run_id", "IngestRunId"] if candidate in available_cols),
+            None
+        )
+        if not actual_ingest_col:
+            raise Exception(f"Could not find Bronze ingest column in {table_name}. Tried {ingest_col}, _ingest_run_id, IngestRunId")
+        site_col = next(
+            (candidate for candidate in [site_col, "_site_code", "SiteCode"] if candidate in available_cols),
+            site_col
+        )
+        database_col = next(
+            (candidate for candidate in [database_col, "_source_database", "SourceDatabase"] if candidate in available_cols),
+            database_col
+        )
+        df = raw_df.where(F.col(actual_ingest_col) == F.lit(ingest_run_id))
         group_cols = []
         if site_col in available_cols:
             group_cols.append(site_col)
@@ -2299,8 +1945,15 @@ def finish_layer_tasks(layer, target_name, ingest_run_id, status, log_level, err
         task_id = safe_int(task["task_id"])
         method = task_method(task)
         if target_name == "SL":
-            rows_read = bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts) if status != "SKIPPED" and br_layer else 0
-            rows_written = read_task_table_df(task, "SL").count() if status == "SUCCESS" else 0
+            silver_counts = silver_audit_counts_from_results(
+                method,
+                parse_method_results_json(p_silver_method_results_json)
+            )
+            if silver_counts is not None and status == "SUCCESS":
+                rows_read, rows_written = silver_counts
+            else:
+                rows_read = bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts) if status != "SKIPPED" and br_layer else 0
+                rows_written = read_task_table_df(task, "SL").count() if status == "SUCCESS" else 0
         elif target_name == "GL":
             silver_task = layer_task_for_method(sl_layer, method) if sl_layer else None
             rows_read = read_task_table_df(silver_task, "SL").count() if status != "SKIPPED" and silver_task else 0
@@ -2341,15 +1994,189 @@ def finish_layer_tasks(layer, target_name, ingest_run_id, status, log_level, err
         len(task_ids) if status == "SKIPPED" else 0
     )
 
+def finish_bronze_tasks_from_method_results(br_layer, method_results, ingest_run_id, audit_offset_base=500):
+    tasks = layer_tasks(br_layer)
+    if not tasks:
+        raise Exception("No BR tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+    bronze_counts = get_bronze_count_context(br_layer, ingest_run_id)
+
+    rows = []
+    statuses = []
+    task_updates = {}
+
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        method_name = task_method(task)
+        outcome = result_for_method(method_results, method_name)
+        site_map = site_result_map(outcome)
+        site_code = str(task.get("site_code") or "")
+        site_outcome = site_map.get(site_code, {})
+        raw_status = site_outcome.get("status") or outcome.get("status") or "SUCCESS"
+        status = str(raw_status).upper()
+        if status not in ("SUCCESS", "FAILED", "SKIPPED"):
+            status = "FAILED"
+
+        failed_stage = str(site_outcome.get("failed_stage") or outcome.get("failed_stage") or "BR").upper()
+        if failed_stage == "SL" and status == "FAILED":
+            status = "SUCCESS"
+
+        error_message = site_outcome.get("error_message") or outcome.get("error_message") or outcome.get("message")
+        if status == "SUCCESS":
+            log_level = "INFO"
+            error_for_task = None
+        elif status == "SKIPPED":
+            log_level = "WARN"
+            error_for_task = error_message or "Skipped by partial site result"
+        else:
+            log_level = "ERROR"
+            error_for_task = error_message or "Bronze site failed"
+
+        rows_copied = bronze_count_for_task_from_context(task, bronze_counts) if status == "SUCCESS" else 0
+        rows_failed = 1 if status == "FAILED" else 0
+        statuses.append(status)
+        task_updates.setdefault((status, error_for_task), []).append(task_id)
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or br_layer.get("run_id")),
+            safe_int(task.get("config_id") or br_layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or br_layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            rows_copied,
+            rows_copied,
+            rows_failed,
+            error_for_task,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    for (status, error_message), grouped_task_ids in task_updates.items():
+        update_taskqueue_for_tasks(grouped_task_ids, status, error_message)
+    append_taskaudit_rows(rows)
+
+    overall, success, failed, skipped = status_counts(statuses)
+    update_pipelinerun(safe_int(br_layer["run_id"]), overall, success, failed, skipped)
+
+def finish_layer_tasks_from_method_results(layer, target_name, method_results, ingest_run_id, audit_offset_base=600, br_layer=None, sl_layer=None):
+    tasks = layer_tasks(layer)
+    if not tasks:
+        raise Exception(f"No {target_name} tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+
+    rows = []
+    statuses = []
+    task_updates = {}
+
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        method_name = task_method(task)
+        outcome = result_for_method(method_results, method_name)
+        status = str(outcome.get("status") or "SUCCESS").upper()
+        if status not in ("SUCCESS", "FAILED", "SKIPPED"):
+            status = "FAILED"
+
+        failed_stage = str(outcome.get("failed_stage") or "").upper()
+        if status == "FAILED" and failed_stage == "BR" and target_name != "BR":
+            status = "SKIPPED"
+
+        error_message = outcome.get("message") or outcome.get("error_message")
+        if status == "SUCCESS":
+            log_level = "INFO"
+            error_for_task = None
+        elif status == "SKIPPED":
+            log_level = "WARN"
+            error_for_task = error_message or f"{target_name} skipped"
+        else:
+            log_level = "ERROR"
+            error_for_task = error_message or f"{target_name} failed"
+
+        if target_name == "SL":
+            method = task_method(task)
+            silver_counts = silver_audit_counts_from_results(method, method_results)
+            if silver_counts is not None and status == "SUCCESS":
+                rows_read, rows_written = silver_counts
+            else:
+                rows_read = safe_int(outcome.get("rows_read"), 0)
+                if rows_read == 0 and br_layer and status == "SUCCESS":
+                    rows_read = bronze_count_for_method_from_layer(br_layer, method, ingest_run_id)
+                rows_written = read_task_table_df(task, "SL").count() if status == "SUCCESS" else 0
+        elif target_name == "GL":
+            rows_read = safe_int(outcome.get("rows_read"), 0)
+            rows_written = read_task_table_df(task, "GL").count() if status == "SUCCESS" else 0
+        else:
+            rows_read = rows_written = 0
+
+        statuses.append(status)
+        task_updates.setdefault((status, error_for_task), []).append(task_id)
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or layer.get("run_id")),
+            safe_int(task.get("config_id") or layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            int(rows_read),
+            int(rows_written),
+            1 if status == "FAILED" else 0,
+            error_for_task,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    for (status, error_message), grouped_task_ids in task_updates.items():
+        update_taskqueue_for_tasks(grouped_task_ids, status, error_message)
+    append_taskaudit_rows(rows)
+
+    overall, success, failed, skipped = status_counts(statuses)
+    update_pipelinerun(safe_int(layer["run_id"]), overall, success, failed, skipped)
+
 def append_dataquality_for_layer(layer, target_name):
     rows = []
-    offset_base = 800 if target_name == "SL" else 900
+    target_name = str(target_name).upper()
+    offset_base = {"BR": 700, "SL": 800, "GL": 900}.get(target_name, 900)
     for idx, task in enumerate(layer_tasks(layer), start=1):
         key_cols = task_dq_keys(task)
         if not key_cols:
             raise Exception(f"Missing dq_keys in taskconfig RequestBody for {target_name} task {task_display_table(task, target_name)}")
 
-        if target_name == "SL":
+        if target_name == "BR":
+            table_name = task_display_table(task, "BR")
+            row_count, null_count, duplicate_count = dq_counts_for_df(
+                filter_task_df_to_ingest(
+                    read_task_table_df(task, "BR"),
+                    task,
+                    p_ingest_run_id
+                ),
+                key_cols
+            )
+        elif target_name == "SL":
             table_name = task_display_table(task, "SL")
             row_count, null_count, duplicate_count = dq_counts_for_df(
                 read_task_table_df(task, "SL"),
@@ -2401,20 +2228,24 @@ ctx = parse_context()
 mode = p_mode.upper().strip()
 
 if mode == "START_LAYER_RUNS":
+    target_filter_sql = ",".join([f"'{target}'" for target in ACTIVE_TARGET_LAYERS])
     configs_df = spark.sql(f"""
         SELECT *
         FROM {etlconfig_table}
         WHERE IsActive = 1
           AND ConfigName LIKE '{p_config_name_prefix}%'
-          AND TargetName IN ('BR', 'SL', 'GL')
+          AND TargetName IN ({target_filter_sql})
     """)
     configs = configs_df.collect()
-    if len(configs) != 3:
-        raise Exception(f"Expected 3 active etlconfig rows for prefix {p_config_name_prefix}, found {len(configs)}")
+    if len(configs) != len(ACTIVE_TARGET_LAYERS):
+        raise Exception(
+            f"Expected {len(ACTIVE_TARGET_LAYERS)} active etlconfig rows for prefix "
+            f"{p_config_name_prefix} and targets {ACTIVE_TARGET_LAYERS}, found {len(configs)}"
+        )
 
     config_by_id = {safe_int(r["ConfigId"]): r for r in configs}
     config_by_target = {str(r["TargetName"]).upper(): r for r in configs}
-    for required_target in ["BR", "SL", "GL"]:
+    for required_target in ACTIVE_TARGET_LAYERS:
         if required_target not in config_by_target:
             raise Exception(f"Missing active {required_target} etlconfig row for prefix {p_config_name_prefix}")
 
@@ -2429,12 +2260,14 @@ if mode == "START_LAYER_RUNS":
     if not tasks:
         raise Exception(f"No active taskconfig rows found for ConfigIds {config_ids}")
 
-    tasks_by_target = {"BR": [], "SL": [], "GL": []}
+    tasks_by_target = {target: [] for target in ACTIVE_TARGET_LAYERS}
     for task in tasks:
         cfg = config_by_id.get(safe_int(task["ConfigId"]))
         if not cfg:
             continue
         target = str(cfg["TargetName"]).upper()
+        if target not in tasks_by_target:
+            continue
         method = row_value(task, "Method")
         if not method:
             continue
@@ -2444,11 +2277,11 @@ if mode == "START_LAYER_RUNS":
         else:
             tasks_by_target[target].append(task)
 
-    if len(tasks_by_target["BR"]) == 0:
+    if "BR" in tasks_by_target and len(tasks_by_target["BR"]) == 0:
         raise Exception("Expected at least one active BR taskconfig row with SiteCode and DataBaseName")
-    if len(tasks_by_target["SL"]) == 0:
+    if "SL" in tasks_by_target and len(tasks_by_target["SL"]) == 0:
         raise Exception("Expected at least one active SL taskconfig row")
-    if len(tasks_by_target["GL"]) == 0:
+    if "GL" in tasks_by_target and len(tasks_by_target["GL"]) == 0:
         raise Exception("Expected at least one active GL taskconfig row")
 
     for target_name in tasks_by_target:
@@ -2604,71 +2437,81 @@ if mode == "START_LAYER_RUNS":
     insert_append(taskqueue_table, task_df)
     exit_json(audit_context)
 
-elif mode in ("FINALIZE_SUCCESS", "FINALIZE_NOTES_SUCCESS"):
-    br = get_context_for_target(ctx, "BR")
-    sl = get_context_for_target(ctx, "SL")
-    gl = get_context_for_target(ctx, "GL")
-
-    if not br or not sl or not gl:
-        raise Exception(f"Missing BR/SL/GL context for {mode}")
+elif mode in ("FINALIZE_SUCCESS", "FINALIZE_NOTES_SUCCESS", "FINALIZE_DARTS_SUCCESS"):
+    layers = {target: get_context_for_target(ctx, target) for target in ACTIVE_TARGET_LAYERS}
+    for target_name, layer in layers.items():
+        if not layer:
+            raise Exception(f"Missing {target_name} context for {mode}")
     if not p_ingest_run_id:
         raise Exception(f"p_ingest_run_id is required for {mode}")
 
-    bronze_rows = finish_bronze_tasks(
-        br,
-        p_ingest_run_id,
-        status="SUCCESS",
-        log_level="INFO",
-        error_message=None,
-        audit_offset_base=100
-    )
+    br = layers.get("BR")
+    sl = layers.get("SL")
+    gl = layers.get("GL")
+    bronze_counts = None
+    bronze_rows = 0
 
-    append_dataquality_for_layer(sl, "SL")
-    append_dataquality_for_layer(gl, "GL")
+    if br:
+        bronze_counts = get_bronze_count_context(br, p_ingest_run_id)
+        append_dataquality_for_layer(br, "BR")
+        bronze_rows = finish_bronze_tasks(
+            br,
+            p_ingest_run_id,
+            status="SUCCESS",
+            log_level="INFO",
+            error_message=None,
+            audit_offset_base=100,
+            bronze_counts=bronze_counts
+        )
 
-    finish_layer_tasks(
-        sl,
-        "SL",
-        p_ingest_run_id,
-        status="SUCCESS",
-        log_level="INFO",
-        error_message=None,
-        audit_offset_base=300,
-        br_layer=br
-    )
-    finish_layer_tasks(
-        gl,
-        "GL",
-        p_ingest_run_id,
-        status="SUCCESS",
-        log_level="INFO",
-        error_message=None,
-        audit_offset_base=400,
-        sl_layer=sl
-    )
+    if sl:
+        append_dataquality_for_layer(sl, "SL")
+        finish_layer_tasks(
+            sl,
+            "SL",
+            p_ingest_run_id,
+            status="SUCCESS",
+            log_level="INFO",
+            error_message=None,
+            audit_offset_base=300,
+            br_layer=br,
+            bronze_counts=bronze_counts
+        )
+
+    if gl:
+        append_dataquality_for_layer(gl, "GL")
+        finish_layer_tasks(
+            gl,
+            "GL",
+            p_ingest_run_id,
+            status="SUCCESS",
+            log_level="INFO",
+            error_message=None,
+            audit_offset_base=400,
+            sl_layer=sl
+        )
 
     exit_json({
         "status": "OK",
         "mode": mode,
-        "bronze_tasks": len(layer_tasks(br)),
-        "silver_tasks": len(layer_tasks(sl)),
-        "gold_tasks": len(layer_tasks(gl)),
+        "active_layers": ACTIVE_TARGET_LAYERS,
+        "bronze_tasks": len(layer_tasks(br)) if br else 0,
+        "silver_tasks": len(layer_tasks(sl)) if sl else 0,
+        "gold_tasks": len(layer_tasks(gl)) if gl else 0,
         "bronze_rows": int(bronze_rows)
     })
 
-elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
-    br = get_context_for_target(ctx, "BR")
-    sl = get_context_for_target(ctx, "SL")
-    gl = get_context_for_target(ctx, "GL")
-
-    if not br or not sl or not gl:
-        raise Exception(f"Missing BR/SL/GL context for {mode}")
+elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE", "FINALIZE_DARTS_FAILURE"):
+    layers = {target: get_context_for_target(ctx, target) for target in ACTIVE_TARGET_LAYERS}
+    for target_name, layer in layers.items():
+        if not layer:
+            raise Exception(f"Missing {target_name} context for {mode}")
     if not p_ingest_run_id:
         raise Exception(f"p_ingest_run_id is required for {mode}")
 
     failed_target = (p_failed_target_name or "ALL").upper()
     fail_all_layers = failed_target in ("ALL", "UNKNOWN", "AUTO")
-    if failed_target not in ("BR", "SL", "GL", "ALL", "UNKNOWN", "AUTO"):
+    if failed_target not in ACTIVE_TARGET_LAYERS and not fail_all_layers:
         failed_target = "ALL"
         fail_all_layers = True
 
@@ -2677,11 +2520,59 @@ elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
         or f"{p_config_name_prefix} pipeline failed. Check the failed parent/child activity run details."
     )
 
-    target_order = ["BR", "SL", "GL"]
-    failed_idx = 0 if fail_all_layers else target_order.index(failed_target)
-    layers = {"BR": br, "SL": sl, "GL": gl}
+    ordered_targets = [target for target in ["BR", "SL", "GL"] if target in ACTIVE_TARGET_LAYERS]
+    failed_idx = 0 if fail_all_layers else ordered_targets.index(failed_target)
+    br = layers.get("BR")
+    sl = layers.get("SL")
+    bronze_counts = None
+    method_results = parse_method_results_json(p_method_results_json, p_silver_method_results_json)
 
-    for idx, target_name in enumerate(target_order):
+    if method_results:
+        finish_bronze_tasks_from_method_results(
+            br,
+            method_results,
+            p_ingest_run_id,
+            audit_offset_base=500
+        )
+
+        try:
+            append_dataquality_for_layer(br, "BR")
+        except Exception as exc:
+            print(f"BR DQ warning: {exc}")
+
+        for layer_idx, target_name in enumerate(ordered_targets[1:], start=1):
+            layer = layers[target_name]
+            finish_layer_tasks_from_method_results(
+                layer,
+                target_name,
+                method_results,
+                p_ingest_run_id,
+                audit_offset_base=600 + ((layer_idx - 1) * 100),
+                br_layer=br,
+                sl_layer=sl
+            )
+            has_success = any(
+                is_success_status(result_for_method(method_results, task_method(task)).get("status"))
+                for task in layer_tasks(layer)
+            )
+            if has_success:
+                try:
+                    append_dataquality_for_layer(layer, target_name)
+                except Exception as exc:
+                    print(f"{target_name} DQ warning: {exc}")
+
+        payload = {
+            "status": "FAILED",
+            "mode": mode,
+            "active_layers": ACTIVE_TARGET_LAYERS,
+            "failed_target": failed_target,
+            "failure_activity": p_failure_activity,
+            "message": "Partial/site-level failure audit finalized; raising exception to keep pipeline failed."
+        }
+        print(json.dumps(payload))
+        raise Exception(json.dumps(payload))
+
+    for idx, target_name in enumerate(ordered_targets):
         layer = layers[target_name]
         if fail_all_layers:
             final_status = "FAILED"
@@ -2701,13 +2592,16 @@ elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
             err = f"Skipped because {failed_target} failed"
 
         if target_name == "BR":
+            if final_status != "SKIPPED":
+                bronze_counts = get_bronze_count_context(layer, p_ingest_run_id, final_status)
             finish_bronze_tasks(
                 layer,
                 p_ingest_run_id,
                 status=final_status,
                 log_level=log_level,
                 error_message=err,
-                audit_offset_base=500
+                audit_offset_base=500,
+                bronze_counts=bronze_counts
             )
         else:
             finish_layer_tasks(
@@ -2719,12 +2613,14 @@ elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
                 error_message=err,
                 audit_offset_base=600 + idx * 100,
                 br_layer=br,
-                sl_layer=sl
+                sl_layer=sl,
+                bronze_counts=bronze_counts
             )
 
     payload = {
         "status": "FAILED",
         "mode": mode,
+        "active_layers": ACTIVE_TARGET_LAYERS,
         "failed_target": failed_target,
         "failure_activity": p_failure_activity,
         "message": "Failure audit finalized; raising exception to keep pipeline failed."
@@ -2734,351 +2630,3 @@ elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
 
 else:
     raise Exception(f"Unsupported p_mode: {p_mode}")
-
-
-
-
-notification:
-
-
-cell1:
-
-
-try: Pipeline_Name
-except NameError: Pipeline_Name = "Fabric ETL"
-
-try: Status
-except NameError: Status = "Succeeded"
-
-try: Config_Name
-except NameError: Config_Name = "Fabric Pipeline"
-
-try: Source_System
-except NameError: Source_System = "Unknown"
-
-try: Target_Name
-except NameError: Target_Name = "ALL"
-
-try: Environment_Name
-except NameError: Environment_Name = "BHG-DATA-PLATFORM-CORE-DEV"
-
-try:
-    Task_Config_Id
-except NameError:
-    Task_Config_Id = ""
-
-try:
-    Bronze_Rows
-except NameError:
-    Bronze_Rows = 0
-
-try:
-    Silver_Rows
-except NameError:
-    Silver_Rows = 0
-
-try:
-    Gold_Rows
-except NameError:
-    Gold_Rows = 0
-
-try:
-    Sites_Processed
-except NameError:
-    Sites_Processed = 0
-
-try:
-    Success_Count
-except NameError:
-    Success_Count = 1
-
-try: Run_Id
-except NameError: Run_Id = ""
-
-try: Description
-except NameError: Description = ""
-
-try: Error_Msg
-except NameError: Error_Msg = ""
-
-try: Pipeline_StartTime
-except NameError: Pipeline_StartTime = ""
-
-try: Pipeline_EndTime
-except NameError: Pipeline_EndTime = ""
-
-try: Teams_Webhook_Url
-except NameError:
-    Teams_Webhook_Url = "https://defaulta5fa28cad2e54dca931f1b594b88e7.e7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/67e2fd2b059d45e5b39571a7e2df9dc2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=qTzglKXyn21I2PYeb-PgRdDWspqn9Taryecku4YECtg"
-
-from datetime import datetime, timezone
-import requests
-
-try:
-    from zoneinfo import ZoneInfo
-    CENTRAL_TZ = ZoneInfo("America/Chicago")
-except Exception:
-    CENTRAL_TZ = None
-
-
-def central_now_text():
-    if CENTRAL_TZ:
-        return datetime.now(CENTRAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-def truncate_iso_fraction(value):
-    if "." not in value:
-        return value
-
-    head, tail = value.split(".", 1)
-    suffix = ""
-
-    if "+" in tail:
-        fraction, offset = tail.split("+", 1)
-        suffix = "+" + offset
-    elif "-" in tail:
-        fraction, offset = tail.split("-", 1)
-        suffix = "-" + offset
-    else:
-        fraction = tail
-
-    return head + "." + fraction[:6] + suffix
-
-
-def central_datetime_text(value):
-    text = str(value or "").strip()
-
-    if not text or not CENTRAL_TZ:
-        return text
-
-    has_timezone = (
-        text.endswith("Z")
-        or (len(text) >= 6 and text[-6] in ["+", "-"] and text[-3] == ":")
-    )
-
-    if not has_timezone:
-        return text
-
-    try:
-        candidate = truncate_iso_fraction(text.replace("Z", "+00:00"))
-        parsed_dt = datetime.fromisoformat(candidate)
-
-        if parsed_dt.tzinfo is None:
-            parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-
-        return parsed_dt.astimezone(CENTRAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
-    except Exception:
-        return text
-
-
-def clean_text(value):
-    if value is None:
-        return ""
-
-    text = str(value)
-
-    for marker in ["at com.microsoft", "at py4j"]:
-        if marker in text:
-            text = text.split(marker)[0]
-
-    text = (
-        text
-        .replace("|", " ")
-        .replace("\n", " ")
-        .replace("\r", " ")
-        .replace("java.base", " ")
-    )
-
-    return " ".join(text.split())
-
-
-def target_layer_name(target_name):
-    target_layer_map = {
-        "BR": "Bronze",
-        "SL": "Silver",
-        "GL": "Gold",
-        "ALL": "Bronze/Silver/Gold"
-    }
-
-    return target_layer_map.get(
-        str(target_name).upper(),
-        str(target_name)
-    )
-
-
-def display_config_name(config_name):
-    return (
-        str(config_name or "")
-        .replace(" Pipeline", "")
-        .replace(" pipeline", "")
-    )
-
-
-def post_teams_message(payload):
-    response = requests.post(
-        Teams_Webhook_Url,
-        json=payload,
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
-
-    print(f"Teams Notification Status : {response.status_code}")
-
-    if response.status_code >= 400:
-        print(response.text[:2000])
-        response.raise_for_status()
-
-
-def send_teams_failure_alert(
-    pipeline_name,
-    config_name,
-    source_system,
-    target_name,
-    environment_name,
-    run_id,
-    failed_count,
-    failures
-):
-    target_layer = target_layer_name(target_name)
-    failure_text = ""
-
-    if failures:
-        for idx, failure in enumerate(failures, start=1):
-            failure_text += f"""
-
-Failure {idx}
-
-Task Config ID : {failure.get('task_config_id', '')}
-
-Task Name : {failure.get('task', '')}
-
-Error :
-{failure.get('error', '')}
-
---------------------------------------------------
-
-"""
-    else:
-        failure_text = clean_text(Error_Msg) or clean_text(Description) or "Pipeline failed. Review Fabric run history and audit tables for details."
-
-    payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "FF0000",
-        "summary": f"Pipeline Failed - {pipeline_name}",
-        "title": (
-            f"{environment_name}: Failed - "
-            f"{source_system} - "
-            f"{target_layer} - "
-            f"{central_now_text()}"
-        ),
-        "sections": [
-            {
-                "facts": [
-                    {"name": "Pipeline:", "value": str(pipeline_name)},
-                    {"name": "Config Name:", "value": display_config_name(config_name)},
-                    {"name": "Run ID:", "value": str(run_id)},
-                    {"name": "Layer:", "value": target_layer},
-                    {"name": "Failed Tasks:", "value": str(failed_count)},
-                    {"name": "Start Time:", "value": central_datetime_text(Pipeline_StartTime)},
-                    {"name": "End Time:", "value": central_datetime_text(Pipeline_EndTime)}
-                ]
-            },
-            {
-                "activityTitle": "Failure Details",
-                "text": failure_text[:12000]
-            }
-        ]
-    }
-
-    post_teams_message(payload)
-
-
-def send_teams_success_alert(
-    pipeline_name,
-    config_name,
-    source_system,
-    target_name,
-    environment_name,
-    run_id,
-    success_count
-):
-    target_layer = target_layer_name(target_name)
-
-    payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "00AA00",
-        "summary": f"Pipeline Succeeded - {pipeline_name}",
-        "title": (
-            f"{environment_name}: Succeeded - "
-            f"{source_system} - "
-            f"{target_layer} - "
-            f"{central_now_text()}"
-        ),
-        "sections": [
-            {
-                "facts": [
-                    {"name": "Pipeline:", "value": str(pipeline_name)},
-                    {"name": "Config Name:", "value": display_config_name(config_name)},
-                    {"name": "Run ID:", "value": str(run_id)},
-                    {"name": "Layer:", "value": target_layer},
-                    {"name": "Successful Tasks:", "value": str(success_count)},
-                    {"name": "Start Time:", "value": central_datetime_text(Pipeline_StartTime)},
-                    {"name": "End Time:", "value": central_datetime_text(Pipeline_EndTime)}
-                ]
-            },
-            {
-                "activityTitle": "Pipeline Details",
-                "text": f"""
-            {clean_text(Description)}
-            
-            Bronze Rows : {Bronze_Rows}
-            Silver Rows : {Silver_Rows}
-            Gold Rows : {Gold_Rows}
-            Sites Processed : {Sites_Processed}
-            """[:12000]
-            }
-        ]
-    }
-
-    post_teams_message(payload)
-
-
-def fabric_task():
-    pipeline_name = Pipeline_Name or "Fabric ETL"
-    pipeline_status = str(Status or "Failed")
-    run_id = Run_Id or ""
-    normalized_status = pipeline_status.strip().upper()
-
-    if normalized_status in ("FAILED", "FAILURE", "ERROR"):
-        failures = [{
-            "task": Description or pipeline_name,
-            "task_config_id": Task_Config_Id,
-            "error": clean_text(Error_Msg)[:3000]
-        }]
-
-        send_teams_failure_alert(
-            pipeline_name=pipeline_name,
-            config_name=Config_Name,
-            source_system=Source_System,
-            target_name=Target_Name,
-            environment_name=Environment_Name,
-            run_id=run_id,
-            failed_count=1,
-            failures=failures
-        )
-    else:
-        send_teams_success_alert(
-            pipeline_name=pipeline_name,
-            config_name=Config_Name,
-            source_system=Source_System,
-            target_name=Target_Name,
-            environment_name=Environment_Name,
-            run_id=run_id,
-            success_count=Success_Count
-        )
-
-
-fabric_task()
