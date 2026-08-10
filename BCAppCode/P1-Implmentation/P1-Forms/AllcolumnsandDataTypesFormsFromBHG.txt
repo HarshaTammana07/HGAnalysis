@@ -655,4 +655,3 @@ FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	CreatedOn	18	timestamp	YES
 FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	ModifiedBy	19	string	YES
 FABRIC_SILVER	pats	tbl_TakeHomeRiskAssessment	ModifiedOn	20	timestamp	YES
 
-

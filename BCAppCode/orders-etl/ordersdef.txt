@@ -1,0 +1,3933 @@
+Parent :
+
+
+{
+    "name": "pl_saveorders",
+    "objectId": "8c367096-03aa-443f-a3b0-14049ea65ba4",
+    "properties": {
+        "activities": [
+            {
+                "name": "src_to_bz_Orders",
+                "type": "InvokePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_Orders_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:30:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "cf820338-18cf-4804-aa6b-97f84bf25e2d",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_sites": {
+                            "value": "@activity('flt_active_orders_sites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_audit_context_json": {
+                            "value": "@activity('nb_Orders_audit_start').output.result.exitValue",
+                            "type": "Expression"
+                        },
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "41e0ba13-b4f5-4419-9cac-ec6b517d1188"
+                }
+            },
+            {
+                "name": "bz_to_sl",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "src_to_bz_Orders",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "58008a0e-f79f-43f2-aa79-fc48def9e2f1",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_Orders_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "sl_to_gd",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "bz_to_sl",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "8d0ba304-1214-4c12-98d1-53a8b36d0cf0",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_load_type": {
+                            "value": "FULL",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_Orders_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Publish_Orders_Versioned_Gold",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "sl_to_gd",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "linkedService": {
+                    "name": "bhg_gold",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
+                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+                        }
+                    }
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "Query",
+                            "text": {
+                                "value": "DECLARE @VersionTable VARCHAR(200);\nDECLARE @BackupTable VARCHAR(200) = 'OrdersBK' + CONVERT(VARCHAR(8), GETDATE(), 112);\nDECLARE @sql NVARCHAR(MAX);\n-- 1. Find the latest timestamped version table created by PySpark (e.g. Orders_20260803164020)\nSELECT TOP 1\n       @VersionTable = TABLE_NAME\nFROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA = 'pats'\n  AND TABLE_NAME LIKE 'Orders_[0-9]%'\n  AND TABLE_NAME NOT LIKE 'OrdersBK%'\nORDER BY TABLE_NAME DESC;\n-- Validate that a version table exists\nIF @VersionTable IS NULL\nBEGIN\n    RAISERROR('No versioned Orders table found in pats schema to promote.', 16, 1);\n    RETURN;\nEND;\n-- 2. Drop today's backup table if it already exists from a previous run today\nIF EXISTS (\n    SELECT 1\n    FROM INFORMATION_SCHEMA.TABLES\n    WHERE TABLE_SCHEMA = 'pats'\n      AND TABLE_NAME = @BackupTable\n)\nBEGIN\n    SET @sql = 'DROP TABLE pats.' + QUOTENAME(@BackupTable);\n    EXEC(@sql);\nEND;\n-- 3. Backup current production table pats.Orders (if it exists - handles Initial Load gracefully)\nIF EXISTS (\n    SELECT 1\n    FROM INFORMATION_SCHEMA.TABLES\n    WHERE TABLE_SCHEMA = 'pats'\n      AND TABLE_NAME = 'Orders'\n)\nBEGIN\n    SET @sql = 'EXEC sp_rename ''pats.Orders'', ''' + @BackupTable + '''';\n    EXEC(@sql);\n    PRINT 'Current production table backed up to: ' + @BackupTable;\nEND\nELSE\nBEGIN\n    PRINT 'No existing pats.Orders table found (Initial Load). Skipping backup.';\nEND;\n-- 4. Promote latest version table to production (pats.Orders)\nSET @sql = 'EXEC sp_rename ''pats.' + @VersionTable + ''', ''Orders''';\nEXEC(@sql);\nPRINT 'Successfully promoted version table ' + @VersionTable + ' to pats.Orders';",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "nb_Orders_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_orders_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "82971dfa-71a7-4210-95f7-f665786e75d3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Orders",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "pl_SaveOrders",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/pl_SaveOrders",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_orders_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_orders_active_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_orders_active_taskconfig').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null)))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_Orders_audit_FINALIZE_SUCESS",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Orders_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "82971dfa-71a7-4210-95f7-f665786e75d3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_ORDERS_SUCCESS",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_Orders_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_orders_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_silver_method_results_json": {
+                            "value": {
+                                "value": "@activity('bz_to_sl').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@coalesce(\nif(\n    equals(activity('src_to_bz_Orders').Status,'Failed'),\n    string(activity('src_to_bz_Orders').error.message),\n    null\n),\nif(\n    equals(activity('bz_to_sl').Status,'Failed'),\n    string(activity('bz_to_sl').error.message),\n    null\n),\nif(\n    equals(activity('sl_to_gd').Status,'Failed'),\n    string(activity('sl_to_gd').error.message),\n    null\n),\nif(\n    equals(activity('Publish_Orders_Versioned_Gold').Status,'Failed'),\n    string(activity('Publish_Orders_Versioned_Gold').error.message),\n    null\n),\n''\n)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_Orders_audit_FINALIZE_FAILURE",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Publish_Orders_Versioned_Gold",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "82971dfa-71a7-4210-95f7-f665786e75d3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "FINALIZE_ORDERS_FAILURE",
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_Orders_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_sites_json": {
+                            "value": {
+                                "value": "@string(activity('flt_active_orders_sites').output.value)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_status": {
+                            "value": "FAILED",
+                            "type": "string"
+                        },
+                        "p_error_message": {
+                            "value": {
+                                "value": "@coalesce(\nif(\n    equals(activity('src_to_bz_Orders').Status,'Failed'),\n    string(activity('src_to_bz_Orders').error.message),\n    null\n),\nif(\n    equals(activity('bz_to_sl').Status,'Failed'),\n    string(activity('bz_to_sl').error.message),\n    null\n),\nif(\n    equals(activity('sl_to_gd').Status,'Failed'),\n    string(activity('sl_to_gd').error.message),\n    null\n),\nif(\n    equals(activity('Publish_Orders_Versioned_Gold').Status,'Failed'),\n    string(activity('Publish_Orders_Versioned_Gold').error.message),\n    null\n),\n'Orders pipeline failed, but no activity error object was available.'\n)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_failure_activity": {
+                            "value": {
+                                "value": "@coalesce(\nif(equals(activity('src_to_bz_Orders').Status,'Failed'), 'src_to_bz_Orders', null),\nif(equals(activity('bz_to_sl').Status,'Failed'), 'bz_to_sl', null),\nif(equals(activity('sl_to_gd').Status,'Failed'), 'sl_to_gd', null),\nif(equals(activity('Publish_Orders_Versioned_Gold').Status,'Failed'), 'Publish_Orders_Versioned_Gold', null),\n'Unknown Activity'\n)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_notify_failure",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "nb_Orders_audit_FINALIZE_FAILURE",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "nb_Orders_audit_FINALIZE_SUCESS",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "59ea35b2-085e-47d7-8038-c977650c0314",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": "pl_SaveOrders",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": "SAMMS Orders",
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "SAMMS",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "GL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@coalesce(\nif(\n    equals(activity('nb_Orders_audit_FINALIZE_FAILURE').Status,'Failed'),\n    string(activity('nb_Orders_audit_FINALIZE_FAILURE').error.message),\n    null\n),\nif(\n    equals(activity('src_to_bz_Orders').Status,'Failed'),\n    string(activity('src_to_bz_Orders').error.message),\n    null\n),\nif(\n    equals(activity('bz_to_sl').Status,'Failed'),\n    string(activity('bz_to_sl').error.message),\n    null\n),\nif(\n    equals(activity('sl_to_gd').Status,'Failed'),\n    string(activity('sl_to_gd').error.message),\n    null\n),\nif(\n    equals(activity('Publish_Orders_Versioned_Gold').Status,'Failed'),\n    string(activity('Publish_Orders_Versioned_Gold').error.message),\n    null\n),\n'Orders pipeline failed'\n)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Failed activity name",
+                            "type": "string"
+                        },
+                        "Failed_Activity_Name": {
+                            "value": "<failed activity name>",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_get_orders_active_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "b8091d01-8235-40fd-aa4e-083a9957435b",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Orders",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\",\"SL\",\"GL\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"Orders\"]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_source_table": {
+                            "value": "true",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_audit_context_json": {
+                "type": "string",
+                "defaultValue": "{}"
+            },
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": ""
+            }
+        },
+        "lastModifiedByObjectId": "f8ee8459-d704-4f44-b046-aab05b040577",
+        "lastPublishTime": "2026-08-03T19:50:47Z"
+    }
+}
+
+
+
+child:
+
+
+{
+    "name": "pl_save_orders",
+    "objectId": "cf820338-18cf-4804-aa6b-97f84bf25e2d",
+    "properties": {
+        "activities": [
+            {
+                "name": "ForEach_Sites",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 10,
+                    "activities": [
+                        {
+                            "name": "Orders_src_to_bronze",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT ',\n'SiteCode = ''', item().SiteCode, ''', ',\n'DataBaseName = ''', item().DataBaseName, ''', ',\n'CAST(NULL AS nvarchar(200)) AS SiteName, ',\n'PipelineRunId = ''', pipeline().parameters.p_ingest_run_id, ''', ',\n'CAST(GETUTCDATE() AS DATE) AS run_date, ',\n'OrderNum, ',\n'cltID, ',\n'medType, ',\n'DateAdded, ',\n'Orderdate, ',\n'Doctor, ',\n'EffectiveDate, ',\n'ExpirationDate, ',\n'Dose, ',\n'Dose2, ',\n'Changeby, ',\n'Intervals, ',\n'Sunday, ',\n'Monday, ',\n'Tuesday, ',\n'Wednesday, ',\n'Thursday, ',\n'Friday, ',\n'Saturday, ',\n'Sunday2, ',\n'Monday2, ',\n'Tuesday2, ',\n'Wednesday2, ',\n'Thursday2, ',\n'Friday2, ',\n'Saturday2, ',\n'Notes, ',\n'Active, ',\n'Type, ',\n'Stype, ',\n'Weeknum, ',\n'splitFIRST, ',\n'BLIND, ',\n'[User], ',\n'cltM4ID, ',\n'newdose, ',\n'pckcode, ',\n'rxhistID, ',\n'EX, ',\n'ActbyDATE, ',\n'ActByUser, ',\n'white, ',\n'repOldOrder, ',\n'CAST(sigDr AS nvarchar(max)) AS sigDr, ',\n'dtSig, ',\n'aws, ',\n'blSched, ',\n'blVerbal, ',\n'Color, ',\n'DeActbyDate, ',\n'DeActbyUser, ',\n'OrderTypev5, ',\n'CAST(sigentered AS nvarchar(max)) AS sigentered, ',\n'CAST(signoted AS nvarchar(max)) AS signoted, ',\n'sigNOTEDDT, ',\n'DTMID, ',\n'CAST(sigMID AS nvarchar(max)) AS sigMID, ',\n'OverApprove, ',\n'OverapproveDT, ',\n'sigentereddt, ',\n'sigDrImg, ',\n'sigMidImg, ',\n'sigNotedImg, ',\n'CAST(NULL AS nvarchar(100)) AS NotedBy, ',\n'CAST(NULL AS nvarchar(100)) AS sigdruser, ',\n'CAST(NULL AS nvarchar(100)) AS sigmiduser, ',\n'RowChkSum = CHECKSUM(',\n'OrderNum, ',\n'cltID, ',\n'medType, ',\n'DateAdded, ',\n'Orderdate, ',\n'Doctor, ',\n'EffectiveDate, ',\n'ExpirationDate, ',\n'Dose, ',\n'Dose2, ',\n'Changeby, ',\n'Intervals, ',\n'Sunday, ',\n'Monday, ',\n'Tuesday, ',\n'Wednesday, ',\n'Thursday, ',\n'Friday, ',\n'Saturday, ',\n'Sunday2, ',\n'Monday2, ',\n'Tuesday2, ',\n'Wednesday2, ',\n'Thursday2, ',\n'Friday2, ',\n'Saturday2, ',\n'Notes, ',\n'Active, ',\n'Type, ',\n'Stype, ',\n'Weeknum, ',\n'splitFIRST, ',\n'BLIND, ',\n'[User], ',\n'cltM4ID, ',\n'newdose, ',\n'pckcode, ',\n'rxhistID, ',\n'EX, ',\n'ActbyDATE, ',\n'ActByUser, ',\n'white, ',\n'repOldOrder, ',\n'dtSig, ',\n'aws, ',\n'blSched, ',\n'blVerbal, ',\n'Color, ',\n'DeActbyDate, ',\n'DeActbyUser, ',\n'OrderTypev5, ',\n'sigNOTEDDT, ',\n'DTMID, ',\n'OverApprove, ',\n'OverapproveDT, ',\n'sigentereddt',\n') ',\n'FROM [', item().DataBaseName, '].', item().SourceTable, ' ',\n'WHERE Orderdate IS NOT NULL'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "database": {
+                                                "value": "@item().DataBaseName",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "order",
+                                            "table": "brz_Orders"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "mappings": [
+                                        {
+                                            "source": {
+                                                "name": "SiteCode",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "3"
+                                            },
+                                            "sink": {
+                                                "name": "SiteCode",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DataBaseName",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "11"
+                                            },
+                                            "sink": {
+                                                "name": "DataBaseName",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "SiteName",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "100"
+                                            },
+                                            "sink": {
+                                                "name": "SiteName",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "PipelineRunId",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "64"
+                                            },
+                                            "sink": {
+                                                "name": "PipelineRunId",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "run_date",
+                                                "type": "Date",
+                                                "physicalType": "date"
+                                            },
+                                            "sink": {
+                                                "name": "run_date",
+                                                "physicalType": "date"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "OrderNum",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "OrderNum",
+                                                "physicalType": "integer"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "cltID",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "cltID",
+                                                "physicalType": "integer"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "medType",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "medType",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DateAdded",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "DateAdded",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Orderdate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "Orderdate",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Doctor",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "Doctor",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "EffectiveDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "EffectiveDate",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ExpirationDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "ExpirationDate",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Dose",
+                                                "type": "Int16",
+                                                "physicalType": "smallint"
+                                            },
+                                            "sink": {
+                                                "name": "Dose",
+                                                "physicalType": "decimal",
+                                                "scale": 18,
+                                                "precision": 38
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Dose2",
+                                                "type": "Int16",
+                                                "physicalType": "smallint"
+                                            },
+                                            "sink": {
+                                                "name": "Dose2",
+                                                "physicalType": "decimal",
+                                                "scale": 18,
+                                                "precision": 38
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Changeby",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "Changeby",
+                                                "physicalType": "integer"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Intervals",
+                                                "type": "Int16",
+                                                "physicalType": "smallint"
+                                            },
+                                            "sink": {
+                                                "name": "Intervals",
+                                                "physicalType": "short"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Sunday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Sunday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Monday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Monday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Tuesday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Tuesday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Wednesday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Wednesday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Thursday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Thursday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Friday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Friday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Saturday",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Saturday",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Sunday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Sunday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Monday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Monday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Tuesday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Tuesday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Wednesday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Wednesday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Thursday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Thursday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Friday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Friday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Saturday2",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Saturday2",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Notes",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "1000"
+                                            },
+                                            "sink": {
+                                                "name": "Notes",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Active",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "Active",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Type",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "Type",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Stype",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "Stype",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Weeknum",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "Weeknum",
+                                                "physicalType": "integer"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "splitFIRST",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "splitFIRST",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "BLIND",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "BLIND",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "User",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "100"
+                                            },
+                                            "sink": {
+                                                "name": "User",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "cltM4ID",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "cltM4ID",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "newdose",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "newdose",
+                                                "physicalType": "integer"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "pckcode",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "pckcode",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "rxhistID",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "rxhistID",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "EX",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "EX",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ActbyDATE",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "ActbyDATE",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ActByUser",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "100"
+                                            },
+                                            "sink": {
+                                                "name": "ActByUser",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "white",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "white",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "repOldOrder",
+                                                "type": "Decimal",
+                                                "physicalType": "decimal",
+                                                "scale": 0,
+                                                "precision": 18
+                                            },
+                                            "sink": {
+                                                "name": "repOldOrder",
+                                                "physicalType": "decimal",
+                                                "scale": 0,
+                                                "precision": 18
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigDr",
+                                                "type": "String",
+                                                "physicalType": "nvarchar",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigDr",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "dtSig",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "dtSig",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "aws",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "aws",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "blSched",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "blSched",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "blVerbal",
+                                                "type": "Boolean",
+                                                "physicalType": "bit"
+                                            },
+                                            "sink": {
+                                                "name": "blVerbal",
+                                                "physicalType": "boolean"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Color",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "Color",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DeActbyDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "DeActbyDate",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DeActbyUser",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "100"
+                                            },
+                                            "sink": {
+                                                "name": "DeActbyUser",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "OrderTypev5",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "OrderTypev5",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigentered",
+                                                "type": "String",
+                                                "physicalType": "nvarchar",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigentered",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "signoted",
+                                                "type": "String",
+                                                "physicalType": "nvarchar",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "signoted",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigNOTEDDT",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "sigNOTEDDT",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DTMID",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "DTMID",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigMID",
+                                                "type": "String",
+                                                "physicalType": "nvarchar",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigMID",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "OverApprove",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "OverApprove",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "OverapproveDT",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "OverapproveDT",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigentereddt",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            },
+                                            "sink": {
+                                                "name": "sigentereddt",
+                                                "physicalType": "timestamp"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigDrImg",
+                                                "type": "Byte[]",
+                                                "physicalType": "varbinary",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigDrImg",
+                                                "physicalType": "binary"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigMidImg",
+                                                "type": "Byte[]",
+                                                "physicalType": "varbinary",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigMidImg",
+                                                "physicalType": "binary"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigNotedImg",
+                                                "type": "Byte[]",
+                                                "physicalType": "varbinary",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "sigNotedImg",
+                                                "physicalType": "binary"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "NotedBy",
+                                                "type": "String",
+                                                "physicalType": "nvarchar",
+                                                "length": "MAX"
+                                            },
+                                            "sink": {
+                                                "name": "NotedBy",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigdruser",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "sigdruser",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "sigmiduser",
+                                                "type": "String",
+                                                "physicalType": "varchar",
+                                                "length": "50"
+                                            },
+                                            "sink": {
+                                                "name": "sigmiduser",
+                                                "physicalType": "string"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "RowChkSum",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            },
+                                            "sink": {
+                                                "name": "RowChkSum",
+                                                "physicalType": "integer"
+                                            }
+                                        }
+                                    ],
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "failed_sites",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "Orders_src_to_bronze",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "variableName": "last_failed_site",
+                                "value": {
+                                    "value": "@item().SiteCode",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "p_sites": {
+                "type": "array"
+            },
+            "p_audit_context_json": {
+                "type": "string",
+                "defaultValue": "{}"
+            },
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": ""
+            }
+        },
+        "variables": {
+            "last_failed_site": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "f8ee8459-d704-4f44-b046-aab05b040577",
+        "lastPublishTime": "2026-08-03T19:49:30Z"
+    }
+}
+
+
+
+nb bronze to silver:
+
+cell1:
+
+# ============================================
+# CELL 1 : BRONZE -> SILVER
+# Target : bhg_silver.pats.slv_Orders
+# Load Type : APPEND (Current Batch Only)
+#
+# CLEAN LEGACY-ALIGNED VERSION
+# FULLY DYNAMIC METADATA & SILVER DEDUP LOGIC
+# ============================================
+
+import json
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.window import Window
+
+spark.conf.set("spark.sql.parquet.datetimeRebaseModeInRead", "LEGACY")
+spark.conf.set("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY")
+spark.conf.set("spark.sql.legacy.parquet.datetimeRebaseModeInRead", "LEGACY")
+spark.conf.set("spark.sql.legacy.parquet.datetimeRebaseModeInWrite", "LEGACY")
+
+# --------------------------------------------
+# DYNAMIC METADATA & AUDIT PAYLOAD RESOLUTION
+# --------------------------------------------
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+try:
+    p_run_date
+except NameError:
+    p_run_date = None
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = None
+
+# Dynamically parse table metadata from audit context payload
+try:
+    audit_ctx = json.loads(p_audit_context_json) if p_audit_context_json and p_audit_context_json != "{}" else {}
+except Exception:
+    audit_ctx = {}
+
+def first_task(layer_name):
+    layer = audit_ctx.get(layer_name, {}) if isinstance(audit_ctx, dict) else {}
+    tasks = layer.get("tasks", []) if isinstance(layer, dict) else []
+    return tasks[0] if isinstance(tasks, list) and tasks else {}
+
+def configured_full_table(layer_name, fallback):
+    task = first_task(layer_name)
+    metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+    configured = task.get("full_table") or metadata.get("full_table")
+    if configured:
+        return configured
+
+    target_table = task.get("target_table") or task.get("TargetTable")
+    target_schema = task.get("target_schema") or task.get("TargetSchema")
+    if target_table:
+        if layer_name == "BR":
+            return f"bhg_bronze.{target_schema or 'order'}.{target_table}"
+        if layer_name == "SL":
+            return f"bhg_silver.{target_schema or 'pats'}.{target_table}"
+    return fallback
+
+def configured_ingest_column(layer_name, fallback="PipelineRunId"):
+    task = first_task(layer_name)
+    metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+    return task.get("ingest_column") or metadata.get("ingest_column") or fallback
+
+# Fallback to defaults if audit payload is empty
+p_source_table = configured_full_table("BR", "bhg_bronze.order.brz_Orders")
+p_target_table = configured_full_table("SL", "bhg_silver.pats.slv_Orders")
+bronze_ingest_column = configured_ingest_column("BR", "PipelineRunId")
+
+# --------------------------------------------
+# READ CURRENT BRONZE BATCH
+# --------------------------------------------
+
+bronze_source_df = spark.table(p_source_table)
+
+if p_ingest_run_id and str(p_ingest_run_id).strip() and bronze_ingest_column in bronze_source_df.columns:
+    bronze_df = (
+        bronze_source_df
+        .filter(col(bronze_ingest_column) == lit(str(p_ingest_run_id)))
+    )
+    batch_filter_text = f"{bronze_ingest_column} = {p_ingest_run_id}"
+else:
+    if not p_run_date or str(p_run_date).strip().upper() in ("NONE", "NULL", ""):
+        latest_run_date = (
+            bronze_source_df
+            .agg(max("run_date").alias("max_run_date"))
+            .first()["max_run_date"]
+        )
+    else:
+        latest_run_date = p_run_date
+
+    bronze_df = (
+        bronze_source_df
+        .filter(col("run_date") == latest_run_date)
+    )
+    batch_filter_text = f"run_date = {latest_run_date}"
+
+print(f"Source Table : {p_source_table}")
+print(f"Target Table : {p_target_table}")
+print(f"Batch Filter : {batch_filter_text}")
+
+# --------------------------------------------
+# VALIDATE DATA EXISTS
+# --------------------------------------------
+
+if bronze_df.limit(1).count() == 0:
+    raise Exception(
+        f"No bronze data found in {p_source_table} for {batch_filter_text}"
+    )
+
+# --------------------------------------------
+# BRONZE -> SILVER TRANSFORMATIONS
+# --------------------------------------------
+
+silver_df = (
+
+    bronze_df
+
+    # =====================================================
+    # REQUIRED OPERATIONAL COLUMNS
+    # =====================================================
+
+    .withColumn("SiteCode", trim(col("SiteCode")))
+    .withColumn("run_date", col("run_date"))
+    .withColumn("PipelineRunId", col("PipelineRunId") if "PipelineRunId" in bronze_df.columns else lit(p_ingest_run_id))
+
+    # =====================================================
+    # BUSINESS KEY COLUMNS
+    # =====================================================
+
+    .withColumn("OrderNum", col("OrderNum").cast(IntegerType()))
+    .withColumn("cltID", col("cltID").cast(IntegerType()))
+    .withColumn("RowChkSum", col("rowchksum").cast(IntegerType()))
+
+    # =====================================================
+    # STRING CLEANUP
+    # =====================================================
+
+    .withColumn("medType", trim(col("medType")))
+    .withColumn("Doctor", trim(col("doctor")))
+    .withColumn("Type", trim(col("type")))
+    .withColumn("Stype", trim(col("stype")))
+    .withColumn("o_User", trim(col("User")))
+    .withColumn("cltM4ID", trim(col("cltM4ID")))
+    .withColumn("Pckcode", trim(col("pckcode")))
+    .withColumn("rxhistID", trim(col("rxhistID")))
+    .withColumn("Color", trim(col("color")))
+    .withColumn("OrderTypev5", trim(col("ordertypev5")))
+
+    # =====================================================
+    # LEGACY BUSINESS COLUMNS
+    # =====================================================
+
+    .withColumn("ActByUser", trim(col("actbyuser")))
+    .withColumn("SigDr", trim(col("sigdr")))
+    .withColumn("DeActbyUser", trim(col("deactbyuser")))
+    .withColumn("Sigentered", trim(col("sigentered")))
+    .withColumn("Signoted", trim(col("signoted")))
+    .withColumn("sigMID", trim(col("sigMID")))
+    .withColumn("OverApprove", trim(col("overapprove")))
+    .withColumn("OverapproveDT", trim(col("OverapproveDT")))
+
+    # =====================================================
+    # NOTES CLEANUP
+    # =====================================================
+
+    .withColumn(
+        "Notes",
+        substring(trim(col("notes")), 1, 999)
+    )
+
+    # =====================================================
+    # DATE CONVERSIONS
+    # =====================================================
+    .withColumn("DateAdded", col("DateAdded"))
+    .withColumn("Orderdate", col("Orderdate"))
+    .withColumn("EffectiveDate", col("EffectiveDate"))
+    .withColumn("ExpirationDate", col("ExpirationDate"))
+    .withColumn("ActbyDATE", col("ActbyDATE"))
+    .withColumn("dtSig", col("dtSig"))
+    .withColumn("DeActbyDate", col("DeActbyDate"))
+    .withColumn("sigNOTEDDT", col("sigNOTEDDT"))
+    .withColumn("sigentereddt", col("sigentereddt"))
+
+    # =====================================================
+    # INVALID DATE CLEANUP
+    # =====================================================
+
+    .withColumn(
+        "DTMID",
+        when(
+            col("DTMID") == to_timestamp(lit("1900-01-01 00:00:00")),
+            lit(None).cast("timestamp")
+        ).otherwise(col("DTMID"))
+    )
+
+    # =====================================================
+    # DECIMAL CONVERSIONS
+    # =====================================================
+
+    .withColumn(
+        "Dose",
+        when(
+            trim(col("dose")) != "",
+            col("dose").cast(DecimalType(8,3))
+        )
+    )
+
+    .withColumn(
+        "Dose2",
+        when(
+            trim(col("dose2")) != "",
+            col("dose2").cast(DecimalType(8,3))
+        )
+    )
+
+    .withColumn(
+        "RepOldOrder",
+        when(
+            trim(col("repoldorder")) != "",
+            col("repoldorder").cast(DecimalType(18,0))
+        )
+    )
+
+    # =====================================================
+    # INTEGER CONVERSIONS
+    # =====================================================
+
+    .withColumn(
+        "Changeby",
+        when(
+            trim(col("changeby")) != "",
+            col("changeby").cast(IntegerType())
+        )
+    )
+
+    .withColumn(
+        "Intervals",
+        when(
+            trim(col("intervals")) != "",
+            col("intervals").cast(IntegerType())
+        )
+    )
+
+    .withColumn(
+        "Weeknum",
+        when(
+            trim(col("weeknum")) != "",
+            col("weeknum").cast(IntegerType())
+        )
+    )
+
+    .withColumn(
+        "newdose",
+        when(
+            trim(col("newdose")) != "",
+            col("newdose").cast(IntegerType())
+        )
+    )
+
+    # =====================================================
+    # BOOLEAN CONVERSIONS
+    # =====================================================
+
+    .withColumn("Sunday", col("sunday").cast(BooleanType()))
+    .withColumn("Monday", col("monday").cast(BooleanType()))
+    .withColumn("Tuesday", col("tuesday").cast(BooleanType()))
+    .withColumn("Wednesday", col("wednesday").cast(BooleanType()))
+    .withColumn("Thursday", col("thursday").cast(BooleanType()))
+    .withColumn("Friday", col("friday").cast(BooleanType()))
+    .withColumn("Saturday", col("saturday").cast(BooleanType()))
+
+    .withColumn("Sunday2", col("sunday2").cast(BooleanType()))
+    .withColumn("Monday2", col("monday2").cast(BooleanType()))
+    .withColumn("Tuesday2", col("tuesday2").cast(BooleanType()))
+    .withColumn("Wednesday2", col("wednesday2").cast(BooleanType()))
+    .withColumn("Thursday2", col("thursday2").cast(BooleanType()))
+    .withColumn("Friday2", col("friday2").cast(BooleanType()))
+    .withColumn("Saturday2", col("saturday2").cast(BooleanType()))
+
+    .withColumn("SplitFirst", col("splitfirst").cast(BooleanType()))
+    .withColumn("BLIND", col("BLIND").cast(BooleanType()))
+    .withColumn("Active", col("active").cast(BooleanType()))
+    .withColumn("Ex", col("ex").cast(BooleanType()))
+    .withColumn("White", col("white").cast(BooleanType()))
+    .withColumn("Aws", col("aws").cast(BooleanType()))
+    .withColumn("BlSched", col("blsched").cast(BooleanType()))
+    .withColumn("BlVerbal", col("blverbal").cast(BooleanType()))
+
+    # =====================================================
+    # BINARY CONVERSION
+    # =====================================================
+
+    .withColumn("sigDrImg", col("sigDrImg"))
+    .withColumn("sigMidImg", col("sigMidImg"))
+    .withColumn("sigNotedImg", col("sigNotedImg"))
+
+    # =====================================================
+    # OPERATIONAL COLUMNS
+    # =====================================================
+
+    .withColumn("order_year", year(col("Orderdate")))
+    .withColumn("LastModAt", current_timestamp())
+    .withColumn("RowState", lit(True))
+)
+
+# --------------------------------------------
+# SILVER DEDUPLICATION (SiteCode, OrderNum, cltID)
+# --------------------------------------------
+
+silver_window = Window.partitionBy(
+    "SiteCode",
+    "OrderNum",
+    "cltID"
+).orderBy(
+    col("DateAdded").desc_nulls_last(),
+    col("Orderdate").desc_nulls_last(),
+    col("RowChkSum").desc_nulls_last()
+)
+
+silver_df = (
+    silver_df
+    .withColumn(
+        "rn",
+        row_number().over(silver_window)
+    )
+    .filter(col("rn") == 1)
+    .drop("rn")
+)
+
+# --------------------------------------------
+# SELECT ONLY REQUIRED COLUMNS
+# --------------------------------------------
+
+silver_df = silver_df.select(
+
+    "SiteCode",
+    "run_date",
+    "PipelineRunId",
+    "OrderNum",
+    "cltID",
+    "RowChkSum",
+    "LastModAt",
+    "RowState",
+    "medType",
+    "DateAdded",
+    "Orderdate",
+    "Doctor",
+    "EffectiveDate",
+    "ExpirationDate",
+    "Dose",
+    "Dose2",
+    "Changeby",
+    "Intervals",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday2",
+    "Monday2",
+    "Tuesday2",
+    "Wednesday2",
+    "Thursday2",
+    "Friday2",
+    "Saturday2",
+    "Notes",
+    "Active",
+    "Type",
+    "Stype",
+    "Weeknum",
+    "splitFIRST",
+    "BLIND",
+    "o_User",
+    "cltM4ID",
+    "newdose",
+    "Pckcode",
+    "rxhistID",
+    "Ex",
+    "ActbyDate",
+    "ActByUser",
+    "White",
+    "RepOldOrder",
+    "SigDr",
+    "DtSig",
+    "Aws",
+    "BlSched",
+    "BlVerbal",
+    "Color",
+    "DeActbyDate",
+    "DeActbyUser",
+    "OrderTypev5",
+    "Sigentered",
+    "Signoted",
+    "sigNOTEDDT",
+    "Dtmid",
+    "sigMid",
+    "OverApprove",
+    "OverapproveDT",
+    "Sigentereddt",
+    "sigDrImg",
+    "sigMidImg",
+    "sigNotedImg",
+    "order_year"
+)
+
+# --------------------------------------------
+# WRITE TO SILVER
+# --------------------------------------------
+
+rows_read = bronze_df.count()
+rows_loaded = silver_df.count()
+
+(
+    silver_df.write
+    .format("delta")
+    .mode("append")
+    .option("mergeSchema", "true")
+    .saveAsTable(p_target_table)
+)
+
+print(f"Silver Load Completed For {batch_filter_text}")
+print(f"Rows Loaded to {p_target_table} : {rows_loaded}")
+print(f"Columns Count : {len(silver_df.columns)}")
+
+silver_result = {
+    "Orders": {
+        "method": "Orders",
+        "layer": "SL",
+        "status": "SUCCESS",
+        "rows_read": int(rows_read),
+        "rows_written": int(rows_loaded),
+        "rows_inserted": int(rows_loaded),
+        "rows_updated": 0,
+        "rows_skipped": 0
+    }
+}
+
+try:
+    import notebookutils
+    notebookutils.notebook.exit(json.dumps(silver_result, default=str))
+except Exception:
+    print(json.dumps(silver_result, default=str))
+
+
+
+silver to gold...
+
+
+cell1:
+
+# ============================================
+# CELL 2 : SILVER -> GOLD
+# LEGACY-ALIGNED
+# CROSS-WORKSPACE FABRIC WAREHOUSE VERSION
+#
+# FEATURES:
+# - Dynamic Multi-Site Processing
+# - Cross-Workspace Compatible
+# - TRUE UPSERT BEHAVIOR
+# - NO DELTA MERGE REQUIRED
+# - Warehouse Compatible
+# - Legacy Logic Aligned
+# - Incremental Processing
+# - Soft Delete Handling
+# - Final Deduplication
+# - Prevents Duplicate Business Keys
+# ============================================
+
+import json
+from datetime import datetime
+from pyspark.sql.functions import *
+from pyspark.sql.window import Window
+from pyspark.storagelevel import StorageLevel
+
+import com.microsoft.spark.fabric
+from com.microsoft.spark.fabric.Constants import Constants
+
+# =====================================================
+# SPARK LEGACY DATETIME CONFIGS
+# =====================================================
+
+spark.conf.set("spark.sql.parquet.datetimeRebaseModeInRead", "LEGACY")
+spark.conf.set("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY")
+spark.conf.set("spark.sql.legacy.parquet.datetimeRebaseModeInRead", "LEGACY")
+spark.conf.set("spark.sql.legacy.parquet.datetimeRebaseModeInWrite", "LEGACY")
+
+# =====================================================
+# CONFIG & DYNAMIC METADATA RESOLUTION
+# =====================================================
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+try:
+    p_run_date
+except NameError:
+    p_run_date = None
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = None
+
+try:
+    audit_ctx = json.loads(p_audit_context_json) if p_audit_context_json and p_audit_context_json != "{}" else {}
+except Exception:
+    audit_ctx = {}
+
+def first_task(layer_name):
+    layer = audit_ctx.get(layer_name, {}) if isinstance(audit_ctx, dict) else {}
+    tasks = layer.get("tasks", []) if isinstance(layer, dict) else []
+    return tasks[0] if isinstance(tasks, list) and tasks else {}
+
+def configured_full_table(layer_name, fallback):
+    task = first_task(layer_name)
+    metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+    configured = task.get("full_table") or metadata.get("full_table")
+    if configured:
+        return configured
+
+    target_table = task.get("target_table") or task.get("TargetTable")
+    target_schema = task.get("target_schema") or task.get("TargetSchema")
+    if target_table:
+        if layer_name == "SL":
+            return f"bhg_silver.{target_schema or 'pats'}.{target_table}"
+        if layer_name == "GL":
+            return f"bhg_gold.{target_schema or 'pats'}.{target_table}"
+    return fallback
+
+def configured_ingest_column(layer_name, fallback="PipelineRunId"):
+    task = first_task(layer_name)
+    metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+    return task.get("ingest_column") or metadata.get("ingest_column") or fallback
+
+SILVER_TABLE = configured_full_table("SL", "bhg_silver.pats.slv_Orders")
+ACTIVE_GOLD_TABLE = configured_full_table("GL", "bhg_gold.pats.Orders")
+silver_ingest_column = configured_ingest_column("SL", "PipelineRunId")
+
+version_suffix = datetime.now().strftime("%Y%m%d%H%M%S")
+backup_suffix = datetime.now().strftime("%Y%m%d")
+
+VERSION_GOLD_TABLE = f"bhg_gold.pats.Orders_{version_suffix}"
+
+# EXPLICIT FABRIC WAREHOUSE CONFIGURATIONS
+gold_workspace_id = "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+gold_warehouse_id = "d29ef036-8c2c-40b0-a8e0-3279f9a906e7"
+
+print(f"Source Silver Table: {SILVER_TABLE}")
+print(f"Active Gold Table  : {ACTIVE_GOLD_TABLE}")
+print(f"Version Gold Table : {VERSION_GOLD_TABLE}")
+print(f"Backup Suffix      : {backup_suffix}")
+print(f"Gold Workspace ID  : {gold_workspace_id}")
+print(f"Gold Warehouse ID  : {gold_warehouse_id}")
+
+# =====================================================
+# READ SILVER TABLE
+# =====================================================
+
+silver_full_df = spark.table(SILVER_TABLE)
+
+# =====================================================
+# GET CURRENT SILVER BATCH
+# =====================================================
+
+if p_ingest_run_id and str(p_ingest_run_id).strip() and silver_ingest_column in silver_full_df.columns:
+    silver_df = (
+        silver_full_df
+        .filter(col(silver_ingest_column) == lit(str(p_ingest_run_id)))
+        .persist(StorageLevel.MEMORY_AND_DISK)
+    )
+    batch_filter_text = f"{silver_ingest_column} = {p_ingest_run_id}"
+else:
+    if not p_run_date or str(p_run_date).strip().upper() in ("NONE", "NULL", ""):
+        latest_run_date = (
+            silver_full_df
+            .agg(max("run_date").alias("max_run_date"))
+            .first()["max_run_date"]
+        )
+    else:
+        latest_run_date = p_run_date
+
+    silver_df = (
+        silver_full_df
+        .filter(col("run_date") == latest_run_date)
+        .persist(StorageLevel.MEMORY_AND_DISK)
+    )
+    batch_filter_text = f"run_date = {latest_run_date}"
+
+print(f"Batch Filter : {batch_filter_text}")
+
+# =====================================================
+# VALIDATE DATA
+# =====================================================
+
+if silver_df.limit(1).count() == 0:
+    raise Exception(
+        f"No silver data found for {batch_filter_text}"
+    )
+
+# =====================================================
+# CURRENT SITECODES
+# =====================================================
+
+current_sitecodes = (
+    silver_df
+    .select("SiteCode")
+    .distinct()
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+print("Current Batch Sites:")
+current_sitecodes.show(truncate=False)
+
+# =====================================================
+# READ EXISTING GOLD (INITIAL LOAD SUPPORT)
+# =====================================================
+
+initial_load = False
+
+try:
+
+    existing_gold_raw = (
+        spark.read
+        .option(Constants.WorkspaceId, gold_workspace_id)
+        .option(Constants.DatawarehouseId, gold_warehouse_id)
+        .synapsesql(ACTIVE_GOLD_TABLE)
+    )
+
+    print("Existing Gold Table Found")
+
+except Exception as e:
+
+    print(f"Gold table read fallback (Initial Load starting): {e}")
+
+    existing_gold_raw = spark.createDataFrame(
+        [],
+        silver_df.schema
+    )
+
+    initial_load = True
+
+# =====================================================
+# GOLD DEDUPLICATION
+# =====================================================
+
+gold_window = Window.partitionBy(
+    "SiteCode",
+    "OrderNum",
+    "cltID"
+).orderBy(
+    col("LastModAt").desc_nulls_last()
+)
+
+existing_gold = (
+    existing_gold_raw
+    .withColumn(
+        "rn",
+        row_number().over(gold_window)
+    )
+    .filter(col("rn") == 1)
+    .drop("rn")
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+# =====================================================
+# CURRENT SITE GOLD DATA
+# =====================================================
+
+existing_gold_current_sites = (
+    existing_gold.alias("g")
+    .join(
+        broadcast(current_sitecodes.alias("s")),
+        col("g.SiteCode") == col("s.SiteCode"),
+        "inner"
+    )
+    .select("g.*")
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+# =====================================================
+# PRESERVE OTHER SITES
+# =====================================================
+
+other_site_records = (
+    existing_gold.alias("g")
+    .join(
+        broadcast(current_sitecodes.alias("s")),
+        col("g.SiteCode") == col("s.SiteCode"),
+        "left_anti"
+    )
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+# =====================================================
+# CURRENT SOURCE KEYS
+# =====================================================
+
+current_keys = (
+    silver_df
+    .select(
+        "SiteCode",
+        "OrderNum",
+        "cltID"
+    )
+    .distinct()
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+# =====================================================
+# UNCHANGED RECORDS (EVEN UNCHANGED ROWS GET UPDATED)
+# =====================================================
+
+unchanged_df = (
+    existing_gold_current_sites.alias("t")
+    .join(
+        silver_df.alias("s"),
+        on=[
+            col("t.SiteCode") == col("s.SiteCode"),
+            col("t.OrderNum") == col("s.OrderNum"),
+            col("t.cltID") == col("s.cltID")
+        ],
+        how="inner"
+    )
+    .filter(
+        (col("t.RowChkSum") == col("s.RowChkSum"))
+        & (col("s.RowChkSum") >= 0)
+    )
+    .select("s.*")
+    .withColumn("RowState", lit(True))
+    .withColumn("Active", lit(True))
+    .withColumn("LastModAt", current_timestamp())
+)
+
+# =====================================================
+# UPDATED RECORDS
+# =====================================================
+
+updated_df = (
+    silver_df.alias("s")
+    .join(
+        existing_gold_current_sites.alias("t"),
+        on=[
+            col("t.SiteCode") == col("s.SiteCode"),
+            col("t.OrderNum") == col("s.OrderNum"),
+            col("t.cltID") == col("s.cltID")
+        ],
+        how="inner"
+    )
+    .filter(
+        (col("t.RowChkSum") != col("s.RowChkSum"))
+        | (col("s.RowChkSum") < 0)
+    )
+    .select("s.*")
+    .withColumn("RowState", lit(True))
+    .withColumn("Active", lit(True))
+    .withColumn("LastModAt", current_timestamp())
+)
+
+# =====================================================
+# NEW RECORDS
+# =====================================================
+
+new_records_df = (
+    silver_df.alias("s")
+    .join(
+        existing_gold_current_sites.alias("t"),
+        on=[
+            col("t.SiteCode") == col("s.SiteCode"),
+            col("t.OrderNum") == col("s.OrderNum"),
+            col("t.cltID") == col("s.cltID")
+        ],
+        how="left_anti"
+    )
+    .select("s.*")
+    .withColumn("RowState", lit(True))
+    .withColumn("Active", lit(True))
+    .withColumn("LastModAt", current_timestamp())
+)
+
+# =====================================================
+# SOFT DELETE LOGIC
+# =====================================================
+
+inactive_df = (
+    existing_gold_current_sites.alias("g")
+    .join(
+        current_keys.alias("s"),
+        on=[
+            col("g.SiteCode") == col("s.SiteCode"),
+            col("g.OrderNum") == col("s.OrderNum"),
+            col("g.cltID") == col("s.cltID")
+        ],
+        how="left_anti"
+    )
+    .select("g.*")
+    .withColumn("Active", lit(False))
+    .withColumn("RowState", lit(False))
+    .withColumn("LastModAt", current_timestamp())
+)
+
+# =====================================================
+# FINAL GOLD DATASET (TRUE UPSERT RECONSTRUCTION)
+# =====================================================
+
+final_gold_df = (
+    other_site_records
+
+    .unionByName(
+        unchanged_df,
+        allowMissingColumns=True
+    )
+
+    .unionByName(
+        updated_df,
+        allowMissingColumns=True
+    )
+
+    .unionByName(
+        new_records_df,
+        allowMissingColumns=True
+    )
+
+    .unionByName(
+        inactive_df,
+        allowMissingColumns=True
+    )
+)
+
+# =====================================================
+# FINAL SAFETY DEDUP (PRIORITIZE ACTIVE/UPDATED ROWS)
+# =====================================================
+
+final_window = Window.partitionBy(
+    "SiteCode",
+    "OrderNum",
+    "cltID"
+).orderBy(
+    col("RowState").desc_nulls_last(),
+    col("Active").desc_nulls_last(),
+    col("DateAdded").desc_nulls_last(),
+    col("Orderdate").desc_nulls_last(),
+    col("RowChkSum").desc_nulls_last()
+)
+
+final_gold_df = (
+    final_gold_df
+    .withColumn(
+        "rn",
+        row_number().over(final_window)
+    )
+    .filter(col("rn") == 1)
+    .drop("rn")
+)
+
+# =====================================================
+# FINAL STANDARDIZATION
+# =====================================================
+
+final_gold_df = (
+    final_gold_df
+    .withColumn(
+        "LastModAt",
+        coalesce(
+            col("LastModAt"),
+            current_timestamp()
+        )
+    )
+)
+
+# =====================================================
+# OPTIMIZE WRITE
+# =====================================================
+
+final_gold_df = (
+    final_gold_df
+    .repartition("SiteCode")
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+# =====================================================
+# FINAL COUNTS
+# =====================================================
+
+print("====================================")
+print("FINAL DATASET METRICS")
+print("====================================")
+
+print(f"Unchanged Rows : {unchanged_df.count()}")
+print(f"Updated Rows   : {updated_df.count()}")
+print(f"New Rows       : {new_records_df.count()}")
+print(f"Inactive Rows  : {inactive_df.count()}")
+
+print(f"Final Rows     : {final_gold_df.count()}")
+
+# =====================================================
+# LEGACY ORDERS SCHEMA ALIGNMENT (EXACT 67 COLUMNS)
+# =====================================================
+
+gold_columns = [
+    "SiteCode",
+    "OrderNum",
+    "cltID",
+    "RowChkSum",
+    "LastModAt",
+    "RowState",
+    "medType",
+    "DateAdded",
+    "Orderdate",
+    "Doctor",
+    "EffectiveDate",
+    "ExpirationDate",
+    "Dose",
+    "Dose2",
+    "Changeby",
+    "Intervals",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday2",
+    "Monday2",
+    "Tuesday2",
+    "Wednesday2",
+    "Thursday2",
+    "Friday2",
+    "Saturday2",
+    "Notes",
+    "Active",
+    "Type",
+    "Stype",
+    "Weeknum",
+    "splitFIRST",
+    "BLIND",
+    "o_User",
+    "cltM4ID",
+    "newdose",
+    "pckcode",
+    "rxhistID",
+    "EX",
+    "ActbyDATE",
+    "ActByUser",
+    "white",
+    "repOldOrder",
+    "sigDr",
+    "dtSig",
+    "aws",
+    "blSched",
+    "blVerbal",
+    "Color",
+    "DeActbyDate",
+    "DeActbyUser",
+    "OrderTypev5",
+    "sigentered",
+    "signoted",
+    "sigNOTEDDT",
+    "DTMID",
+    "sigMID",
+    "OverApprove",
+    "OverapproveDT",
+    "sigentereddt",
+    "sigDrImg",
+    "sigMidImg",
+    "sigNotedImg"
+]
+
+final_gold_df = final_gold_df.select(*gold_columns)
+
+print(f"Final Gold Columns : {len(final_gold_df.columns)}")
+
+# =====================================================
+# WRITE TO GOLD (OVERWRITE MAINTAINS TRUE UPSERT)
+# =====================================================
+
+if final_gold_df.count() == 0:
+    raise Exception(
+        "Validation Failed: Final Gold Dataset is empty"
+    )
+
+print("Writing Final Gold Dataset...")
+
+(
+    final_gold_df.write
+    .option(Constants.WorkspaceId, gold_workspace_id)
+    .option(Constants.DatawarehouseId, gold_warehouse_id)
+    .mode("overwrite")
+    .synapsesql(VERSION_GOLD_TABLE)
+)
+
+print("====================================")
+print("VERSION TABLE CREATED")
+print("====================================")
+
+print(f"Version Table : {VERSION_GOLD_TABLE}")
+print(f"Version Suffix: {version_suffix}")
+
+# =====================================================
+# FINAL LOGGING
+# =====================================================
+
+print("====================================")
+print("Dynamic Multi-Site Gold Load Completed")
+print("====================================")
+
+print(f"Batch Filter     : {batch_filter_text}")
+print("Processed Sites:")
+current_sitecodes.show(truncate=False)
+print(f"Rows Loaded      : {final_gold_df.count()}")
+print(f"Columns Count    : {len(final_gold_df.columns)}")
+print(f"Initial Load     : {initial_load}")
+print("Cross-workspace warehouse load completed successfully")
+
+
+
+
+nb_audit_orders:
+
+
+cell1:
+
+from datetime import datetime
+import json
+import random
+import time
+
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+from pyspark.sql.types import *
+
+try:
+    p_mode
+except NameError:
+    p_mode = "START_LAYER_RUNS"
+
+try:
+    p_config_name_prefix
+except NameError:
+    p_config_name_prefix = "SAMMS Orders"    # <-- Changed for Orders
+
+try:
+    p_pipeline_name
+except NameError:
+    p_pipeline_name = "pl_saveorders"        # <-- Changed for Orders
+
+try:
+    p_pipeline_path
+except NameError:
+    p_pipeline_path = "/pipelines/pl_saveorders" # <-- Changed for Orders
+
+try:
+    p_triggered_by
+except NameError:
+    p_triggered_by = "Fabric"
+
+try:
+    p_error_message
+except NameError:
+    p_error_message = None
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = None
+
+try:
+    p_sites_json
+except NameError:
+    p_sites_json = "[]"
+
+try:
+    p_status
+except NameError:
+    p_status = "SUCCESS"
+
+try:
+    p_failed_target_name
+except NameError:
+    p_failed_target_name = None
+
+try:
+    p_failure_activity
+except NameError:
+    p_failure_activity = None
+
+try:
+    p_method_results_json
+except NameError:
+    p_method_results_json = None
+
+try:
+    p_bronze_method_results_json
+except NameError:
+    p_bronze_method_results_json = None
+
+try:
+    p_silver_method_results_json
+except NameError:
+    p_silver_method_results_json = None
+
+etlconfig_table = "bhg_bronze.meta.etlconfig"
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+pipelinerun_table = "bhg_bronze.meta.pipelinerun"
+taskqueue_table = "bhg_bronze.meta.taskqueue"
+taskaudit_table = "bhg_bronze.meta.taskaudit"
+dataquality_table = "bhg_bronze.meta.dataquality"
+
+gold_workspace_id = "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+gold_warehouse_id = "d29ef036-8c2c-40b0-a8e0-3279f9a906e7"
+gold_warehouse_prefix = "bhg_gold.pats"
+
+ACTIVE_TARGET_LAYERS = ["BR", "SL", "GL"]    # <-- Changed to include Gold
+TERMINAL_TARGET_NAME = "GL"                 # <-- Changed for Orders
+
+BRONZE_COUNT_CONTEXT_CACHE = {}
+
+def new_bigint(offset=0):
+    return int(datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[:18]) + int(offset)
+
+def safe_int(value, default=0):
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+def row_value(row, name, default=None):
+    data = row.asDict(recursive=True) if hasattr(row, "asDict") else dict(row)
+    if name in data:
+        return data[name]
+    lower_name = str(name).lower()
+    for key, value in data.items():
+        if str(key).lower() == lower_name:
+            return value
+    return default
+
+def parse_context():
+    if not p_audit_context_json:
+        return {}
+    if isinstance(p_audit_context_json, dict):
+        return p_audit_context_json
+    try:
+        raw = json.loads(str(p_audit_context_json))
+        if "exitValue" in raw and isinstance(raw["exitValue"], str):
+            return json.loads(raw["exitValue"])
+        return raw
+    except Exception:
+        return {}
+
+def parse_request_body(value):
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return value
+    text = str(value).strip()
+    if not text or text.upper() == "NULL":
+        return {}
+    try:
+        parsed = json.loads(text)
+    except Exception as exc:
+        raise Exception(f"Invalid taskconfig RequestBody JSON: {text[:500]}") from exc
+    if parsed is None:
+        return {}
+    if not isinstance(parsed, dict):
+        raise Exception(f"Taskconfig RequestBody must be a JSON object, got: {type(parsed).__name__}")
+    return parsed
+
+def get_context_for_target(ctx, target_name):
+    return ctx.get(target_name) or ctx.get(str(target_name).upper()) or {}
+
+def layer_tasks(layer):
+    if not layer:
+        return []
+    if "tasks" in layer:
+        return layer["tasks"] or []
+    if layer.get("task_id") is not None:
+        return [layer]
+    return []
+
+def method_key(method):
+    return str(method or "").replace(" ", "").lower()
+
+def task_method(task):
+    method = row_value(task, "method") or row_value(task, "Method")
+    if method:
+        return str(method)
+    return row_value(task, "task_name") or row_value(task, "TaskName") or "Orders"
+
+def task_metadata(task):
+    metadata = row_value(task, "metadata")
+    if isinstance(metadata, dict):
+        return metadata
+    return parse_request_body(
+        row_value(task, "RequestBody")
+        or row_value(task, "request_body")
+    )
+
+def task_target_name(task, default=None):
+    target_name = row_value(task, "target_name") or row_value(task, "TargetName")
+    return str(target_name or default or "").upper()
+
+def task_display_table(task, target_name=None):
+    return (
+        row_value(task, "target_table")
+        or row_value(task, "TargetTable")
+        or task_full_table(task, target_name).split(".")[-1]
+    )
+
+def task_full_table(task, target_name=None):
+    metadata = task_metadata(task)
+    configured_table = row_value(task, "full_table") or metadata.get("full_table")
+    if configured_table:
+        return str(configured_table).strip()
+
+    target = task_target_name(task, target_name)
+    target_table = row_value(task, "target_table") or row_value(task, "TargetTable") or "brz_Orders"
+    target_schema = row_value(task, "target_schema") or row_value(task, "TargetSchema")
+
+    if target == "BR":
+        return f"bhg_bronze.order.{target_table}" if not target_schema else f"bhg_bronze.{target_schema}.{target_table}"
+    if target == "SL":
+        return f"bhg_silver.pats.{target_table}" if not target_schema else f"bhg_silver.{target_schema}.{target_table}"
+    if target == "GL":
+        return f"bhg_gold.pats.{target_table}"
+    return str(target_table)
+
+def task_ingest_column(task):
+    return row_value(task, "ingest_column") or task_metadata(task).get("ingest_column") or "PipelineRunId"
+
+def task_site_column(task):
+    return row_value(task, "site_column") or task_metadata(task).get("site_column") or "SiteCode"
+
+def task_database_column(task):
+    return row_value(task, "database_column") or task_metadata(task).get("database_column") or "DataBaseName"
+
+def task_dq_keys(task):
+    keys = row_value(task, "dq_keys") or task_metadata(task).get("dq_keys") or task_metadata(task).get("key_columns") or ["SiteCode", "OrderNum", "cltid"]
+    if isinstance(keys, str):
+        text = keys.strip()
+        if text.startswith("["):
+            keys = json.loads(text)
+        elif text:
+            keys = [item.strip() for item in text.split(",") if item.strip()]
+        else:
+            keys = ["SiteCode", "OrderNum", "cltid"]
+    return [str(key) for key in keys]
+
+def bronze_business_key_cols(task):
+    keys = task_dq_keys(task)
+    site_col = str(task_site_column(task) or "").lower()
+    database_col = str(task_database_column(task) or "").lower()
+    excluded = {site_col, database_col, "sitecode", "databasename", "_site_code", "_source_database"}
+    return [key for key in keys if str(key).lower() not in excluded]
+
+def bronze_business_rows_df(df, task):
+    business_keys = bronze_business_key_cols(task)
+    if not business_keys:
+        return df
+
+    available = {c.lower(): c for c in df.columns}
+    actual_keys = [
+        available[str(key).lower()]
+        for key in business_keys
+        if str(key).lower() in available
+    ]
+    if not actual_keys:
+        return df
+
+    non_marker_cond = None
+    for key in actual_keys:
+        cond = F.col(key).isNotNull()
+        non_marker_cond = cond if non_marker_cond is None else (non_marker_cond | cond)
+    return df.where(non_marker_cond)
+
+def filter_layer_by_method(layer, method_name):
+    mk = method_key(method_name)
+    tasks = [t for t in layer_tasks(layer) if method_key(task_method(t)) == mk]
+    if not tasks:
+        return None
+    result = dict(layer)
+    result["tasks"] = tasks
+    return result
+
+def resolve_method_outcome(method_results, method_name):
+    mk = method_key(method_name)
+    for k, v in method_results.items():
+        if method_key(k) == mk:
+            return v
+    return {"status": "FAILED", "failed_stage": "BR", "error_message": None}
+
+def is_success_status(status):
+    return str(status or "").upper() in ("SUCCESS", "SUCCEEDED")
+
+def is_skipped_status(status):
+    return str(status or "").upper() == "SKIPPED"
+
+def parse_method_results_json(value):
+    if not value:
+        return {}
+    if isinstance(value, dict):
+        return value
+    try:
+        parsed = json.loads(str(value))
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+def method_result_from(results, method_name, default_status="SUCCESS"):
+    mk = method_key(method_name)
+    for key, value in results.items():
+        if method_key(key) == mk and isinstance(value, dict):
+            return value
+    global_result = results.get("Orders") or results.get("SaveOrders")    # <-- Updated for Orders
+    if isinstance(global_result, dict):
+        return global_result
+    return {"status": default_status, "failed_stage": "", "error_message": None}
+
+def result_error_message(result):
+    return (
+        result.get("error_message")
+        or result.get("message")
+        or result.get("error")
+    )
+
+def compact_error_message(value, max_len=500):
+    if not value:
+        return None
+    text = str(value).replace("\r", " ").replace("\n", " ")
+    markers = [
+        "Invalid object name",
+        "SqlException,Message=",
+        "HybridDeliveryException,Message=",
+        "ErrorCode="
+    ]
+    for marker in markers:
+        pos = text.find(marker)
+        if pos >= 0:
+            text = text[pos:]
+            break
+    while "  " in text:
+        text = text.replace("  ", " ")
+    return text[:max_len]
+
+def failed_site_codes_from_outcome(outcome):
+    site_results = outcome.get("site_results") if isinstance(outcome, dict) else None
+    if not isinstance(site_results, list):
+        return []
+    failed_sites = []
+    for site_result in site_results:
+        if not isinstance(site_result, dict):
+            continue
+        if not is_success_status(site_result.get("status")):
+            site_code = site_result.get("site_code") or site_result.get("SiteCode")
+            if site_code:
+                failed_sites.append(str(site_code))
+    return sorted(set(failed_sites))
+
+def build_failure_summary(method_results, failure_message):
+    if not method_results:
+        return compact_error_message(failure_message, 1500) or "Pipeline failed. Check failed activity run details."
+
+    parts = []
+    for method_name in sorted(method_results.keys(), key=method_key):
+        outcome = method_results.get(method_name) or {}
+        layer_statuses = outcome.get("layer_statuses") if isinstance(outcome, dict) else {}
+        failed_layers = [
+            layer_name
+            for layer_name in ACTIVE_TARGET_LAYERS
+            if not is_success_status(layer_statuses.get(layer_name, outcome.get("status")))
+        ]
+        failed_stage = str(outcome.get("failed_stage") or (failed_layers[0] if failed_layers else "BR")).upper()
+        failed_sites = failed_site_codes_from_outcome(outcome)
+        if failed_sites:
+            site_text = ",".join(failed_sites)
+            parts.append(f"{method_name} {failed_stage} failed site(s): {site_text}")
+        elif not is_success_status(outcome.get("status")):
+            parts.append(f"{method_name} {failed_stage} failed")
+
+        error_text = compact_error_message(result_error_message(outcome), 350)
+        if error_text and parts:
+            parts[-1] = f"{parts[-1]}. Error: {error_text}"
+
+    if not parts:
+        return compact_error_message(failure_message, 1500) or "Pipeline failed. Check failed activity run details."
+    return " | ".join(parts)[:1800]
+
+def result_count_value(value, default=0):
+    if value is None:
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        try:
+            return int(float(value))
+        except Exception:
+            return int(default)
+
+def silver_audit_counts_from_results(method_name, silver_results):
+    result = method_result_from(silver_results, method_name, default_status="")
+    if not isinstance(result, dict):
+        return None
+
+    has_count_payload = any(
+        key in result
+        for key in ("rows_read", "rows_written", "rows_inserted", "rows_updated")
+    )
+    if not has_count_payload:
+        return None
+
+    rows_read = result_count_value(result.get("rows_read"), 0)
+    if "rows_written" in result:
+        rows_written = result_count_value(result.get("rows_written"), 0)
+    else:
+        rows_written = (
+            result_count_value(result.get("rows_inserted"), 0)
+            + result_count_value(result.get("rows_updated"), 0)
+        )
+    return rows_read, rows_written
+
+def build_terminal_method_results(br_layer, sl_layer, bronze_json, silver_json):
+    bronze_results = parse_method_results_json(bronze_json)
+    silver_results = parse_method_results_json(silver_json)
+    methods = sorted({
+        task_method(task)
+        for task in (layer_tasks(br_layer) + layer_tasks(sl_layer))
+    }, key=method_key)
+
+    combined = {}
+    for method in methods:
+        br_result = method_result_from(bronze_results, method, default_status="SUCCESS")
+        sl_result = method_result_from(silver_results, method, default_status="SUCCESS")
+        br_status = br_result.get("status")
+        sl_status = sl_result.get("status")
+        br_layer_status = "SUCCESS" if is_success_status(br_status) else ("SKIPPED" if is_skipped_status(br_status) else "FAILED")
+        sl_layer_status = "SUCCESS" if is_success_status(sl_status) else ("SKIPPED" if is_skipped_status(sl_status) else "FAILED")
+        site_results = sl_result.get("site_results") or br_result.get("site_results") or []
+        layer_errors = {
+            "BR": result_error_message(br_result),
+            "SL": result_error_message(sl_result)
+                  or ("Silver task was skipped" if is_skipped_status(sl_status) else None)
+        }
+
+        if not is_success_status(br_status) and not is_success_status(sl_status):
+            combined[method] = {
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": result_error_message(br_result),
+                "layer_statuses": {"BR": br_layer_status, "SL": sl_layer_status},
+                "layer_errors": layer_errors,
+                "site_results": site_results,
+            }
+        elif is_success_status(sl_status):
+            combined[method] = {
+                "status": "SUCCESS" if is_success_status(br_status) else "FAILED",
+                "failed_stage": "" if is_success_status(br_status) else "BR",
+                "error_message": None if is_success_status(br_status) else result_error_message(br_result),
+                "layer_statuses": {"BR": br_layer_status, "SL": "SUCCESS"},
+                "layer_errors": layer_errors,
+                "site_results": site_results,
+            }
+        else:
+            combined[method] = {
+                "status": "FAILED",
+                "failed_stage": "SL",
+                "error_message": result_error_message(sl_result)
+                or ("Silver task was skipped" if is_skipped_status(sl_status) else "Silver task failed"),
+                "layer_statuses": {"BR": br_layer_status, "SL": sl_layer_status},
+                "layer_errors": layer_errors,
+                "site_results": site_results,
+            }
+
+    return combined
+
+def method_layer_status(outcome, target_name):
+    layer_statuses = outcome.get("layer_statuses")
+    if isinstance(layer_statuses, dict):
+        direct_status = layer_statuses.get(str(target_name).upper())
+        if direct_status:
+            if is_success_status(direct_status):
+                return "SUCCESS"
+            if is_skipped_status(direct_status):
+                return "SKIPPED"
+            return "FAILED"
+
+    m_status = str(outcome.get("status", "FAILED")).upper()
+    if is_success_status(m_status):
+        return "SUCCESS"
+    layer_order = ACTIVE_TARGET_LAYERS
+    failed_stage = str(outcome.get("failed_stage") or "BR").upper()
+    if failed_stage == "GL" and "GL" not in layer_order:
+        failed_stage = TERMINAL_TARGET_NAME
+    failed_idx = layer_order.index(failed_stage) if failed_stage in layer_order else 0
+    target_idx = layer_order.index(target_name) if target_name in layer_order else 0
+    if target_idx < failed_idx:
+        return "SUCCESS"
+    elif target_idx == failed_idx:
+        return "FAILED"
+    else:
+        return "SKIPPED"
+
+def normalize_gold_table_name(table_name):
+    name = str(table_name).strip()
+    prefix = f"{gold_warehouse_prefix}."
+    if name.lower().startswith(prefix.lower()):
+        return name[len(prefix):]
+    if name.lower().startswith("bhg_gold."):
+        return name.split(".")[-1]
+    if "." in name and name.split(".")[-2].lower() == "pats":
+        return name.split(".")[-1]
+    return name
+
+def read_task_table_df(task, target_name):
+    table_name = task_full_table(task, target_name)
+    if str(target_name).upper() == "GL":
+        return read_gold_df(table_name)
+    return spark.table(table_name)
+
+def layer_task_for_method(layer, method):
+    for task in layer_tasks(layer):
+        if method_key(task_method(task)) == method_key(method):
+            return task
+    return None
+
+def table_schema(table_name):
+    return spark.table(table_name).schema
+
+def align_to_table(table_name, df):
+    target_schema = table_schema(table_name)
+    cols = []
+    for field in target_schema:
+        if field.name in df.columns:
+            if field.name.lower() == "pipelinerunid":
+                cols.append(
+                    F.coalesce(F.col(field.name), F.lit(p_ingest_run_id))
+                    .cast(field.dataType)
+                    .alias(field.name)
+                )
+            else:
+                cols.append(F.col(field.name).cast(field.dataType).alias(field.name))
+        elif field.name.lower() == "pipelinerunid":
+            cols.append(F.lit(p_ingest_run_id).cast(field.dataType).alias(field.name))
+        else:
+            cols.append(F.lit(None).cast(field.dataType).alias(field.name))
+    return df.select(*cols)
+
+def is_delta_concurrency_error(exc):
+    msg = str(exc)
+    retry_tokens = [
+        "ConcurrentAppendException",
+        "ConcurrentWriteException",
+        "ConcurrentDeleteReadException",
+        "DELTA_CONCURRENT_APPEND",
+        "DELTA_CONCURRENT"
+    ]
+    return any(token in msg for token in retry_tokens)
+
+def with_delta_retry(action, label, max_attempts=6, base_sleep_seconds=2):
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return action()
+        except Exception as exc:
+            last_error = exc
+            if attempt >= max_attempts or not is_delta_concurrency_error(exc):
+                raise
+            sleep_seconds = base_sleep_seconds * (2 ** (attempt - 1)) + random.uniform(0, 1.5)
+            print(f"{label}: concurrent Delta write detected; retrying in {sleep_seconds:.1f}s")
+            time.sleep(sleep_seconds)
+    raise last_error
+
+def delta_upsert(table_name, df, keys):
+    df = align_to_table(table_name, df)
+    condition = " AND ".join([f"t.{k} = s.{k}" for k in keys])
+    updates = {c: f"s.{c}" for c in df.columns if c not in keys}
+    inserts = {c: f"s.{c}" for c in df.columns}
+
+    def action():
+        return (
+            DeltaTable.forName(spark, table_name).alias("t")
+            .merge(df.alias("s"), condition)
+            .whenMatchedUpdate(set=updates)
+            .whenNotMatchedInsert(values=inserts)
+            .execute()
+        )
+
+    return with_delta_retry(action, f"MERGE {table_name}")
+
+def insert_append(table_name, df):
+    aligned_df = align_to_table(table_name, df)
+
+    def action():
+        return aligned_df.write.mode("append").format("delta").saveAsTable(table_name)
+
+    return with_delta_retry(action, f"APPEND {table_name}")
+
+def exit_json(payload):
+    result = json.dumps(payload, default=str)
+    print(result)
+    try:
+        import notebookutils
+        notebookutils.notebook.exit(result)
+    except NameError:
+        try:
+            from notebookutils import mssparkutils
+            mssparkutils.notebook.exit(result)
+        except NameError:
+            pass
+
+def read_gold_df(table_name="Orders"):
+    from com.microsoft.spark.fabric.Constants import Constants
+    gold_table_name = normalize_gold_table_name(table_name)
+    return (
+        spark.read
+        .option(Constants.WorkspaceId, gold_workspace_id)
+        .option(Constants.DatawarehouseId, gold_warehouse_id)
+        .synapsesql(f"{gold_warehouse_prefix}.{gold_table_name}")
+    )
+
+def dq_counts_for_df(df, key_cols):
+    row_count = df.count()
+    null_cond = None
+    for c in key_cols:
+        cond = F.col(c).isNull()
+        null_cond = cond if null_cond is None else (null_cond | cond)
+    null_count = df.where(null_cond).count() if null_cond is not None else 0
+    duplicate_count = (
+        df.groupBy(*key_cols)
+        .count()
+        .where(F.col("count") > 1)
+        .count()
+    )
+    return int(row_count), int(null_count), int(duplicate_count)
+
+def resolve_df_key_cols(df, key_cols, label):
+    available = {c.lower(): c for c in df.columns}
+    resolved = []
+    missing = []
+    for key in key_cols:
+        actual = available.get(str(key).lower())
+        if actual:
+            resolved.append(actual)
+        else:
+            missing.append(str(key))
+    if missing:
+        raise Exception(f"DQ keys {missing} are not present in {label}. Available columns: {df.columns}")
+    return resolved
+
+def lookup_value(value):
+    return None if value is None else str(value)
+
+def bronze_count_group_key(task):
+    return (
+        method_key(task_method(task)),
+        task_full_table(task, "BR"),
+        task_ingest_column(task),
+        task_site_column(task),
+        task_database_column(task)
+    )
+
+def empty_bronze_count_context():
+    return {
+        "task_counts": {},
+        "method_totals": {},
+        "task_successes": {}
+    }
+
+def bronze_count_cache_key(br_layer, ingest_run_id):
+    task_ids = tuple(sorted([
+        safe_int(task.get("task_config_id"))
+        for task in layer_tasks(br_layer)
+        if task.get("task_config_id") is not None
+    ]))
+    return (safe_int(row_value(br_layer, "run_id")), str(ingest_run_id), task_ids)
+
+def build_bronze_count_context(br_layer, ingest_run_id):
+    context = empty_bronze_count_context()
+    grouped_tasks = {}
+    for task in layer_tasks(br_layer):
+        grouped_tasks.setdefault(bronze_count_group_key(task), []).append(task)
+
+    for group_key in grouped_tasks:
+        method, table_name, ingest_col, site_col, database_col = group_key
+        representative_task = grouped_tasks[group_key][0]
+        raw_df = spark.table(table_name)
+        if ingest_run_id and ingest_col in raw_df.columns:
+            raw_df = raw_df.where(F.col(ingest_col) == F.lit(ingest_run_id))
+        available_cols = set(raw_df.columns)
+        group_cols = []
+        if site_col in available_cols:
+            group_cols.append(site_col)
+        if database_col in available_cols and database_col != site_col:
+            group_cols.append(database_col)
+
+        if group_cols:
+            success_rows = raw_df.groupBy(*group_cols).count().collect()
+            for row in success_rows:
+                site_value = lookup_value(row[site_col]) if site_col in group_cols else None
+                database_value = lookup_value(row[database_col]) if database_col in group_cols else None
+                if int(row["count"] or 0) > 0:
+                    context["task_successes"][(group_key, site_value, database_value)] = True
+
+            df = bronze_business_rows_df(raw_df, representative_task)
+            grouped_rows = df.groupBy(*group_cols).count().collect()
+            for row in grouped_rows:
+                site_value = lookup_value(row[site_col]) if site_col in group_cols else None
+                database_value = lookup_value(row[database_col]) if database_col in group_cols else None
+                row_count = int(row["count"] or 0)
+                context["task_counts"][(group_key, site_value, database_value)] = row_count
+                context["method_totals"][method] = context["method_totals"].get(method, 0) + row_count
+        else:
+            raw_count = int(raw_df.count())
+            if raw_count > 0:
+                context["task_successes"][(group_key, None, None)] = True
+            df = bronze_business_rows_df(raw_df, representative_task)
+            row_count = int(df.count())
+            context["task_counts"][(group_key, None, None)] = row_count
+            context["method_totals"][method] = context["method_totals"].get(method, 0) + row_count
+
+    return context
+
+def get_bronze_count_context(br_layer, ingest_run_id, status=None):
+    if status == "SKIPPED":
+        return empty_bronze_count_context()
+    cache_key = bronze_count_cache_key(br_layer, ingest_run_id)
+    if cache_key not in BRONZE_COUNT_CONTEXT_CACHE:
+        BRONZE_COUNT_CONTEXT_CACHE[cache_key] = build_bronze_count_context(br_layer, ingest_run_id)
+    return BRONZE_COUNT_CONTEXT_CACHE[cache_key]
+
+def bronze_count_for_task_from_context(task, bronze_counts):
+    group_key = bronze_count_group_key(task)
+    site_code = lookup_value(row_value(task, "site_code") or row_value(task, "SiteCode"))
+    data_base_name = lookup_value(row_value(task, "data_base_name") or row_value(task, "DataBaseName"))
+    task_counts = bronze_counts.get("task_counts", {})
+    fallback_keys = [
+        (group_key, site_code, data_base_name),
+        (group_key, site_code, None),
+        (group_key, None, data_base_name),
+        (group_key, None, None)
+    ]
+    for key in fallback_keys:
+        if key in task_counts:
+            return int(task_counts[key])
+    return 0
+
+def bronze_success_for_task_from_context(task, bronze_counts):
+    group_key = bronze_count_group_key(task)
+    site_code = lookup_value(row_value(task, "site_code") or row_value(task, "SiteCode"))
+    data_base_name = lookup_value(row_value(task, "data_base_name") or row_value(task, "DataBaseName"))
+    task_successes = bronze_counts.get("task_successes", {})
+    fallback_keys = [
+        (group_key, site_code, data_base_name),
+        (group_key, site_code, None),
+        (group_key, None, data_base_name),
+        (group_key, None, None)
+    ]
+    return any(task_successes.get(key) for key in fallback_keys)
+
+def bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts=None):
+    context = bronze_counts or get_bronze_count_context(br_layer, ingest_run_id)
+    return int(context.get("method_totals", {}).get(method_key(method), 0))
+
+def taskaudit_schema():
+    return StructType([
+        StructField("AuditId", LongType()),
+        StructField("TaskId", LongType()),
+        StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()),
+        StructField("TaskConfigId", LongType()),
+        StructField("TaskName", StringType()),
+        StructField("TableName", StringType()),
+        StructField("StepName", StringType()),
+        StructField("Status", StringType()),
+        StructField("LogLevel", StringType()),
+        StructField("RowsRead", LongType()),
+        StructField("RowsWritten", LongType()),
+        StructField("RowsFailed", LongType()),
+        StructField("ErrorMessage", StringType()),
+        StructField("SiteCode", StringType()),
+        StructField("DataBaseName", StringType()),
+        StructField("SiteName", StringType()),
+        StructField("StartTime", TimestampType()),
+        StructField("EndTime", TimestampType()),
+        StructField("DurationSeconds", LongType())
+    ])
+
+def append_taskaudit_rows(rows):
+    if not rows:
+        return
+    audit_df = (
+        spark.createDataFrame(rows, taskaudit_schema())
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("CreatedAt", F.current_timestamp())
+    )
+    audit_df = audit_df.withColumn(
+        "DurationSeconds",
+        F.unix_timestamp("EndTime") - F.unix_timestamp("StartTime")
+    )
+    insert_append(taskaudit_table, audit_df)
+
+def update_pipelinerun(run_id, status, success_tasks, failed_tasks, skipped_tasks):
+    pr_df = spark.sql(f"SELECT * FROM {pipelinerun_table} WHERE RunId = {int(run_id)}").limit(1)
+    if pr_df.count() == 0:
+        raise Exception(f"No pipelinerun row found for RunId={run_id}")
+
+    pr_update_df = (
+        pr_df
+        .withColumn("Status", F.lit(status))
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("SuccessTasks", F.lit(int(success_tasks)))
+        .withColumn("FailedTasks", F.lit(int(failed_tasks)))
+        .withColumn("SkippedTasks", F.lit(int(skipped_tasks)))
+    )
+    delta_upsert(pipelinerun_table, pr_update_df, ["RunId"])
+
+def update_taskqueue_for_tasks(task_ids, status, error_message=None):
+    if not task_ids:
+        return
+    ids = ",".join([str(int(x)) for x in task_ids])
+    tq_df = spark.sql(f"SELECT * FROM {taskqueue_table} WHERE TaskId IN ({ids})")
+    if tq_df.count() == 0:
+        raise Exception(f"No taskqueue rows found for TaskIds {ids}")
+
+    tq_update_df = (
+        tq_df
+        .withColumn("Status", F.lit(status))
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("ErrorMessage", F.lit(error_message).cast("string"))
+    )
+    delta_upsert(taskqueue_table, tq_update_df, ["TaskId"])
+
+def finish_bronze_tasks(br_layer, ingest_run_id, status, log_level, error_message=None, audit_offset_base=100, bronze_counts=None, skip_run_update=False):
+    tasks = layer_tasks(br_layer)
+    if not tasks:
+        raise Exception("No BR tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    update_taskqueue_for_tasks(task_ids, status, error_message)
+
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+    if bronze_counts is None:
+        bronze_counts = get_bronze_count_context(br_layer, ingest_run_id, status)
+
+    rows = []
+    total_rows = 0
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        rows_copied = bronze_count_for_task_from_context(task, bronze_counts) if status != "SKIPPED" else 0
+        total_rows += rows_copied
+        rows_failed = 1 if status == "FAILED" else 0
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or br_layer.get("run_id")),
+            safe_int(task.get("config_id") or br_layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or br_layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            rows_copied,
+            rows_copied if status != "SKIPPED" else 0,
+            rows_failed,
+            error_message,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    append_taskaudit_rows(rows)
+    if not skip_run_update:
+        update_pipelinerun(
+            safe_int(br_layer["run_id"]),
+            status,
+            len(task_ids) if status == "SUCCESS" else 0,
+            len(task_ids) if status == "FAILED" else 0,
+            len(task_ids) if status == "SKIPPED" else 0
+        )
+    return total_rows
+
+def finish_layer_tasks(layer, target_name, ingest_run_id, status, log_level, error_message=None, audit_offset_base=300, br_layer=None, sl_layer=None, bronze_counts=None, silver_method_results=None, skip_run_update=False):
+    tasks = layer_tasks(layer)
+    if not tasks:
+        raise Exception(f"No {target_name} tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    update_taskqueue_for_tasks(task_ids, status, error_message)
+
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+
+    rows = []
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        method = task_method(task)
+        if target_name == "SL":
+            if silver_method_results is None:
+                silver_method_results = parse_method_results_json(p_silver_method_results_json)
+            silver_counts = silver_audit_counts_from_results(method, silver_method_results)
+            if silver_counts is not None:
+                rows_read, rows_written = silver_counts
+            else:
+                rows_read = bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts) if status != "SKIPPED" and br_layer else 0
+                rows_written = read_task_table_df(task, "SL").count() if status == "SUCCESS" else 0
+        elif target_name == "GL":
+            silver_task = layer_task_for_method(sl_layer, method) if sl_layer else None
+            if status != "SKIPPED" and silver_task:
+                silver_df_for_task = read_task_table_df(silver_task, "SL")
+                silver_ingest_col = task_ingest_column(silver_task)
+                if ingest_run_id and silver_ingest_col in silver_df_for_task.columns:
+                    silver_df_for_task = silver_df_for_task.where(F.col(silver_ingest_col) == F.lit(ingest_run_id))
+                rows_read = silver_df_for_task.count()
+            else:
+                rows_read = 0
+            rows_written = read_task_table_df(task, "GL").count() if status == "SUCCESS" else 0
+        else:
+            rows_read = rows_written = 0
+
+        rows_failed = 1 if status == "FAILED" else 0
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or layer.get("run_id")),
+            safe_int(task.get("config_id") or layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            int(rows_read),
+            int(rows_written),
+            rows_failed,
+            error_message,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    append_taskaudit_rows(rows)
+    if not skip_run_update:
+        update_pipelinerun(
+            safe_int(layer["run_id"]),
+            status,
+            len(task_ids) if status == "SUCCESS" else 0,
+            len(task_ids) if status == "FAILED" else 0,
+            len(task_ids) if status == "SKIPPED" else 0
+        )
+
+def task_layer_status(task, target_name, outcome, bronze_counts=None):
+    target_name = str(target_name).upper()
+    base_status = method_layer_status(outcome, target_name)
+
+    if target_name == "BR" and bronze_counts is not None:
+        if bronze_success_for_task_from_context(task, bronze_counts):
+            return "SUCCESS"
+        if base_status == "FAILED":
+            return "FAILED"
+        if base_status == "SKIPPED":
+            return "SKIPPED"
+        return "SUCCESS"
+
+    return base_status
+
+def task_layer_error(method_name, outcome, target_name, status, failure_message):
+    if status == "FAILED":
+        layer_errors = outcome.get("layer_errors")
+        if isinstance(layer_errors, dict) and layer_errors.get(str(target_name).upper()):
+            return str(layer_errors.get(str(target_name).upper()))
+        return str(outcome.get("error_message") or failure_message)
+    if status == "SKIPPED":
+        failed_stage = outcome.get("failed_stage", "BR")
+        return f"Skipped: {method_name} failed at {failed_stage}"
+    return None
+
+def finalize_method_results_batched(br_layer, sl_layer, method_results, ingest_run_id, failure_message):
+    layers = {"BR": br_layer, "SL": sl_layer}
+    layer_order = ACTIVE_TARGET_LAYERS
+    full_bronze_counts = get_bronze_count_context(br_layer, ingest_run_id)
+    silver_method_results = parse_method_results_json(p_silver_method_results_json)
+
+    all_task_ids = []
+    for target_name in layer_order:
+        all_task_ids.extend([safe_int(t["task_id"]) for t in layer_tasks(layers[target_name])])
+    all_task_ids = [task_id for task_id in all_task_ids if task_id]
+
+    start_by_task = {}
+    if all_task_ids:
+        tq_df = spark.sql(
+            f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in all_task_ids])})"
+        )
+        start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+
+    rows = []
+    task_updates = {}
+    audit_idx = 1
+
+    for method_name, outcome in method_results.items():
+        for target_name in layer_order:
+            layer = layers[target_name]
+            method_sub_layer = filter_layer_by_method(layer, method_name)
+            if not method_sub_layer:
+                continue
+
+            for task in layer_tasks(method_sub_layer):
+                task_id = safe_int(task["task_id"])
+                task_status = task_layer_status(task, target_name, outcome, full_bronze_counts)
+                log_level = "ERROR" if task_status == "FAILED" else ("WARN" if task_status == "SKIPPED" else "INFO")
+                err = task_layer_error(method_name, outcome, target_name, task_status, failure_message)
+                task_updates.setdefault((task_status, err), []).append(task_id)
+
+                if target_name == "BR":
+                    rows_read = bronze_count_for_task_from_context(task, full_bronze_counts) if task_status != "SKIPPED" else 0
+                    rows_written = rows_read if task_status == "SUCCESS" else 0
+                    audit_offset = 500
+                else:
+                    silver_counts = silver_audit_counts_from_results(task_method(task), silver_method_results)
+                    if silver_counts is not None:
+                        rows_read, rows_written = silver_counts
+                    else:
+                        rows_read = bronze_count_for_method_from_layer(br_layer, task_method(task), ingest_run_id, full_bronze_counts) if task_status != "SKIPPED" else 0
+                        rows_written = read_task_table_df(task, "SL").count() if task_status == "SUCCESS" else 0
+                    audit_offset = 600
+
+                rows_failed = 1 if task_status == "FAILED" else 0
+                rows.append((
+                    new_bigint(audit_offset + audit_idx),
+                    task_id,
+                    safe_int(task.get("run_id") or layer.get("run_id")),
+                    safe_int(task.get("config_id") or layer.get("config_id")),
+                    safe_int(task.get("task_config_id")),
+                    task.get("task_name"),
+                    task.get("target_table") or layer.get("target_table"),
+                    "TASK_COMPLETE",
+                    task_status,
+                    log_level,
+                    int(rows_read),
+                    int(rows_written),
+                    rows_failed,
+                    err,
+                    task.get("site_code"),
+                    task.get("data_base_name"),
+                    task.get("site_name"),
+                    start_by_task.get(task_id),
+                    None,
+                    None
+                ))
+                audit_idx += 1
+
+    for (status, err), task_ids in task_updates.items():
+        update_taskqueue_for_tasks(task_ids, status, err)
+
+    append_taskaudit_rows(rows)
+
+    for target_name in layer_order:
+        layer_obj = layers[target_name]
+        all_tasks = layer_tasks(layer_obj)
+        n_success = sum(1 for t in all_tasks if task_layer_status(t, target_name, resolve_method_outcome(method_results, task_method(t)), full_bronze_counts) == "SUCCESS")
+        n_failed  = sum(1 for t in all_tasks if task_layer_status(t, target_name, resolve_method_outcome(method_results, task_method(t)), full_bronze_counts) == "FAILED")
+        n_skipped = sum(1 for t in all_tasks if task_layer_status(t, target_name, resolve_method_outcome(method_results, task_method(t)), full_bronze_counts) == "SKIPPED")
+        layer_run_status = "FAILED" if n_failed > 0 else ("SKIPPED" if n_skipped > 0 else "SUCCESS")
+        update_pipelinerun(safe_int(layer_obj["run_id"]), layer_run_status, n_success, n_failed, n_skipped)
+
+def successful_layer_subset(layer, target_name, method_results, bronze_counts=None):
+    tasks = [
+        task
+        for task in layer_tasks(layer)
+        if task_layer_status(task, target_name, resolve_method_outcome(method_results, task_method(task)), bronze_counts) == "SUCCESS"
+    ]
+    if not tasks:
+        return None
+    result = dict(layer)
+    result["tasks"] = tasks
+    return result
+
+def append_dataquality_for_layer(layer, target_name, reference_layer=None, ingest_run_id=None):
+    rows = []
+    target_name = str(target_name).upper()
+    offset_base = {"BR": 700, "SL": 800, "GL": 900}.get(target_name, 900)
+
+    dq_tasks = layer_tasks(layer)
+    if target_name == "BR":
+        grouped = {}
+        for task in dq_tasks:
+            group_key = (
+                method_key(task_method(task)),
+                task_full_table(task, "BR"),
+                task_ingest_column(task)
+            )
+            if group_key not in grouped:
+                grouped[group_key] = task
+        dq_tasks = list(grouped.values())
+
+    for idx, task in enumerate(dq_tasks, start=1):
+        key_cols = task_dq_keys(task)
+        if not key_cols and target_name == "BR" and reference_layer:
+            reference_task = layer_task_for_method(reference_layer, task_method(task))
+            if reference_task:
+                key_cols = task_dq_keys(reference_task)
+        if not key_cols:
+            raise Exception(f"Missing dq_keys in taskconfig RequestBody for {target_name} task {task_display_table(task, target_name)}")
+
+        if target_name == "BR":
+            table_name = task_display_table(task, "BR")
+            dq_df = read_task_table_df(task, "BR")
+            ingest_col = task_ingest_column(task)
+            if ingest_run_id and ingest_col in dq_df.columns:
+                dq_df = dq_df.where(F.col(ingest_col) == F.lit(ingest_run_id))
+            dq_df = bronze_business_rows_df(dq_df, task)
+            site_col = task_site_column(task)
+            if site_col in dq_df.columns:
+                key_cols = [
+                    site_col if str(key).lower() == "sitecode" and "SiteCode" not in dq_df.columns else key
+                    for key in key_cols
+                ]
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(dq_df, resolved_keys)
+        elif target_name == "SL":
+            table_name = task_display_table(task, "SL")
+            dq_df = read_task_table_df(task, "SL")
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(
+                dq_df,
+                resolved_keys
+            )
+        elif target_name == "GL":
+            table_name = task_display_table(task, "GL")
+            dq_df = read_task_table_df(task, "GL")
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(
+                dq_df,
+                resolved_keys
+            )
+        else:
+            continue
+
+        rows.append((
+            new_bigint(offset_base + idx),
+            safe_int(task.get("run_id") or layer.get("run_id")),
+            safe_int(task.get("config_id") or layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            table_name,
+            row_count,
+            null_count,
+            duplicate_count,
+            "SUCCESS" if null_count == 0 and duplicate_count == 0 else "FAILED"
+        ))
+
+    if not rows:
+        return
+
+    dq_schema = StructType([
+        StructField("DqId", LongType()),
+        StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()),
+        StructField("TaskConfigId", LongType()),
+        StructField("TableName", StringType()),
+        StructField("RowCount", LongType()),
+        StructField("NullCount", LongType()),
+        StructField("DuplicateCount", LongType()),
+        StructField("ValidationStatus", StringType())
+    ])
+    dq_df = spark.createDataFrame(rows, dq_schema).withColumn("CreatedAt", F.current_timestamp())
+    insert_append(dataquality_table, dq_df)
+
+
+# ---------------------------------------------------------------------
+# MAIN ROUTER
+# ---------------------------------------------------------------------
+ctx = parse_context()
+mode = p_mode.upper().strip()
+
+if mode == "START_LAYER_RUNS":
+    active_targets_sql = ",".join([f"'{target}'" for target in ACTIVE_TARGET_LAYERS])
+    configs_df = spark.sql(f"""
+        SELECT *
+        FROM {etlconfig_table}
+        WHERE IsActive = 1
+          AND ConfigName LIKE '{p_config_name_prefix}%'
+          AND TargetName IN ({active_targets_sql})
+    """)
+    configs = configs_df.collect()
+    if len(configs) != len(ACTIVE_TARGET_LAYERS):
+        raise Exception(
+            f"Expected {len(ACTIVE_TARGET_LAYERS)} active etlconfig rows for prefix {p_config_name_prefix} "
+            f"and targets {ACTIVE_TARGET_LAYERS}, found {len(configs)}"
+        )
+
+    config_by_id = {safe_int(r["ConfigId"]): r for r in configs}
+    config_by_target = {str(r["TargetName"]).upper(): r for r in configs}
+
+    config_ids = ",".join([str(r["ConfigId"]) for r in configs])
+    tasks_df = spark.sql(f"""
+        SELECT *
+        FROM {taskconfig_table}
+        WHERE IsActive = 1
+          AND ConfigId IN ({config_ids})
+    """)
+    tasks = tasks_df.collect()
+    if not tasks:
+        raise Exception(f"No active taskconfig rows found for ConfigIds {config_ids}")
+
+    tasks_by_target = {target_name: [] for target_name in ACTIVE_TARGET_LAYERS}
+    for task in tasks:
+        cfg = config_by_id.get(safe_int(task["ConfigId"]))
+        if not cfg:
+            continue
+        target = str(cfg["TargetName"]).upper()
+        if target == "BR":
+            if row_value(task, "SiteCode") and row_value(task, "DataBaseName"):
+                tasks_by_target[target].append(task)
+        else:
+            tasks_by_target[target].append(task)
+
+    run_rows = []
+    task_rows = []
+    audit_context = {}
+    base_id = new_bigint(0)
+    targets_in_order = [
+        str(r["TargetName"]).upper()
+        for r in sorted(configs, key=lambda row: safe_int(row_value(row, "ExecutionSequence"), 0))
+    ]
+
+    for target_idx, target_name in enumerate(targets_in_order, start=1):
+        cfg = config_by_target[target_name]
+        config_id = safe_int(cfg["ConfigId"])
+        layer_tasks_cfg = tasks_by_target[target_name]
+        run_id = base_id + (target_idx * 100000)
+        layer_task_context = []
+
+        for task_idx, task in enumerate(layer_tasks_cfg, start=1):
+            task_id = run_id + task_idx
+            site_code = row_value(task, "SiteCode")
+            data_base_name = row_value(task, "DataBaseName")
+            site_name = row_value(task, "SiteName")
+            method = row_value(task, "Method") or "Orders"
+            metadata = parse_request_body(row_value(task, "RequestBody"))
+            task_ctx = {
+                "run_id": run_id,
+                "config_id": config_id,
+                "config_name": cfg["ConfigName"],
+                "target_name": target_name,
+                "task_config_id": safe_int(task["TaskConfigId"]),
+                "task_id": task_id,
+                "task_name": task["TaskName"],
+                "target_table": task["TargetTable"],
+                "target_schema": row_value(task, "TargetSchema"),
+                "method": method,
+                "source_table": row_value(task, "SourceTable"),
+                "site_code": site_code,
+                "data_base_name": data_base_name,
+                "site_name": site_name,
+                "request_body": row_value(task, "RequestBody"),
+                "metadata": metadata,
+                "full_table": metadata.get("full_table") or task_full_table(task, target_name),
+                "ingest_column": metadata.get("ingest_column") or "PipelineRunId",
+                "site_column": metadata.get("site_column") or "SiteCode",
+                "database_column": metadata.get("database_column") or "DataBaseName",
+                "dq_keys": metadata.get("dq_keys") or metadata.get("key_columns") or ["SiteCode", "OrderNum", "cltid"]
+            }
+            layer_task_context.append(task_ctx)
+
+            task_rows.append((
+                task_id, run_id, config_id, safe_int(task["TaskConfigId"]),
+                task["TaskName"], cfg["SourceType"], task["TargetTable"],
+                safe_int(row_value(task, "ExecutionOrder"), 0), 1, "RUNNING",
+                0, 0, 1, 0, 0, site_code, data_base_name, site_name, None, None, None
+            ))
+
+        audit_context[target_name] = {
+            "run_id": run_id,
+            "config_id": config_id,
+            "config_name": cfg["ConfigName"],
+            "target_name": target_name,
+            "target_table": layer_task_context[0]["target_table"],
+            "tasks": layer_task_context
+        }
+
+        run_rows.append((
+            run_id, config_id, cfg["ConfigName"], cfg["PipelineName"],
+            cfg["PipelinePath"], cfg["SourceSystem"], cfg["TargetName"],
+            cfg["EnvironmentName"], None, None, "RUNNING",
+            cfg["TriggerType"], cfg["TriggeredBy"] or p_triggered_by,
+            len(layer_task_context), 0, 0, 0, 0, 1
+        ))
+
+    run_schema = StructType([
+        StructField("RunId", LongType()), StructField("ConfigId", LongType()),
+        StructField("ConfigName", StringType()), StructField("PipelineName", StringType()),
+        StructField("PipelinePath", StringType()), StructField("SourceSystem", StringType()),
+        StructField("TargetName", StringType()), StructField("EnvironmentName", StringType()),
+        StructField("StartTime", TimestampType()), StructField("EndTime", TimestampType()),
+        StructField("Status", StringType()), StructField("TriggerType", StringType()),
+        StructField("TriggeredBy", StringType()), StructField("TotalTasks", IntegerType()),
+        StructField("SuccessTasks", IntegerType()), StructField("FailedTasks", IntegerType()),
+        StructField("SkippedTasks", IntegerType()), StructField("RestartFlag", IntegerType()),
+        StructField("AttemptNumber", IntegerType())
+    ])
+    task_schema = StructType([
+        StructField("TaskId", LongType()), StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()), StructField("TaskConfigId", LongType()),
+        StructField("TaskName", StringType()), StructField("SourceType", StringType()),
+        StructField("TargetTable", StringType()), StructField("ExecutionOrder", IntegerType()),
+        StructField("ExecutionFlag", IntegerType()), StructField("Status", StringType()),
+        StructField("RetryAttempt", IntegerType()), StructField("RestartFlag", IntegerType()),
+        StructField("AttemptNumber", IntegerType()), StructField("HttpStatusCode", IntegerType()),
+        StructField("ApiResponseTimeMs", LongType()), StructField("SiteCode", StringType()),
+        StructField("DataBaseName", StringType()), StructField("SiteName", StringType()),
+        StructField("StartTime", TimestampType()), StructField("EndTime", TimestampType()),
+        StructField("ErrorMessage", StringType())
+    ])
+
+    insert_append(pipelinerun_table, spark.createDataFrame(run_rows, run_schema).withColumn("StartTime", F.current_timestamp()).withColumn("CreatedAt", F.current_timestamp()))
+    insert_append(taskqueue_table, spark.createDataFrame(task_rows, task_schema).withColumn("StartTime", F.current_timestamp()).withColumn("CreatedAt", F.current_timestamp()))
+    exit_json(audit_context)
+
+elif mode in ("FINALIZE_SUCCESS", "FINALIZE_ORDERS_SUCCESS", "FINALIZE_NOTES_SUCCESS"):
+    br = get_context_for_target(ctx, "BR")
+    sl = get_context_for_target(ctx, "SL")
+    gl = get_context_for_target(ctx, "GL")
+
+    bronze_rows = finish_bronze_tasks(br, p_ingest_run_id, status="SUCCESS", log_level="INFO", error_message=None, audit_offset_base=100)
+    append_dataquality_for_layer(br, "BR", reference_layer=sl, ingest_run_id=p_ingest_run_id)
+    append_dataquality_for_layer(sl, "SL")
+    append_dataquality_for_layer(gl, "GL")
+
+    silver_method_results = parse_method_results_json(p_silver_method_results_json)
+    finish_layer_tasks(sl, "SL", p_ingest_run_id, status="SUCCESS", log_level="INFO", error_message=None, audit_offset_base=300, br_layer=br, silver_method_results=silver_method_results)
+    finish_layer_tasks(gl, "GL", p_ingest_run_id, status="SUCCESS", log_level="INFO", error_message=None, audit_offset_base=400, br_layer=br, sl_layer=sl)
+
+    exit_json({
+        "status": "OK",
+        "mode": mode,
+        "bronze_tasks": len(layer_tasks(br)),
+        "silver_tasks": len(layer_tasks(sl)),
+        "gold_tasks": len(layer_tasks(gl)),
+        "bronze_rows": int(bronze_rows)
+    })
+
+elif mode in ("FINALIZE_FAILURE", "FINALIZE_ORDERS_FAILURE", "FINALIZE_NOTES_FAILURE"):
+    br = get_context_for_target(ctx, "BR")
+    sl = get_context_for_target(ctx, "SL")
+    gl = get_context_for_target(ctx, "GL")
+    failure_message = p_error_message or "Orders pipeline failed."
+
+    finish_bronze_tasks(br, p_ingest_run_id, status="FAILED", log_level="ERROR", error_message=failure_message, audit_offset_base=500)
+    finish_layer_tasks(sl, "SL", p_ingest_run_id, status="FAILED", log_level="ERROR", error_message=failure_message, audit_offset_base=600, br_layer=br)
+    finish_layer_tasks(gl, "GL", p_ingest_run_id, status="FAILED", log_level="ERROR", error_message=failure_message, audit_offset_base=650, br_layer=br, sl_layer=sl)
+
+    exit_json({"status": "FAILED", "mode": mode, "error": failure_message})
+
+else:
+    exit_json({"status": "OK", "mode": mode})
+
+
+
+
+
+
+

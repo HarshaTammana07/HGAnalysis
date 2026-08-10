@@ -1,0 +1,960 @@
+Parent:
+
+{
+    "name": "pl_ppa",
+    "objectId": "6d6500ac-9d9d-409e-852f-a91b5c538127",
+    "properties": {
+        "activities": [
+            {
+                "name": "fl_activesites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_taskconfig').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(\n    and(\n        and(\n            equals(item().ConfigId, 76),\n            equals(item().TaskName, 'PPA Bronze')\n        ),\n        equals(item().IsActive, 1)\n    ),\n    and(\n        not(equals(item().SiteCode, null)),\n        not(equals(item().DataBaseName, null))\n    )\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_truncate_bronze",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "1a3e87dc-25d7-4ea2-9c7b-31a535147ea0",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8"
+                }
+            },
+            {
+                "name": "src_to_brz",
+                "type": "InvokePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_ppa_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "f4472014-c9f2-4fce-bf2b-c166e68decdd",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_sites": {
+                            "value": "@activity('fl_activesites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@coalesce(first(activity('fl_activesites').output.value).LookbackDays, pipeline().parameters.p_lookback_days)",
+                            "type": "Expression"
+                        },
+                        "p_work_date": {
+                            "value": "@convertFromUtc(utcNow(), 'Central Standard Time', 'yyyy-MM-dd')",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
+                }
+            },
+            {
+                "name": "nb_brz_to_slv",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "set_ppa_bronze_results",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "6ffe19be-20c2-435d-bfae-e461e7b92fa5",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_ppa_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_get_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_truncate_bronze",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_ids_json": {
+                            "value": "[76,77]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"SFPatientPreAdmission\"]",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_ppa_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "fl_activesites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "e24596dc-5d3f-444d-a383-40a815c2eb04",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS PatientPreAdmission",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": {
+                                "value": "@pipeline().PipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_active_target_layers_json": {
+                            "value": "[\"BR\",\"SL\"]",
+                            "type": "string"
+                        },
+                        "p_terminal_target_name": {
+                            "value": "SL",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set_ppa_bronze_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "src_to_brz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_bronze_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('src_to_brz').Status,'Succeeded'), string(activity('src_to_brz').output.properties.returnValue.v_bronze_method_results_json), '{\"SFPatientPreAdmission\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"PPA Bronze child pipeline failed before returning method results\"}}')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set_ppa_silver_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "nb_brz_to_slv",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('nb_brz_to_slv').Status,'Succeeded'), string(activity('nb_brz_to_slv').output.result.exitValue), concat('{\"SFPatientPreAdmission\":{\"method\":\"SFPatientPreAdmission\",\"layer\":\"SL\",\"status\":\"', if(equals(activity('nb_brz_to_slv').Status,'Skipped'),'SKIPPED','FAILED'), '\",\"failed_stage\":\"', if(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'),'BR','SL'), '\",\"error_message\":\"', replace(replace(if(equals(activity('nb_brz_to_slv').Status,'Failed'), string(activity('nb_brz_to_slv').error), 'PPA Silver notebook was skipped.'),'\"',''''),'\\','\\\\'), '\"}}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if_ppa_silver_result_success",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set_ppa_silver_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(and(and(not(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"ERROR\"'))), and(and(not(contains(variables('v_silver_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_silver_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_silver_method_results_json'), '\"status\":\"ERROR\"'))))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "nb_ppa_audit_failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "e24596dc-5d3f-444d-a383-40a815c2eb04",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_ppa_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('fl_activesites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    },
+                                    "p_terminal_target_name": {
+                                        "value": "SL",
+                                        "type": "string"
+                                    },
+                                    "p_failed_target_name": {
+                                        "value": {
+                                            "value": "@if(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_failure_activity": {
+                                        "value": "PPA_Bronze_Silver_Finalizer",
+                                        "type": "string"
+                                    },
+                                    "p_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_error_message": {
+                                        "value": {
+                                            "value": "@concat('Bronze results: ', variables('v_bronze_method_results_json'), ' Silver results: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_ppa_notify_failed",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_ppa_audit_failure",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "Pipeline_Name": {
+                                        "value": "PPA ETL",
+                                        "type": "string"
+                                    },
+                                    "Status": {
+                                        "value": "Failed",
+                                        "type": "string"
+                                    },
+                                    "Config_Name": {
+                                        "value": "SAMMS PatientPreAdmission",
+                                        "type": "string"
+                                    },
+                                    "Source_System": {
+                                        "value": "PPA",
+                                        "type": "string"
+                                    },
+                                    "Target_Name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Environment_Name": {
+                                        "value": "BHG-DATA-PLATFORM-CORE-DEV",
+                                        "type": "string"
+                                    },
+                                    "Run_Id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Description": {
+                                        "value": "PPA pipeline failed or completed with partial site failures. See audit details.",
+                                        "type": "string"
+                                    },
+                                    "Error_Msg": {
+                                        "value": {
+                                            "value": "@concat('PPA failed details. Bronze: ', variables('v_bronze_method_results_json'), ' Silver: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_StartTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_EndTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "nb_ppa_audit_Success",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "e24596dc-5d3f-444d-a383-40a815c2eb04",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_ppa_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('fl_activesites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    },
+                                    "p_terminal_target_name": {
+                                        "value": "SL",
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "2026-07-15"
+            }
+        },
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            },
+            "v_silver_method_results_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-07-29T18:20:14Z"
+    }
+}
+
+child:
+
+{
+    "name": "pl_ppa_src_to_brz",
+    "objectId": "f4472014-c9f2-4fce-bf2b-c166e68decdd",
+    "properties": {
+        "activities": [
+            {
+                "name": "fe_each_samms",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "ppa_Src_to_Brz",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'IF EXISTS (\n    SELECT 1\n    FROM [',item().DataBaseName,'].sys.tables t\n    JOIN [',item().DataBaseName,'].sys.schemas s\n        ON t.schema_id = s.schema_id\n    WHERE t.name = PARSENAME(''', item().SourceTable, ''', 1)\n      AND s.name = PARSENAME(''', item().SourceTable, ''', 2)\n)\nBEGIN\n\nSELECT\n    ''',item().SiteCode,''' AS SiteCode,\n    ''',item().DataBaseName,''' AS SourceDatabase,\n    GETDATE() AS ExtractedAt,\n    ''',pipeline().parameters.p_ingest_run_id,''' AS IngestRunId,\n    CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, '''))) AS SourceQueryStartDate,\n    CONVERT(date, ''',pipeline().parameters.p_work_date,''') AS SourceQueryEndDate,\n    *\nFROM [',item().DataBaseName,'].', item().SourceTable, ' PP\nWHERE\n    pp.IntakeProgramDate >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, ''')))\n    OR\n    pp.LastUpdateOn >= CONVERT(date, DATEADD(day, -', string(pipeline().parameters.p_lookback_days), ', CONVERT(date, ''', pipeline().parameters.p_work_date, ''')))\n\nEND'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "dbo",
+                                            "table": "SF_PatientPreAdmission"
+                                        },
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                    "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "PatientPreAdmission",
+                                            "table": "br_SF_PatientPreAdmission"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_samms",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{\"SFPatientPreAdmission\":{\"status\":\"',if(equals(activity('fe_each_samms').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms').error,'PPA Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            }
+        ],
+        "parameters": {
+            "p_sites": {
+                "type": "array"
+            },
+            "p_ingest_run_id": {
+                "type": "string"
+            },
+            "p_lookback_days": {
+                "type": "int"
+            },
+            "p_work_date": {
+                "type": "string"
+            },
+            "p_audit_context_json": {
+                "type": "string"
+            }
+        },
+        "lastModifiedByObjectId": "16bd3f28-b8cb-49cb-98f3-566527c19303",
+        "lastPublishTime": "2026-07-25T14:59:07Z"
+    }
+}
+
+Notebook cell 1: (bronze to silver)
+
+from pyspark.sql import SparkSession, functions as F
+import json
+
+spark = SparkSession.builder.getOrCreate()
+
+METHOD_NAME = "SFPatientPreAdmission"
+DEFAULT_BRONZE_TABLE = "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission"
+DEFAULT_SILVER_TABLE = "bhg_silver.pats.SFPatientPreAdmission"
+DEFAULT_INGEST_COLUMN = "IngestRunId"
+DEFAULT_SITE_COLUMN = "SiteCode"
+DEFAULT_DATABASE_COLUMN = "SourceDatabase"
+MATCH_KEYS = ["SiteCode", "ID"]
+BRONZE_METADATA_COLUMNS = {
+    "SourceDatabase",
+    "IngestRunId",
+    "ExtractedAt",
+    "SourceQueryStartDate",
+    "SourceQueryEndDate",
+    "_source_query_date_anchor"
+}
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = None
+
+try:
+    p_bronze_method_results_json
+except NameError:
+    p_bronze_method_results_json = None
+
+
+def parse_json(value, default):
+    if value is None:
+        return default
+    if isinstance(value, (dict, list)):
+        return value
+    text = str(value).strip()
+    if not text:
+        return default
+    try:
+        return json.loads(text)
+    except Exception:
+        return default
+
+
+def bronze_result():
+    parsed = parse_json(p_bronze_method_results_json, {})
+    result = parsed.get(METHOD_NAME) if isinstance(parsed, dict) else {}
+    return result if isinstance(result, dict) else {}
+
+
+def bronze_had_method_failure():
+    result = bronze_result()
+    status = str(result.get("status") or "").upper()
+    failed_stage = str(result.get("failed_stage") or "").upper()
+    return status in ("FAILED", "ERROR") or failed_stage == "BR"
+
+
+def table_exists(table_name):
+    try:
+        return spark.catalog.tableExists(table_name)
+    except Exception:
+        try:
+            spark.table(table_name).limit(1).count()
+            return True
+        except Exception:
+            return False
+
+
+def request_body(task):
+    body = task.get("request_body") or task.get("RequestBody") or "{}"
+    return parse_json(body, {})
+
+
+def method_of(task):
+    return str(task.get("method") or task.get("Method") or "").strip()
+
+
+def layer_tasks(ctx, layer):
+    section = ctx.get(layer) or {}
+    tasks = section.get("tasks") or []
+    if not tasks and section.get("task_config_id"):
+        tasks = [section]
+    return tasks
+
+
+def first_method_task(tasks, method_name):
+    for task in tasks:
+        if method_of(task).lower() == method_name.lower():
+            return task
+    return tasks[0] if tasks else {}
+
+
+def align_to_columns(df, columns):
+    result = df
+    for col_name in columns:
+        if col_name not in result.columns:
+            result = result.withColumn(col_name, F.lit(None))
+    return result.select(*columns)
+
+
+def empty_result(status, message, site_results=None):
+    payload = {
+        METHOD_NAME: {
+            "method": METHOD_NAME,
+            "layer": "SL",
+            "status": status,
+            "failed_stage": "BR" if status != "SUCCESS" else "",
+            "rows_read": 0,
+            "rows_inserted": 0,
+            "rows_updated": 0,
+            "rows_skipped": 0,
+            "message": message,
+            "site_results": site_results or []
+        }
+    }
+    mssparkutils.notebook.exit(json.dumps(payload))
+
+ctx = parse_json(p_audit_context_json, {})
+br_tasks = layer_tasks(ctx, "BR")
+sl_tasks = layer_tasks(ctx, "SL")
+br_task = first_method_task(br_tasks, METHOD_NAME)
+sl_task = first_method_task(sl_tasks, METHOD_NAME)
+
+br_body = request_body(br_task)
+sl_body = request_body(sl_task)
+
+bronze_table = br_body.get("full_table") or DEFAULT_BRONZE_TABLE
+silver_table = sl_body.get("full_table") or DEFAULT_SILVER_TABLE
+ingest_column = br_body.get("ingest_column") or DEFAULT_INGEST_COLUMN
+site_column = br_body.get("site_column") or DEFAULT_SITE_COLUMN
+database_column = br_body.get("database_column") or DEFAULT_DATABASE_COLUMN
+match_keys = sl_body.get("dq_keys") or MATCH_KEYS
+match_keys = [c for c in match_keys if c in MATCH_KEYS] or MATCH_KEYS
+
+if not p_ingest_run_id:
+    raise Exception("p_ingest_run_id is required for PPA Bronze-to-Silver processing")
+
+active_site_tasks = [t for t in br_tasks if method_of(t).lower() == METHOD_NAME.lower()]
+if not active_site_tasks:
+    active_site_tasks = br_tasks
+active_sites = [
+    {
+        "site_code": str(t.get("site_code") or t.get("SiteCode") or ""),
+        "database_name": str(t.get("data_base_name") or t.get("DataBaseName") or "")
+    }
+    for t in active_site_tasks
+    if (t.get("site_code") or t.get("SiteCode"))
+]
+
+bronze_raw_df = spark.table(bronze_table)
+if ingest_column not in bronze_raw_df.columns:
+    raise Exception(f"Bronze ingest column {ingest_column} not found in {bronze_table}")
+
+run_bronze_df = bronze_raw_df.where(F.col(ingest_column) == F.lit(p_ingest_run_id))
+rows_read = run_bronze_df.count()
+
+bronze_site_counts = {}
+if site_column in run_bronze_df.columns:
+    bronze_site_counts = {
+        str(r["site_code"]): int(r["row_count"] or 0)
+        for r in (
+            run_bronze_df
+            .where(F.col(site_column).isNotNull())
+            .groupBy(F.col(site_column).cast("string").alias("site_code"))
+            .count()
+            .withColumnRenamed("count", "row_count")
+            .collect()
+        )
+    }
+
+successful_sites = set(bronze_site_counts.keys())
+bronze_failed = bronze_had_method_failure()
+site_results = []
+for site in active_sites:
+    site_code = site["site_code"]
+    item = {**site, "rows_written": int(bronze_site_counts.get(site_code, 0))}
+    if site_code in successful_sites:
+        site_results.append({**item, "status": "SUCCESS"})
+    elif bronze_failed:
+        site_results.append({
+            **item,
+            "status": "FAILED",
+            "failed_stage": "BR",
+            "error_message": "PPA Bronze copy failed or did not write rows for this site/run."
+        })
+    else:
+        site_results.append({**item, "status": "SUCCESS"})
+
+if rows_read == 0:
+    if bronze_failed:
+        empty_result("SKIPPED", "No successful Bronze rows found for this ingest run; Silver skipped.", site_results)
+    empty_result("SUCCESS", "Bronze completed successfully but returned no PPA rows for this ingest run.", site_results)
+
+metadata_to_drop = [c for c in BRONZE_METADATA_COLUMNS if c in run_bronze_df.columns]
+payload_df = run_bronze_df.drop(*metadata_to_drop)
+payload_df = payload_df.dropDuplicates(match_keys)
+
+for key in match_keys:
+    if key not in payload_df.columns:
+        raise Exception(f"Required merge key {key} not found in PPA Bronze payload")
+
+if table_exists(silver_table):
+    silver_df = spark.table(silver_table)
+    target_columns = silver_df.columns
+    payload_df = align_to_columns(payload_df, target_columns)
+
+    target_keys_df = silver_df.select(*match_keys).dropDuplicates()
+    payload_keys_df = payload_df.select(*match_keys).dropDuplicates()
+
+    update_df = payload_df.join(target_keys_df, match_keys, "inner")
+    insert_df = payload_df.join(target_keys_df, match_keys, "left_anti")
+    remaining_df = silver_df.join(payload_keys_df, match_keys, "left_anti")
+
+    rows_updated = update_df.count()
+    rows_inserted = insert_df.count()
+
+    final_df = remaining_df.unionByName(update_df).unionByName(insert_df)
+else:
+    rows_updated = 0
+    rows_inserted = payload_df.count()
+    final_df = payload_df
+
+(
+    final_df.write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable(silver_table)
+)
+
+failed_sites = [s for s in site_results if s.get("status") != "SUCCESS"]
+status = "FAILED" if failed_sites else "SUCCESS"
+message = None if status == "SUCCESS" else "One or more PPA Bronze sites failed. Silver loaded successful Bronze rows only."
+
+payload = {
+    METHOD_NAME: {
+        "method": METHOD_NAME,
+        "layer": "SL",
+        "status": status,
+        "failed_stage": "BR" if failed_sites else "",
+        "rows_read": int(rows_read),
+        "rows_inserted": int(rows_inserted),
+        "rows_updated": int(rows_updated),
+        "rows_skipped": int(rows_read - rows_inserted - rows_updated) if rows_read >= (rows_inserted + rows_updated) else 0,
+        "message": message,
+        "site_results": site_results
+    }
+}
+
+mssparkutils.notebook.exit(json.dumps(payload))
+

@@ -1000,7 +1000,7 @@ def append_dataquality_for_layer(layer, target_name, reference_layer=None, inges
             new_bigint(offset_base + idx),
             safe_int(task.get("run_id") or layer.get("run_id")),
             safe_int(task.get("config_id") or layer.get("config_id")),
-            safe_int(task.get("task_config_id")),
+            None,
             table_name,
             row_count,
             null_count,

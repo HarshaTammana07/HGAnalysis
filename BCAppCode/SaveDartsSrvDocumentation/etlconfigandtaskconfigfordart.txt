@@ -1,0 +1,836 @@
+ETLConfig:
+
+ConfigId	ConfigName	PipelineName	PipelinePath	TransformationModule	SourceSystem	SourceType	TargetName	EnvironmentName	PipelineDependency	ExecutionSequence	TriggerType	TriggerFrequency	TriggeredBy	IsActive	ConnectionConfig	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy
+25	SAMMS DartsSrv Bronze Pipeline	pl_execute_dartsrv	/pipelines/dartSRV_Pipeline	NULL	SAMMS	DATABASE	BR	DEV	NULL	1	SCHEDULE	DAILY	Fabric	1	{}	2026-06-04 16:10:02.666254	Harsha	2026-07-13 18:48:28.918687	Harsha
+26	SAMMS DartsSrv Silver Pipeline	pl_execute_dartsrv	/notebooks/nb_darts_bronze_to_silver	/notebooks/nb_darts_bronze_to_silver	Lakehouse	TABLE	SL	DEV	DARTS_BRONZE	2	SCHEDULE	DAILY	Fabric	1	{}	2026-06-04 16:10:02.666254	Harsha	2026-07-13 18:48:28.918687	Harsha
+27	SAMMS DartsSrv Gold Pipeline	pl_execute_dartsrv	/pipelines/Execute_DartSrv	Versioned Gold Publish	Warehouse	TABLE	GL	DEV	DARTS_SILVER	3	SCHEDULE	DAILY	Fabric	1	{}	2026-06-04 16:10:02.666254	Harsha	2026-07-13 18:48:28.918687	Harsha
+
+
+
+
+
+Taskconfig:
+
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
+57	27	DartsSrv Gold	NULL	DartsSrv	bhg_silver.pats.tbl_dartsrv	0	NULL	FULL_VERSIONED	0	NULL	15	pats	tbl_dartsrv	/warehouse/bhg_gold/pats/tbl_dartsrv	3	0	43200	{
+  "full_table": "tbl_dartsrv",
+  "source_full_table": "bhg_silver.pats.tbl_dartsrv",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-04 16:10:45.269256	Harsha	2026-08-04 20:38:58.548874	Harsha	NULL	NULL	NULL	NULL
+56	26	DartsSrv Silver	NULL	DartsSrv	bhg_bronze.Dart.br_tblDartSrv	0	NULL	MERGE	1	IngestRunId	15	pats	tbl_dartsrv	/lakehouse/bhg_silver/Tables/pats/tbl_dartsrv	2	0	43200	{
+  "full_table": "bhg_silver.pats.tbl_dartsrv",
+  "source_full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-04 16:10:45.269256	Harsha	2026-08-04 20:38:52.506713	Harsha	NULL	NULL	NULL	NULL
+55001	25	DartsSrv Bronze - AHK	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	AHK	SAMMS-Ahoskie	Ahoskie
+55002	25	DartsSrv Bronze - B12B	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B12B	SAMMS-ColoradoSpringsV5	ColoradoSprings
+55003	25	DartsSrv Bronze - B24	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B24	SAMMS-PaintsvilleV5	Paintsville
+55004	25	DartsSrv Bronze - B25	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B25	SAMMS-PikevilleV5	Pikeville
+55005	25	DartsSrv Bronze - B26	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B26	SAMMS-HazardV5	Hazard
+55006	25	DartsSrv Bronze - B27	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B27	SAMMS-SavannahV6	Savannah
+55007	25	DartsSrv Bronze - B28	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B28	SAMMS-WestPlainesV5	WestPlaines
+55008	25	DartsSrv Bronze - B29	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B29	SAMMS-PoplarBluffV5	PoplarBluff
+55009	25	DartsSrv Bronze - B30	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B30	SAMMS-KCNv5	KCN
+55010	25	DartsSrv Bronze - B31	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B31	SAMMS-DyersburgV5	Dyersburg
+55011	25	DartsSrv Bronze - B33	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B33	SAMMS-Paducah	Paducah
+55012	25	DartsSrv Bronze - B34	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B34	SAMMS-CorbinV5	Corbin
+55013	25	DartsSrv Bronze - B35	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B35	SAMMS-LexingtonV5	Lexington
+55014	25	DartsSrv Bronze - B35A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B35A	SAMMS-BereaV5	Berea
+55015	25	DartsSrv Bronze - B36	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B36	SAMMS-AshevilleV5	Asheville
+55016	25	DartsSrv Bronze - B37	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B37	SAMMS-ClydeV5	Clyde
+55017	25	DartsSrv Bronze - B38	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B38	SAMMS-SpartanburgV5	Spartanburg
+55018	25	DartsSrv Bronze - B39	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B39	SAMMS-AikenV5	Aiken
+55019	25	DartsSrv Bronze - B41	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B41	SAMMS-ChesapeakeV5	Chesapeake
+55020	25	DartsSrv Bronze - B42	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B42	SAMMS-VirginiaBeachV5	VirginiaBeach
+55021	25	DartsSrv Bronze - B42A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B42A	SAMMS-NewportNewsV5	NewportNews
+55022	25	DartsSrv Bronze - B42B	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B42B	SAMMS-FranklinV5	Franklin
+55023	25	DartsSrv Bronze - B42C	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B42C	SAMMS-GlenAllenV5	GlenAllen
+55024	25	DartsSrv Bronze - B42D	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B42D	SAMMS-ChesapeakeSouthV5	ChesapeakeSouth
+55025	25	DartsSrv Bronze - B44	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B44	SAMMS-AlbanyV5	Albany
+55026	25	DartsSrv Bronze - B45	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B45	SAMMS-TiftonV5	Tifton
+55027	25	DartsSrv Bronze - B46	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B46	SAMMS-WashingtonDCv5	WashingtonDC
+55028	25	DartsSrv Bronze - B47	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B47	SAMMS-MobileV5	Mobile
+55029	25	DartsSrv Bronze - B48	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B48	SAMMS-TuscaloosaV5	Tuscaloosa
+55030	25	DartsSrv Bronze - B51	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B51	SAMMS-NorthLittleRockV6	NorthLittleRock
+55031	25	DartsSrv Bronze - B52	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B52	SAMMS-JacksonGAV5	JacksonGA
+55032	25	DartsSrv Bronze - B54	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B54	SAMMS-GadsdenV5	Gadsden
+55033	25	DartsSrv Bronze - B55	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B55	SAMMS-ShoalsV5	Shoals
+55034	25	DartsSrv Bronze - B57	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B57	SAMMS-Pawtucket	Pawtucket
+55035	25	DartsSrv Bronze - B57A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B57A	SAMMS-Johnston	Johnston
+55036	25	DartsSrv Bronze - B57B	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B57B	SAMMS-Middletown	Middletown
+55037	25	DartsSrv Bronze - B57C	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B57C	SAMMS-Providence	Providence
+55038	25	DartsSrv Bronze - B57D	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B57D	SAMMS-Westerly	Westerly
+55039	25	DartsSrv Bronze - B66A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B66A	SAMMS-Bremen	Bremen
+55040	25	DartsSrv Bronze - B72	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B72	SAMMS-Mobile-OBOT	Mobile-OBOT
+55041	25	DartsSrv Bronze - B73	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B73	SAMMS-Montgomery	Montgomery
+55042	25	DartsSrv Bronze - B75	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B75	SAMMS-LawrenceV6	Lawrence
+55043	25	DartsSrv Bronze - B76	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	B76	SAMMS-Huntsville-OBOT	Huntsville-OBOT
+55044	25	DartsSrv Bronze - BAT	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	BAT	SAMMS-Batesville	Batesville
+55045	25	DartsSrv Bronze - BG	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	BG	SAMMS-BowlingGreen	BowlingGreen
+55046	25	DartsSrv Bronze - BOI	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	BOI	SAMMS-Boise	Boise
+55047	25	DartsSrv Bronze - CBCO	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	CBCO	SAMMS-CoeurdAleneV6	CoeurdAlene
+55048	25	DartsSrv Bronze - CON	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	CON	SAMMS-Conway	Conway
+55049	25	DartsSrv Bronze - D07	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	D07	SAMMS-KnoxvilleV6	Knoxville
+55050	25	DartsSrv Bronze - D08	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	D08	SAMMS-MadisonV6	Madison
+55051	25	DartsSrv Bronze - D09	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	D09	SAMMS-MurfreesboroV6	Murfreesboro
+55052	25	DartsSrv Bronze - DA	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DA	SAMMS-Davenport	Davenport
+55053	25	DartsSrv Bronze - DM	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DM	SAMMS-DesMoines	DesMoines
+55054	25	DartsSrv Bronze - DRD-CO	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-CO	SAMMS-ColumbiaV5	Columbia
+55055	25	DartsSrv Bronze - DRD-KC	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-KC	SAMMS-KCv5	KC
+55056	25	DartsSrv Bronze - DRD-KVB	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-KVB	SAMMS-KVBv5	KVB
+55057	25	DartsSrv Bronze - DRD-KVC	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-KVC	SAMMS-KVCv5	KVC
+55058	25	DartsSrv Bronze - DRD-NOLA	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-NOLA	SAMMS-NOLAv5	NOLA
+55059	25	DartsSrv Bronze - DRD-SF	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	DRD-SF	SAMMS-SFv5	SF
+55060	25	DartsSrv Bronze - ELC	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	ELC	SAMMS-ElizabethCity	ElizabethCity
+55061	25	DartsSrv Bronze - ET	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	ET	SAMMS-Elizabethtown	Elizabethtown
+55062	25	DartsSrv Bronze - FAY	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	FAY	SAMMS-Fayetteville	Fayetteville
+55063	25	DartsSrv Bronze - FR	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	FR	SAMMS-Frankfort	Frankfort
+55064	25	DartsSrv Bronze - FS	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	FS	SAMMS-FortSmith	FortSmith
+55065	25	DartsSrv Bronze - FW	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	FW	SAMMS-FortWayne	FortWayne
+55066	25	DartsSrv Bronze - GAL	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	GAL	SAMMS-Gaylord	Gaylord
+55067	25	DartsSrv Bronze - HGT	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	HGT	SAMMS-Hagerstown	Hagerstown
+55068	25	DartsSrv Bronze - HNT	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	HNT	SAMMS-Huntsville	Huntsville
+55069	25	DartsSrv Bronze - HS	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	HS	SAMMS-HotSprings	HotSprings
+55070	25	DartsSrv Bronze - JON	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	JON	SAMMS-Jonesboro	Jonesboro
+55071	25	DartsSrv Bronze - LAN	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	LAN	SAMMS-Lansing	Lansing
+55072	25	DartsSrv Bronze - LO	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	LO	SAMMS-Louisville	Louisville
+55073	25	DartsSrv Bronze - LV1	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	LV1	SAMMS-Cheyenne	Cheyenne
+55074	25	DartsSrv Bronze - LV2	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	LV2	SAMMS-DesertInn	DesertInn
+55075	25	DartsSrv Bronze - LV3	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	LV3	SAMMS-McDaniel	McDaniel
+55076	25	DartsSrv Bronze - MNRE	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	MNRE	SAMMS-Monroe	Monroe
+55077	25	DartsSrv Bronze - MP	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	MP	SAMMS-MtPleasant	MtPleasant
+55078	25	DartsSrv Bronze - MRD	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	MRD	SAMMS-Meridian	Meridian
+55079	25	DartsSrv Bronze - NC	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	NC	SAMMS-NorthCharleston	NorthCharleston
+55080	25	DartsSrv Bronze - NLR	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	NLR	SAMMS-NLROBOT	NLROBOT
+55081	25	DartsSrv Bronze - PH	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	PH	SAMMS-Phoenix	Phoenix
+55082	25	DartsSrv Bronze - RE	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	RE	SAMMS-Reno	Reno
+55083	25	DartsSrv Bronze - RMD	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	RMD	SAMMS-Richmond	Richmond
+55084	25	DartsSrv Bronze - SFN	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	SFN	SAMMS-SFNv5	SFN
+55085	25	DartsSrv Bronze - SHP	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	SHP	SAMMS-Shreveport	Shreveport
+55086	25	DartsSrv Bronze - STN	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	STN	SAMMS-Staunton	Staunton
+55087	25	DartsSrv Bronze - STVN	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	STVN	SAMMS-Stevenson	Stevenson
+55088	25	DartsSrv Bronze - TE	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TE	SAMMS-Tempe	Tempe
+55089	25	DartsSrv Bronze - TEX	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TEX	SAMMS-Texarkana	Texarkana
+55090	25	DartsSrv Bronze - TTCA	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TTCA	SAMMS-BessemerV5	Bessemer
+55091	25	DartsSrv Bronze - TTCB	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TTCB	SAMMS-CullmanV5	Cullman
+55092	25	DartsSrv Bronze - TTCC	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	1	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TTCC	SAMMS-GrandBay	GrandBay
+55093	25	DartsSrv Bronze - TU	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	TU	SAMMS-Tucson	Tucson
+55094	25	DartsSrv Bronze - V1	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V1	SAMMS-VCPHCS-I-MemphisV5	VCPHCS-I-Memphis
+55095	25	DartsSrv Bronze - V10	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V10	SAMMS-BoulderV5	Boulder
+55096	25	DartsSrv Bronze - V10A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V10A	SAMMS-FortCollinsV5	FortCollins
+55097	25	DartsSrv Bronze - V11	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V11	SAMMS-VCPHCS-XI-NorthDenverV5	VCPHCS-XI-NorthDenver
+55098	25	DartsSrv Bronze - V12	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V12	SAMMS-VCPHCS-XII-DowntownDenverV5	VCPHCS-XII-DowntownDenver
+55099	25	DartsSrv Bronze - V12A	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V12A	SAMMS-CentennialV5	Centennial
+55100	25	DartsSrv Bronze - V14	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V14	SAMMS-VCPHCS-XIV-BridgewayV5	VCPHCS-XIV-Bridgeway
+55101	25	DartsSrv Bronze - V15	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V15	SAMMS-JoplinV5	Joplin
+55102	25	DartsSrv Bronze - V17	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V17	SAMMS-ColumbiaTNv5	ColumbiaTN
+55103	25	DartsSrv Bronze - V19	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V19	SAMMS-JacksonV5	Jackson
+55104	25	DartsSrv Bronze - V20	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V20	SAMMS-ParisV5	Paris
+55105	25	DartsSrv Bronze - V21	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V21	SAMMS-RaleighV5	Raleigh
+55106	25	DartsSrv Bronze - V5	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V5	SAMMS-NONTCv5	NONTC
+55107	25	DartsSrv Bronze - V5B	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V5B	SAMMS-HoumaV6	Houma
+55108	25	DartsSrv Bronze - V6	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V6	SAMMS-LCv5	LC
+55109	25	DartsSrv Bronze - V8	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V8	SAMMS-VCPHCS-VIII-MemphisV5	VCPHCS-VIII-Memphis
+55110	25	DartsSrv Bronze - V9	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	V9	SAMMS-NashvilleV5	Nashville
+55111	25	DartsSrv Bronze - VBRA	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	VBRA	SAMMS-BrainerdV6	Brainerd
+55112	25	DartsSrv Bronze - VBRP	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	VBRP	SAMMS-BrooklynParkV6	BrooklynPark
+55113	25	DartsSrv Bronze - VMIN	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	VMIN	SAMMS-MinneapolisV6	Minneapolis
+55114	25	DartsSrv Bronze - VWBY	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	VWBY	SAMMS-WoodburyV6	Woodbury
+55115	25	DartsSrv Bronze - WIL	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-09 14:24:58.917224	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	WIL	SAMMS-Wilson	Wilson
+55	25	DartsSrv Bronze	NULL	DartsSrv	dbo.tblDartsSrv	0	NULL	INCREMENTAL	1	dsDtStart,dsDtAdded,dsUpdate,dsBilled,dsSigDate,dsClt<=0	15	Dart	br_tblDartSrv	/lakehouse/bhg_bronze/Tables/Dart/br_tblDartSrv	1	0	43200	{
+  "full_table": "bhg_bronze.Dart.br_tblDartSrv",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "dsID"]
+}	NULL	0	2026-06-04 16:10:45.269256	Harsha	2026-08-04 20:38:45.222367	Harsha	NULL	NULL	NULL	NULL

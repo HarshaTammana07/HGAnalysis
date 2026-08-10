@@ -1,0 +1,1027 @@
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	MaxLength	NumericPrecision	NumericScale	IsNullable
+BHG_DR	pats	tbl_Bills	SiteCode	1	nvarchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_Bills	RowChkSum	2	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	billID	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Bills	billCLTID	4	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Bills	billGuestID	5	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	billDate	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	billBILL	7	money	NULL	19	4	YES
+BHG_DR	pats	tbl_Bills	billPAY	8	money	NULL	19	4	YES
+BHG_DR	pats	tbl_Bills	billPAYTYPE	9	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	BillAdjust	10	money	NULL	19	4	YES
+BHG_DR	pats	tbl_Bills	billReason	11	varchar	2500	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	billReceiptNum	12	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	strUser	13	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	blnDeposit	14	bit	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_Bills	dtDeposit	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	billADJUSTID	16	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	FIFOallocated	17	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	FIFObalance	18	money	NULL	19	4	YES
+BHG_DR	pats	tbl_Bills	Costcenter	19	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	BillAptID	20	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	billORGdt	21	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	BillServID	22	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	BillSiteID	23	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Bills	LastModAt	24	datetime2	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Bills	RowState	25	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	SiteCode	1	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_pbi3PAYauth	tpaID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_pbi3PAYauth	tpEFFDate	3	date	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_pbi3PAYauth	tpaCLTID	4	int	NULL	10	0	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaPayer	5	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaDESC	6	ntext	1073741823	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaEffDATE	7	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaTermDATE	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaSTAFF	9	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpadt	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaAuthCode	11	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpAUTHPATH	12	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpCONFIRMPath	13	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	TpFail	14	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpRequestForm	15	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpResponseForm	16	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpServ	17	varchar	600	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpTermDate	18	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpUNITS	19	int	NULL	10	0	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpSERVAPPROVED	20	varchar	1500	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpNOTE	21	varchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpTYPE	22	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaCompKey	23	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	tpaBigKey	24	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	ProgGroup	25	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	PayerGroup	26	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	PayerType	27	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	LastModAt	28	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	RowChkSum	29	int	NULL	10	0	YES
+BHG_DR	pats	tbl_pbi3PAYauth	RowState	30	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	Provider	31	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_pbi3PAYauth	ProviderSiteId	32	int	NULL	10	0	YES
+BHG_DR	pats	tbl_vw3pBillSub	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	descript	2	varchar	17	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	billdatecriteria	3	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	payDEFAULTSUBMIT	4	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	ScrubError	5	varchar	1000	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsID	6	int	NULL	10	0	NO
+BHG_DR	pats	tbl_vw3pBillSub	dsClt	7	int	NULL	10	0	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsTxtSrv	8	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsDtStart	9	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsDtEnd	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsTxtType	11	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsdblUnits	12	float	NULL	53	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	billUnits	13	float	NULL	53	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dstxtStaff	14	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	npi	15	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	DSbilled	16	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	pyPAYERID	17	varchar	75	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	pySUBSID	18	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	pyGROUP	19	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	CPTCODE	20	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	charge	21	float	NULL	53	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	tpaAuthCode	22	varchar	100	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	clientname	23	varchar	152	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltDOB	24	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltGender	25	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltADD1	26	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltCity	27	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltState	28	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltzip	29	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltPhone	30	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltMARRY	31	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	cltM4ID	32	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsdiag	33	varchar	15	NULL	NULL	NO
+BHG_DR	pats	tbl_vw3pBillSub	Modifier	34	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsPOS	35	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	NDC	36	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	MG	37	float	NULL	53	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	SiteID	38	int	NULL	10	0	YES
+BHG_DR	pats	tbl_vw3pBillSub	dsarea	39	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	payclass	40	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	LastModAt	41	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	RowState	42	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_vw3pBillSub	RowChkSum	43	int	NULL	10	0	YES
+BHG_DR	pats	tbl_vw3pBillSub	CptMod	44	varchar	101	NULL	NULL	NO
+BHG_DR	pats	tbl_FMP	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_FMP	fmpID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_FMP	fmpLngClt	3	int	NULL	10	0	YES
+BHG_DR	pats	tbl_FMP	fmpDtStart	4	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpDtProjEnd	5	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpDtEnd	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpIntRate	7	int	NULL	10	0	YES
+BHG_DR	pats	tbl_FMP	fmpStrReason	8	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpStrDesc	9	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpDtAdded	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpStrUserAdded	11	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpDtEnded	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmpStrUserEnded	13	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	fmPENDTEXT	14	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	atriskTYPE	15	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	RowState	16	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_FMP	LastModAt	17	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerCltHistory	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_PayerCltHistory	pchID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_PayerCltHistory	pyID	3	int	NULL	10	0	YES
+BHG_DR	pats	tbl_PayerCltHistory	pyChange	4	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerCltHistory	pyDtm	5	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerCltHistory	pyUser	6	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerCltHistory	pyNote	7	varchar	8000	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	Tbl_FinancialHardshipApplication	RowState	2	bit	NULL	NULL	NULL	NO
+BHG_DR	pats	Tbl_FinancialHardshipApplication	RowChkSum	3	int	NULL	10	0	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	LastModAt	4	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	Id	5	int	NULL	10	0	NO
+BHG_DR	pats	Tbl_FinancialHardshipApplication	DataFormId	6	int	NULL	10	0	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	PreAdmissionId	7	int	NULL	10	0	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	cltId	8	int	NULL	10	0	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	CreatedOn	9	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	CreatedBy	10	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	ModifiedOn	11	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	ModifiedBy	12	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	IsDeleted	13	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	IsIdentification	14	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	IsIncome	15	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtIncomeIdentification	16	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	FHAPatientSignature	17	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	FHAPatientSignatureDate	18	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	FHAPatientSignatureBy	19	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAnnualHouseholdIncome	20	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	EmergencyName	21	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	EmergencyRelation	22	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	EmergencyPhone	23	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIGross1	24	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIGross2	25	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIGross3	26	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISocial1	27	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISocial2	28	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISocial3	29	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIAlimony1	30	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIAlimony2	31	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIAlimony3	32	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISelf1	33	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISelf2	34	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUISelf3	35	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIRent1	36	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIRent2	37	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	txtAUIRent3	38	float	NULL	53	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	Version	39	nvarchar	25	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	IscurrentlyUninsured	40	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	StatusofApplication	41	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	Facts	42	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	PayClassApproved	43	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	ApprovedBy	44	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	EffectiveDate	45	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	Tbl_FinancialHardshipApplication	ExpirationDate	46	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_3pElig	RowChkSum	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_3pElig	RowState	3	bit	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_3pElig	LastModAt	4	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_3pElig	eID	5	int	NULL	10	0	NO
+BHG_DR	pats	tbl_3pElig	eCLT	6	int	NULL	10	0	YES
+BHG_DR	pats	tbl_3pElig	ePAYER	7	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eDATE	8	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eStaff	9	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	ePOST	10	varchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eRESPONSE	11	varchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eStatus	12	varchar	200	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eFormat	13	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	Filepath	14	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eELECSTATUS	15	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	EStaffSTATUS	16	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	EStaffNote	17	varchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eSCAN	18	varchar	200	NULL	NULL	YES
+BHG_DR	pats	tbl_3pElig	eORIGID	19	int	NULL	10	0	YES
+BHG_DR	pats	tbl_3pElig	pyeligcheck	20	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ClaimLineItem	tpcliID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClaimLineItem	RowChkSum	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClaimLineItem	LastModAt	4	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_ClaimLineItem	RowState	5	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliTPCID	6	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDtmService	7	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliTxtService	8	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntUnits	9	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDtmAdded	10	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliStrAdded	11	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliAmtCharge	12	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliStrCPT	13	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliStrModifier	14	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliStrNDC	15	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliStrPOS	16	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntDx1	17	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntDx2	18	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntDx3	19	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntDx4	20	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDiagnosis	21	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDSID	22	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliPayerClaimID	23	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliProviderId	24	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliUNITFEE	25	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliVOID	26	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpclivoidDT	27	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpclivoidUSER	28	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDtmServiceTo	29	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliIntMg	30	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItem	tpcliDBnotes	31	varchar	1000	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClaimLineItemActivity	RowChkSum	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClaimLineItemActivity	LastModAt	4	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_ClaimLineItemActivity	RowState	5	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaTPCLIID	6	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaDtm	7	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaStrUser	8	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiPAIDINS	9	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiContADJ	10	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiGENADJ	11	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiCOPay	12	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiDEDUC	13	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiCLIENT	14	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaBitNoteOnly	15	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaStrDesc	16	varchar	1000	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	tprbID	17	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaPending	18	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaamt	19	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liastrtext	20	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaADJREASON	21	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	laiCOINS	22	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaAction1	23	varchar	500	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaAction2	24	varchar	500	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaADJcontract	25	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaADJgeneral	26	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaANSI1	27	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaANSI2	28	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaANSImod1	29	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaANSImod2	30	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	BillID	31	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClaimLineItemActivity	liaDBnotes	32	varchar	1000	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_Claims	tpcID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Claims	RowChkSum	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_Claims	LastModAt	4	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_Claims	RowState	5	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpccltID	6	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Claims	tpcStrStatus	7	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcStrPayer	8	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcDtmAdded	9	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcStrAdded	10	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f10oth	11	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcClaimBatchID	12	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Claims	f11insnumber	13	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f11insplan	14	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f11inssex	15	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f12sig	16	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f12sigdate	17	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f13inssig	18	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f14date	19	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f15firstdate	20	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f16dateunableend	21	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f10auto	22	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcStrPrimary	23	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f10employ	24	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f10local	25	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f11insanother	26	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f11insdob	27	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f11insemploy	28	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f16dateunablestart	29	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f17refername	30	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f17refernpi	31	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f18datehospend	32	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f18datehospstart	33	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f19local	34	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f1id	35	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f20outsidelab	36	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f21diag1	37	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f21diag2	38	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f21diag3	39	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f21diag4	40	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f22medresub	41	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f23priorauth	42	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f25taxid	43	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f26account	44	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f27assign	45	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f28totalcharge	46	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f29amtpaid	47	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f2name	48	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f30balancedue	49	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f31date	50	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f31phys	51	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32a	52	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32b	53	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32line1	54	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32line2	55	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32line3	56	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f32line4	57	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33a	58	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33b	59	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33line1	60	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33line2	61	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33line3	62	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33line4	63	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f33phone	64	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f3dob	65	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f4insname	66	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f5add	67	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f5city	68	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f5phone	69	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f5state	70	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f5zip	71	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f6insrel	72	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f7insadd	73	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f7inscity	74	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f7insphone	75	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f7insstate	76	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f7inszip	77	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f8stat	78	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinsdob	79	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinsemp	80	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinsname	81	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinsnumber	82	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinsplan	83	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f9othinssex	84	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcCreatedDate	85	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcEncounter	86	nchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcREBILLREASON	87	varchar	500	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcStrWeek	88	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcWKSTART	89	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcPayerCIN	90	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcSrvType	91	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	f3sex	92	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcClaimType	93	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Claims	SiteID	94	int	NULL	10	0	YES
+BHG_DR	pats	tbl_Claims	tpcDBnotes	95	varchar	1000	NULL	NULL	YES
+BHG_DR	pats	tbl_Claims	tpcReferring	96	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	PCID	1	bigint	NULL	19	0	NO
+BHG_DR	pats	tbl_PayerClient	RowChkSum	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_PayerClient	SiteCode	3	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_PayerClient	pyID	4	int	NULL	10	0	NO
+BHG_DR	pats	tbl_PayerClient	pyPAYERID	5	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyPAYERTYPE	6	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pySUBSID	7	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyGROUP	8	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyAUTH	9	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pySTART	10	datetime	NULL	NULL	NULL	NO
+BHG_DR	pats	tbl_PayerClient	pyEND	11	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyCLTID	12	int	NULL	10	0	NO
+BHG_DR	pats	tbl_PayerClient	pyACTIVE	13	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyadd	14	varchar	50	NULL	NULL	NO
+BHG_DR	pats	tbl_PayerClient	pycity	15	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyDOB	16	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyfirst	17	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pylast	18	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyPhone	19	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pysame	20	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pystate	21	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyzip	22	varchar	10	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyAddDate	23	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	PyAddUser	24	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyBACK	25	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pybupe	26	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pycoins	27	money	NULL	19	4	YES
+BHG_DR	pats	tbl_PayerClient	pycopay	28	money	NULL	19	4	YES
+BHG_DR	pats	tbl_PayerClient	pyded	29	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pydeduct	30	money	NULL	19	4	YES
+BHG_DR	pats	tbl_PayerClient	pydeductleft	31	money	NULL	19	4	YES
+BHG_DR	pats	tbl_PayerClient	pyEligCheck	32	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyEligUser	33	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyfront	34	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pymmt	35	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyout	36	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyProjectedEnd	37	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	tempSavePayer	38	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyBasicNum	39	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyCategory	40	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyHMOprovider	41	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyLocalOffice	42	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	pyDBnotes	43	varchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	TypeOfAgreementCode	44	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_PayerClient	LastModAt	45	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	SiteCode	1	varchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_tbldiag10	dgID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_tbldiag10	dgCLTID	3	int	NULL	10	0	YES
+BHG_DR	pats	tbl_tbldiag10	dgDIAG	4	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgDESC	5	ntext	1073741823	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgDATE	6	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgSTAFF	7	nvarchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgdt	8	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgPRIMARY	9	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgDIAG10	10	nvarchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgDIAG10Description	11	ntext	1073741823	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgNote	12	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	dgType	13	nvarchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	EnrollmentId	14	int	NULL	10	0	YES
+BHG_DR	pats	tbl_tbldiag10	dgEndDate	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	LastModAt	16	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_tbldiag10	RowState	17	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	PrimKey	1	bigint	NULL	19	0	NO
+BHG_DR	pats	tbl_ClientDemo1	SiteCode	2	nvarchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ClientDemo1	ClientID	3	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClientDemo1	RowChkSum	4	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo1	ClientM4ID	5	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	FirstName	6	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	MiddleName	7	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	LastName	8	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Suffix	9	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	DOB	10	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Gender	11	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	SSN	12	varchar	15	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	email	13	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Size	14	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo1	Address1	15	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Address2	16	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	City	17	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	State	18	varchar	2	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	zip	19	varchar	20	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Phone	20	varchar	25	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	preg	21	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	PregEDC	22	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Marital	23	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	EmpStatus	24	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Employer	25	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	WorkPhone	26	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Income	27	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Education	28	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Hair	29	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Eye	30	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Height	31	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Weight	32	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Race	33	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	Language	34	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	County	35	varchar	75	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	LastModAt	36	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	RowState	37	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo1	isSalesForceSync	38	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo1	SalesForceId	39	nvarchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo1	OptinDiversion	40	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	SiteCode	1	nvarchar	25	NULL	NULL	NO
+BHG_DR	pats	tbl_ClientDemo2	clientID	2	int	NULL	10	0	NO
+BHG_DR	pats	tbl_ClientDemo2	RowChkSum	3	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo2	Counselor	4	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Status	5	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Prog	6	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	DateAdded	7	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Amount	8	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Freq	9	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	DOW1	10	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	DOW2	11	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	NextBill	12	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	LastBill	13	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	NextTP	14	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	PhysTB	15	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Monthly	16	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	BOTTLES	17	smallint	NULL	5	0	YES
+BHG_DR	pats	tbl_ClientDemo2	PICPATH	18	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	REMARKS	19	ntext	1073741823	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	RIN	20	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	ETH	21	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Medicaid	22	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	EnrollDate	23	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	BULK	24	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	STAND	25	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	SPECIAL	26	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	dtLastUA	27	varchar	25	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	AMSID	28	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	NOCENSUS	29	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	CHANGEUSER	30	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	RepOldClient	31	numeric	NULL	18	0	YES
+BHG_DR	pats	tbl_ClientDemo2	UAWeekly	32	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	OptIn	33	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	credit	34	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo2	CONTTXDT	35	date	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	INS	36	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	RISK	37	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Clt3pBack	38	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Clt3pfront	39	varchar	150	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	BiWeeklyUA	40	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	NurseNotes	41	varchar	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	PANEL	42	varchar	100	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	PAYDAY	43	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	FingerPrint1	44	varbinary	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	FingerPrint2	45	varbinary	-1	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Clt911Name	46	varchar	175	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Clt911PH	47	varchar	50	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	Clt911Relation	48	varchar	75	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	HolidayPickup	49	bit	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	ddapid	50	bigint	NULL	19	0	YES
+BHG_DR	pats	tbl_ClientDemo2	ProvClient	51	bigint	NULL	19	0	YES
+BHG_DR	pats	tbl_ClientDemo2	ProvClientID	52	bigint	NULL	19	0	YES
+BHG_DR	pats	tbl_ClientDemo2	BackFee	53	money	NULL	19	4	YES
+BHG_DR	pats	tbl_ClientDemo2	isSalesForceSync	54	int	NULL	10	0	YES
+BHG_DR	pats	tbl_ClientDemo2	SalesForceId	55	nvarchar	250	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	LastModAt	56	datetime	NULL	NULL	NULL	YES
+BHG_DR	pats	tbl_ClientDemo2	RowState	57	int	NULL	10	0	YES
+
+
+
+
+Fabric:
+
+
+SourceSystem	SchemaName	TableName	ColumnName	OrdinalPosition	DataType	MaxLength	NumericPrecision	NumericScale	IsNullable
+BHG_SILVER	pats	tbl_3pelig	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_3pelig	RowChkSum	2	int				YES
+BHG_SILVER	pats	tbl_3pelig	RowState	3	boolean				YES
+BHG_SILVER	pats	tbl_3pelig	LastModAt	4	timestamp				YES
+BHG_SILVER	pats	tbl_3pelig	eID	5	int				YES
+BHG_SILVER	pats	tbl_3pelig	eCLT	6	int				YES
+BHG_SILVER	pats	tbl_3pelig	ePAYER	7	string				YES
+BHG_SILVER	pats	tbl_3pelig	eDATE	8	date				YES
+BHG_SILVER	pats	tbl_3pelig	eStaff	9	string				YES
+BHG_SILVER	pats	tbl_3pelig	ePOST	10	string				YES
+BHG_SILVER	pats	tbl_3pelig	eRESPONSE	11	string				YES
+BHG_SILVER	pats	tbl_3pelig	eStatus	12	string				YES
+BHG_SILVER	pats	tbl_3pelig	eFormat	13	string				YES
+BHG_SILVER	pats	tbl_3pelig	Filepath	14	string				YES
+BHG_SILVER	pats	tbl_3pelig	eELECSTATUS	15	string				YES
+BHG_SILVER	pats	tbl_3pelig	EStaffSTATUS	16	string				YES
+BHG_SILVER	pats	tbl_3pelig	EStaffNote	17	string				YES
+BHG_SILVER	pats	tbl_3pelig	eSCAN	18	string				YES
+BHG_SILVER	pats	tbl_3pelig	eORIGID	19	int				YES
+BHG_SILVER	pats	tbl_3pelig	pyeligcheck	20	date				YES
+BHG_SILVER	pats	tbl_bills	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_bills	RowChkSum	2	int				YES
+BHG_SILVER	pats	tbl_bills	billID	3	int				YES
+BHG_SILVER	pats	tbl_bills	billCLTID	4	int				YES
+BHG_SILVER	pats	tbl_bills	billGuestID	5	int				YES
+BHG_SILVER	pats	tbl_bills	billDate	6	timestamp				YES
+BHG_SILVER	pats	tbl_bills	billBILL	7	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_bills	billPAY	8	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_bills	billPAYTYPE	9	string				YES
+BHG_SILVER	pats	tbl_bills	BillAdjust	10	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_bills	billReason	11	string				YES
+BHG_SILVER	pats	tbl_bills	billReceiptNum	12	int				YES
+BHG_SILVER	pats	tbl_bills	strUser	13	string				YES
+BHG_SILVER	pats	tbl_bills	blnDeposit	14	boolean				YES
+BHG_SILVER	pats	tbl_bills	dtDeposit	15	timestamp				YES
+BHG_SILVER	pats	tbl_bills	billADJUSTID	16	int				YES
+BHG_SILVER	pats	tbl_bills	FIFOallocated	17	boolean				YES
+BHG_SILVER	pats	tbl_bills	FIFObalance	18	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_bills	Costcenter	19	string				YES
+BHG_SILVER	pats	tbl_bills	BillAptID	20	int				YES
+BHG_SILVER	pats	tbl_bills	billORGdt	21	date				YES
+BHG_SILVER	pats	tbl_bills	BillServID	22	int				YES
+BHG_SILVER	pats	tbl_bills	BillSiteID	23	int				YES
+BHG_SILVER	pats	tbl_bills	LastModAt	24	timestamp				YES
+BHG_SILVER	pats	tbl_bills	RowState	25	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitem	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliID	2	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	RowChkSum	3	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	LastModAt	4	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitem	RowState	5	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliTPCID	6	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDtmService	7	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliTxtService	8	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntUnits	9	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDtmAdded	10	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliStrAdded	11	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliAmtCharge	12	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliStrCPT	13	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliStrModifier	14	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliStrNDC	15	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliStrPOS	16	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntDx1	17	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntDx2	18	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntDx3	19	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntDx4	20	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDiagnosis	21	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDSID	22	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliPayerClaimID	23	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliProviderId	24	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliUNITFEE	25	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliVOID	26	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpclivoidDT	27	date				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpclivoidUSER	28	string				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDtmServiceTo	29	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliIntMg	30	int				YES
+BHG_SILVER	pats	tbl_claimlineitem	tpcliDBnotes	31	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaID	2	int				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	RowChkSum	3	int				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	LastModAt	4	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	RowState	5	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaTPCLIID	6	int				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaDtm	7	timestamp				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaStrUser	8	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiPAIDINS	9	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiContADJ	10	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiGENADJ	11	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiCOPay	12	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiDEDUC	13	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiCLIENT	14	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaBitNoteOnly	15	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaStrDesc	16	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	tprbID	17	int				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaPending	18	boolean				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaamt	19	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liastrtext	20	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaADJREASON	21	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	laiCOINS	22	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaAction1	23	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaAction2	24	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaADJcontract	25	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaADJgeneral	26	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaANSI1	27	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaANSI2	28	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaANSImod1	29	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaANSImod2	30	string				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	BillID	31	int				YES
+BHG_SILVER	pats	tbl_claimlineitemactivity	liaDBnotes	32	string				YES
+BHG_SILVER	pats	tbl_claims	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_claims	tpcID	2	int				YES
+BHG_SILVER	pats	tbl_claims	RowChkSum	3	int				YES
+BHG_SILVER	pats	tbl_claims	LastModAt	4	timestamp				YES
+BHG_SILVER	pats	tbl_claims	RowState	5	boolean				YES
+BHG_SILVER	pats	tbl_claims	tpccltID	6	int				YES
+BHG_SILVER	pats	tbl_claims	tpcStrStatus	7	string				YES
+BHG_SILVER	pats	tbl_claims	tpcStrPayer	8	string				YES
+BHG_SILVER	pats	tbl_claims	tpcDtmAdded	9	timestamp				YES
+BHG_SILVER	pats	tbl_claims	tpcStrAdded	10	string				YES
+BHG_SILVER	pats	tbl_claims	f10oth	11	string				YES
+BHG_SILVER	pats	tbl_claims	tpcClaimBatchID	12	int				YES
+BHG_SILVER	pats	tbl_claims	f11insnumber	13	string				YES
+BHG_SILVER	pats	tbl_claims	f11insplan	14	string				YES
+BHG_SILVER	pats	tbl_claims	f11inssex	15	string				YES
+BHG_SILVER	pats	tbl_claims	f12sig	16	string				YES
+BHG_SILVER	pats	tbl_claims	f12sigdate	17	string				YES
+BHG_SILVER	pats	tbl_claims	f13inssig	18	string				YES
+BHG_SILVER	pats	tbl_claims	f14date	19	string				YES
+BHG_SILVER	pats	tbl_claims	f15firstdate	20	string				YES
+BHG_SILVER	pats	tbl_claims	f16dateunableend	21	string				YES
+BHG_SILVER	pats	tbl_claims	f10auto	22	string				YES
+BHG_SILVER	pats	tbl_claims	tpcStrPrimary	23	string				YES
+BHG_SILVER	pats	tbl_claims	f10employ	24	string				YES
+BHG_SILVER	pats	tbl_claims	f10local	25	string				YES
+BHG_SILVER	pats	tbl_claims	f11insanother	26	string				YES
+BHG_SILVER	pats	tbl_claims	f11insdob	27	string				YES
+BHG_SILVER	pats	tbl_claims	f11insemploy	28	string				YES
+BHG_SILVER	pats	tbl_claims	f16dateunablestart	29	string				YES
+BHG_SILVER	pats	tbl_claims	f17refername	30	string				YES
+BHG_SILVER	pats	tbl_claims	f17refernpi	31	string				YES
+BHG_SILVER	pats	tbl_claims	f18datehospend	32	string				YES
+BHG_SILVER	pats	tbl_claims	f18datehospstart	33	string				YES
+BHG_SILVER	pats	tbl_claims	f19local	34	string				YES
+BHG_SILVER	pats	tbl_claims	f1id	35	string				YES
+BHG_SILVER	pats	tbl_claims	f20outsidelab	36	string				YES
+BHG_SILVER	pats	tbl_claims	f21diag1	37	string				YES
+BHG_SILVER	pats	tbl_claims	f21diag2	38	string				YES
+BHG_SILVER	pats	tbl_claims	f21diag3	39	string				YES
+BHG_SILVER	pats	tbl_claims	f21diag4	40	string				YES
+BHG_SILVER	pats	tbl_claims	f22medresub	41	string				YES
+BHG_SILVER	pats	tbl_claims	f23priorauth	42	string				YES
+BHG_SILVER	pats	tbl_claims	f25taxid	43	string				YES
+BHG_SILVER	pats	tbl_claims	f26account	44	string				YES
+BHG_SILVER	pats	tbl_claims	f27assign	45	string				YES
+BHG_SILVER	pats	tbl_claims	f28totalcharge	46	string				YES
+BHG_SILVER	pats	tbl_claims	f29amtpaid	47	string				YES
+BHG_SILVER	pats	tbl_claims	f2name	48	string				YES
+BHG_SILVER	pats	tbl_claims	f30balancedue	49	string				YES
+BHG_SILVER	pats	tbl_claims	f31date	50	string				YES
+BHG_SILVER	pats	tbl_claims	f31phys	51	string				YES
+BHG_SILVER	pats	tbl_claims	f32a	52	string				YES
+BHG_SILVER	pats	tbl_claims	f32b	53	string				YES
+BHG_SILVER	pats	tbl_claims	f32line1	54	string				YES
+BHG_SILVER	pats	tbl_claims	f32line2	55	string				YES
+BHG_SILVER	pats	tbl_claims	f32line3	56	string				YES
+BHG_SILVER	pats	tbl_claims	f32line4	57	string				YES
+BHG_SILVER	pats	tbl_claims	f33a	58	string				YES
+BHG_SILVER	pats	tbl_claims	f33b	59	string				YES
+BHG_SILVER	pats	tbl_claims	f33line1	60	string				YES
+BHG_SILVER	pats	tbl_claims	f33line2	61	string				YES
+BHG_SILVER	pats	tbl_claims	f33line3	62	string				YES
+BHG_SILVER	pats	tbl_claims	f33line4	63	string				YES
+BHG_SILVER	pats	tbl_claims	f33phone	64	string				YES
+BHG_SILVER	pats	tbl_claims	f3dob	65	string				YES
+BHG_SILVER	pats	tbl_claims	f4insname	66	string				YES
+BHG_SILVER	pats	tbl_claims	f5add	67	string				YES
+BHG_SILVER	pats	tbl_claims	f5city	68	string				YES
+BHG_SILVER	pats	tbl_claims	f5phone	69	string				YES
+BHG_SILVER	pats	tbl_claims	f5state	70	string				YES
+BHG_SILVER	pats	tbl_claims	f5zip	71	string				YES
+BHG_SILVER	pats	tbl_claims	f6insrel	72	string				YES
+BHG_SILVER	pats	tbl_claims	f7insadd	73	string				YES
+BHG_SILVER	pats	tbl_claims	f7inscity	74	string				YES
+BHG_SILVER	pats	tbl_claims	f7insphone	75	string				YES
+BHG_SILVER	pats	tbl_claims	f7insstate	76	string				YES
+BHG_SILVER	pats	tbl_claims	f7inszip	77	string				YES
+BHG_SILVER	pats	tbl_claims	f8stat	78	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinsdob	79	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinsemp	80	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinsname	81	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinsnumber	82	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinsplan	83	string				YES
+BHG_SILVER	pats	tbl_claims	f9othinssex	84	string				YES
+BHG_SILVER	pats	tbl_claims	tpcCreatedDate	85	timestamp				YES
+BHG_SILVER	pats	tbl_claims	tpcEncounter	86	string				YES
+BHG_SILVER	pats	tbl_claims	tpcREBILLREASON	87	string				YES
+BHG_SILVER	pats	tbl_claims	tpcStrWeek	88	string				YES
+BHG_SILVER	pats	tbl_claims	tpcWKSTART	89	date				YES
+BHG_SILVER	pats	tbl_claims	tpcPayerCIN	90	string				YES
+BHG_SILVER	pats	tbl_claims	tpcSrvType	91	string				YES
+BHG_SILVER	pats	tbl_claims	f3sex	92	string				YES
+BHG_SILVER	pats	tbl_claims	tpcClaimType	93	int				YES
+BHG_SILVER	pats	tbl_claims	SiteID	94	int				YES
+BHG_SILVER	pats	tbl_claims	tpcDBnotes	95	string				YES
+BHG_SILVER	pats	tbl_claims	tpcReferring	96	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	PrimKey	1	bigint				YES
+BHG_SILVER	pats	tbl_clientdemo1	SiteCode	2	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	ClientID	3	int				YES
+BHG_SILVER	pats	tbl_clientdemo1	RowChkSum	4	int				YES
+BHG_SILVER	pats	tbl_clientdemo1	ClientM4ID	5	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	FirstName	6	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	MiddleName	7	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	LastName	8	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Suffix	9	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	DOB	10	date				YES
+BHG_SILVER	pats	tbl_clientdemo1	Gender	11	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	SSN	12	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	email	13	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Size	14	int				YES
+BHG_SILVER	pats	tbl_clientdemo1	Address1	15	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Address2	16	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	City	17	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	State	18	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	zip	19	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Phone	20	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	preg	21	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo1	PregEDC	22	date				YES
+BHG_SILVER	pats	tbl_clientdemo1	Marital	23	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	EmpStatus	24	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Employer	25	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	WorkPhone	26	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Income	27	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Education	28	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Hair	29	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Eye	30	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Height	31	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Weight	32	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Race	33	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	Language	34	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	County	35	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	LastModAt	36	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo1	RowState	37	int				YES
+BHG_SILVER	pats	tbl_clientdemo1	isSalesForceSync	38	int				YES
+BHG_SILVER	pats	tbl_clientdemo1	SalesForceId	39	string				YES
+BHG_SILVER	pats	tbl_clientdemo1	OptinDiversion	40	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	clientID	2	int				YES
+BHG_SILVER	pats	tbl_clientdemo2	RowChkSum	3	int				YES
+BHG_SILVER	pats	tbl_clientdemo2	Counselor	4	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Status	5	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Prog	6	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	DateAdded	7	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	Amount	8	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Freq	9	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	DOW1	10	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	DOW2	11	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	NextBill	12	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	LastBill	13	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	NextTP	14	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	PhysTB	15	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	Monthly	16	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	BOTTLES	17	int				YES
+BHG_SILVER	pats	tbl_clientdemo2	PICPATH	18	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	REMARKS	19	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	RIN	20	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	ETH	21	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Medicaid	22	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	EnrollDate	23	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	BULK	24	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	STAND	25	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	SPECIAL	26	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	dtLastUA	27	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	AMSID	28	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	NOCENSUS	29	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	CHANGEUSER	30	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	RepOldClient	31	decimal(18,0)		18	0	YES
+BHG_SILVER	pats	tbl_clientdemo2	UAWeekly	32	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	OptIn	33	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	credit	34	int				YES
+BHG_SILVER	pats	tbl_clientdemo2	CONTTXDT	35	date				YES
+BHG_SILVER	pats	tbl_clientdemo2	INS	36	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	RISK	37	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Clt3pBack	38	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Clt3pfront	39	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	BiWeeklyUA	40	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	NurseNotes	41	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	PANEL	42	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	PAYDAY	43	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	FingerPrint1	44	binary				YES
+BHG_SILVER	pats	tbl_clientdemo2	FingerPrint2	45	binary				YES
+BHG_SILVER	pats	tbl_clientdemo2	Clt911Name	46	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Clt911PH	47	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	Clt911Relation	48	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	HolidayPickup	49	boolean				YES
+BHG_SILVER	pats	tbl_clientdemo2	ddapid	50	bigint				YES
+BHG_SILVER	pats	tbl_clientdemo2	ProvClient	51	bigint				YES
+BHG_SILVER	pats	tbl_clientdemo2	ProvClientID	52	bigint				YES
+BHG_SILVER	pats	tbl_clientdemo2	BackFee	53	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_clientdemo2	isSalesForceSync	54	int				YES
+BHG_SILVER	pats	tbl_clientdemo2	SalesForceId	55	string				YES
+BHG_SILVER	pats	tbl_clientdemo2	LastModAt	56	timestamp				YES
+BHG_SILVER	pats	tbl_clientdemo2	RowState	57	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	RowState	2	boolean				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	RowChkSum	3	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	LastModAt	4	timestamp				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	Id	5	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	DataFormId	6	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	PreAdmissionId	7	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	cltId	8	int				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	CreatedOn	9	timestamp				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	CreatedBy	10	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	ModifiedOn	11	timestamp				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	ModifiedBy	12	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	IsDeleted	13	boolean				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	IsIdentification	14	boolean				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	IsIncome	15	boolean				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtIncomeIdentification	16	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	FHAPatientSignature	17	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	FHAPatientSignatureDate	18	timestamp				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	FHAPatientSignatureBy	19	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAnnualHouseholdIncome	20	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	EmergencyName	21	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	EmergencyRelation	22	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	EmergencyPhone	23	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIGross1	24	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIGross2	25	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIGross3	26	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISocial1	27	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISocial2	28	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISocial3	29	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIAlimony1	30	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIAlimony2	31	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIAlimony3	32	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISelf1	33	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISelf2	34	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUISelf3	35	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIRent1	36	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIRent2	37	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	txtAUIRent3	38	double				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	Version	39	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	IscurrentlyUninsured	40	boolean				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	StatusofApplication	41	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	Facts	42	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	PayClassApproved	43	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	ApprovedBy	44	string				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	EffectiveDate	45	timestamp				YES
+BHG_SILVER	pats	tbl_financialhardshipapplication	ExpirationDate	46	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_fmp	fmpID	2	int				YES
+BHG_SILVER	pats	tbl_fmp	fmpLngClt	3	int				YES
+BHG_SILVER	pats	tbl_fmp	fmpDtStart	4	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	fmpDtProjEnd	5	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	fmpDtEnd	6	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	fmpIntRate	7	int				YES
+BHG_SILVER	pats	tbl_fmp	fmpStrReason	8	string				YES
+BHG_SILVER	pats	tbl_fmp	fmpStrDesc	9	string				YES
+BHG_SILVER	pats	tbl_fmp	fmpDtAdded	10	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	fmpStrUserAdded	11	string				YES
+BHG_SILVER	pats	tbl_fmp	fmpDtEnded	12	timestamp				YES
+BHG_SILVER	pats	tbl_fmp	fmpStrUserEnded	13	string				YES
+BHG_SILVER	pats	tbl_fmp	fmPENDTEXT	14	string				YES
+BHG_SILVER	pats	tbl_fmp	atriskTYPE	15	string				YES
+BHG_SILVER	pats	tbl_fmp	RowState	16	boolean				YES
+BHG_SILVER	pats	tbl_fmp	LastModAt	17	timestamp				YES
+BHG_SILVER	pats	tbl_payerclient	PCID	1	bigint				YES
+BHG_SILVER	pats	tbl_payerclient	RowChkSum	2	int				YES
+BHG_SILVER	pats	tbl_payerclient	SiteCode	3	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyID	4	int				YES
+BHG_SILVER	pats	tbl_payerclient	pyPAYERID	5	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyPAYERTYPE	6	string				YES
+BHG_SILVER	pats	tbl_payerclient	pySUBSID	7	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyGROUP	8	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyAUTH	9	string				YES
+BHG_SILVER	pats	tbl_payerclient	pySTART	10	timestamp				YES
+BHG_SILVER	pats	tbl_payerclient	pyEND	11	timestamp				YES
+BHG_SILVER	pats	tbl_payerclient	pyCLTID	12	int				YES
+BHG_SILVER	pats	tbl_payerclient	pyACTIVE	13	boolean				YES
+BHG_SILVER	pats	tbl_payerclient	pyadd	14	string				YES
+BHG_SILVER	pats	tbl_payerclient	pycity	15	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyDOB	16	timestamp				YES
+BHG_SILVER	pats	tbl_payerclient	pyfirst	17	string				YES
+BHG_SILVER	pats	tbl_payerclient	pylast	18	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyPhone	19	string				YES
+BHG_SILVER	pats	tbl_payerclient	pysame	20	boolean				YES
+BHG_SILVER	pats	tbl_payerclient	pystate	21	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyzip	22	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyAddDate	23	date				YES
+BHG_SILVER	pats	tbl_payerclient	PyAddUser	24	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyBACK	25	string				YES
+BHG_SILVER	pats	tbl_payerclient	pybupe	26	string				YES
+BHG_SILVER	pats	tbl_payerclient	pycoins	27	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_payerclient	pycopay	28	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_payerclient	pyded	29	string				YES
+BHG_SILVER	pats	tbl_payerclient	pydeduct	30	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_payerclient	pydeductleft	31	decimal(19,4)		19	4	YES
+BHG_SILVER	pats	tbl_payerclient	pyEligCheck	32	timestamp				YES
+BHG_SILVER	pats	tbl_payerclient	pyEligUser	33	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyfront	34	string				YES
+BHG_SILVER	pats	tbl_payerclient	pymmt	35	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyout	36	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyProjectedEnd	37	date				YES
+BHG_SILVER	pats	tbl_payerclient	tempSavePayer	38	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyBasicNum	39	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyCategory	40	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyHMOprovider	41	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyLocalOffice	42	string				YES
+BHG_SILVER	pats	tbl_payerclient	pyDBnotes	43	string				YES
+BHG_SILVER	pats	tbl_payerclient	TypeOfAgreementCode	44	string				YES
+BHG_SILVER	pats	tbl_payerclient	LastModAt	45	timestamp				YES
+BHG_SILVER	pats	tbl_payerclthistory	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_payerclthistory	pchID	2	int				YES
+BHG_SILVER	pats	tbl_payerclthistory	pyID	3	int				YES
+BHG_SILVER	pats	tbl_payerclthistory	pyChange	4	string				YES
+BHG_SILVER	pats	tbl_payerclthistory	pyDtm	5	timestamp				YES
+BHG_SILVER	pats	tbl_payerclthistory	pyUser	6	string				YES
+BHG_SILVER	pats	tbl_payerclthistory	pyNote	7	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaID	2	int				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpEFFDate	3	date				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaCLTID	4	int				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaPayer	5	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaDESC	6	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaEffDATE	7	timestamp				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaTermDATE	8	timestamp				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaSTAFF	9	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpadt	10	timestamp				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaAuthCode	11	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpAUTHPATH	12	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpCONFIRMPath	13	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	TpFail	14	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpRequestForm	15	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpResponseForm	16	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpServ	17	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpTermDate	18	date				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpUNITS	19	int				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpSERVAPPROVED	20	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpNOTE	21	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpTYPE	22	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaCompKey	23	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	tpaBigKey	24	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	ProgGroup	25	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	PayerGroup	26	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	PayerType	27	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	LastModAt	28	timestamp				YES
+BHG_SILVER	pats	tbl_pbi3payauth	RowChkSum	29	int				YES
+BHG_SILVER	pats	tbl_pbi3payauth	RowState	30	boolean				YES
+BHG_SILVER	pats	tbl_pbi3payauth	Provider	31	string				YES
+BHG_SILVER	pats	tbl_pbi3payauth	ProviderSiteId	32	int				YES
+BHG_SILVER	pats	tbl_tbldiag10	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgID	2	int				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgCLTID	3	int				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgDIAG	4	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgDESC	5	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgDATE	6	timestamp				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgSTAFF	7	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgdt	8	timestamp				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgPRIMARY	9	boolean				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgDIAG10	10	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgDIAG10Description	11	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgNote	12	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgType	13	string				YES
+BHG_SILVER	pats	tbl_tbldiag10	EnrollmentId	14	int				YES
+BHG_SILVER	pats	tbl_tbldiag10	dgEndDate	15	timestamp				YES
+BHG_SILVER	pats	tbl_tbldiag10	LastModAt	16	timestamp				YES
+BHG_SILVER	pats	tbl_tbldiag10	RowState	17	boolean				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	SiteCode	1	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	descript	2	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	billdatecriteria	3	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	payDEFAULTSUBMIT	4	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	ScrubError	5	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsID	6	int				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsClt	7	int				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsTxtSrv	8	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsDtStart	9	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsDtEnd	10	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsTxtType	11	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsdblUnits	12	double				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	billUnits	13	double				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dstxtStaff	14	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	npi	15	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	DSbilled	16	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	pyPAYERID	17	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	pySUBSID	18	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	pyGROUP	19	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	CPTCODE	20	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	charge	21	double				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	tpaAuthCode	22	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	clientname	23	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltDOB	24	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltGender	25	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltADD1	26	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltCity	27	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltState	28	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltzip	29	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltPhone	30	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltMARRY	31	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	cltM4ID	32	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsdiag	33	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	Modifier	34	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsPOS	35	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	NDC	36	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	MG	37	double				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	SiteID	38	int				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	dsarea	39	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	payclass	40	string				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	LastModAt	41	timestamp				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	RowState	42	boolean				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	RowChkSum	43	int				YES
+BHG_SILVER	pats	tbl_vw3pbillsub	CptMod	44	string				YES

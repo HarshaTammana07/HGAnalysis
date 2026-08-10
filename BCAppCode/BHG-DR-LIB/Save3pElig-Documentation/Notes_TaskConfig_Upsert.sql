@@ -52,7 +52,7 @@ claimnote_bronze_request_body = json.dumps({
     "ingest_column": "IngestRunId",
     "site_column": "SiteCode",
     "database_column": "SourceDatabase",
-    "dq_keys": ["SiteCode", "tpcnTPCID"]
+    "dq_keys": ["SiteCode", "tpcn"]
 })
 
 arnote_silver_request_body = json.dumps({
@@ -62,7 +62,7 @@ arnote_silver_request_body = json.dumps({
 
 claimnote_silver_request_body = json.dumps({
     "full_table": "bhg_silver.pats.tbl_3pClaimNote",
-    "dq_keys": ["SiteCode", "tpcnTPCID"]
+    "dq_keys": ["SiteCode", "tpcn"]
 })
 
 # Paste/update content from BCAppCode/Framework/AllsiteCodesAndDatabses.txt here.

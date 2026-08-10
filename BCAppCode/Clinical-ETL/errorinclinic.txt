@@ -1,0 +1,118 @@
+now only these getting failed..
+Error code
+DeltaProtocolConcurrentModification
+Failure type
+User configuration issue
+Details
+ Failure happened on 'destination' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,' 
+Activity ID
+ f1bae88f-c0f3-4f24-a0ca-4e88e369041f 
+Error source
+Pipeline
+pl_src_to_brz_P1/P2_Clinical
+Are you satisfied with your experience?
+
+{
+	"dataRead": 0,
+	"dataWritten": 0,
+	"filesWritten": 0,
+	"sourcePeakConnections": 1,
+	"sinkPeakConnections": 1,
+	"rowsRead": 0,
+	"copyDuration": 32,
+	"throughput": 0,
+	"errors": [
+		{
+			"Code": 27493,
+			"Message": "Failure happened on 'Sink' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,'",
+			"EventType": 0,
+			"Category": 5,
+			"Data": {
+				"FailureInitiator": "Sink"
+			},
+			"MsgId": null,
+			"ExceptionType": null,
+			"Source": null,
+			"StackTrace": null,
+			"InnerEventInfos": []
+		}
+	],
+	"usedParallelCopies": 1,
+	"executionDetails": [
+		{
+			"source": {
+				"type": "SqlSe
+
+
+
+
+
+
+Error code
+DeltaProtocolConcurrentModification
+Failure type
+User configuration issue
+Details
+ Failure happened on 'destination' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,' 
+Activity ID
+ a906c554-44b8-4172-a106-60afc532a7f6 
+Error source
+Pipeline
+pl_src_to_brz_P1/P2_Clinical
+Are you satisfied with your experience?
+
+ {
+	"dataRead": 0,
+	"dataWritten": 0,
+	"filesWritten": 0,
+	"sourcePeakConnections": 1,
+	"sinkPeakConnections": 1,
+	"rowsRead": 0,
+	"copyDuration": 33,
+	"throughput": 0,
+	"errors": [
+		{
+			"Code": 27493,
+			"Message": "Failure happened on 'Sink' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,'",
+			"EventType": 0,
+			"Category": 5,
+			"Data": {
+				"FailureInitiator": "Sink"
+			},
+			"MsgId": null,
+			"ExceptionType": null,
+			"Source"
+Error code
+DeltaProtocolConcurrentModification
+Failure type
+User configuration issue
+Details
+ Failure happened on 'destination' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,' 
+Activity ID
+ 2331900e-ec29-46e0-95a9-65e4246cd0fa 
+Error source
+Pipeline
+
+ {
+	"dataRead": 0,
+	"dataWritten": 0,
+	"filesWritten": 0,
+	"sourcePeakConnections": 1,
+	"sinkPeakConnections": 1,
+	"rowsRead": 0,
+	"copyDuration": 40,
+	"throughput": 0,
+	"errors": [
+		{
+			"Code": 27493,
+			"Message": "Failure happened on 'Sink' side. ErrorCode=DeltaProtocolConcurrentModification,'Type=Microsoft.DataTransfer.Common.Shared.HybridDeliveryException,Message=Hit an error in Lakehouse table creation: conflicting protocol upgrade. This could happen when multiple copy activity runs are creating or replacing a table at the same time. Please retry copy or prepare the table upfront.,Source=Microsoft.DataTransfer.ClientLibrary,'",
+			"EventType": 0,
+			"Category": 5,
+			"Data": {
+				"FailureInitiator": "Sink"
+			},
+			"MsgId": null,
+			"ExceptionType": null,
+			"Source": null,
+			"StackTrace": null,
+			"InnerEve

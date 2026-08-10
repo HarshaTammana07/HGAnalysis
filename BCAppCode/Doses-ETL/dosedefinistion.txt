@@ -8,7 +8,7 @@ Parent:
     "properties": {
         "activities": [
             {
-                "name": "Src_to_Brz",
+                "name": "Src_to_Brz1",
                 "type": "InvokePipeline",
                 "dependsOn": [
                     {
@@ -62,7 +62,7 @@ Parent:
                 "type": "Filter",
                 "dependsOn": [
                     {
-                        "activity": "nb_get_taskconfigs",
+                        "activity": "nb_get_taskconfig",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -70,7 +70,7 @@ Parent:
                 ],
                 "typeProperties": {
                     "items": {
-                        "value": "@json(activity('nb_get_taskconfigs').output.result.exitValue)",
+                        "value": "@json(activity('nb_get_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -144,7 +144,7 @@ Parent:
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "7590b2e2-50bb-4694-9ef9-0d1f4c02b156",
+                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
                     "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
                         "Pipeline_Name": {
@@ -164,7 +164,10 @@ Parent:
                             "type": "string"
                         },
                         "Target_Name": {
-                            "value": "ALL",
+                            "value": {
+                                "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_result_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                "type": "Expression"
+                            },
                             "type": "string"
                         },
                         "Environment_Name": {
@@ -179,12 +182,12 @@ Parent:
                             "type": "string"
                         },
                         "Description": {
-                            "value": "Dose pipeline failed or audit finalization failed. See error details.",
+                            "value": "Dose pipeline failed or completed with partial site failures. See audit details.",
                             "type": "string"
                         },
                         "Error_Msg": {
                             "value": {
-                                "value": "@if(and(not(empty(variables('v_method_results_json'))), not(equals(variables('v_method_results_json'), '{}'))), variables('v_method_results_json'), 'Dose pipeline failed. Check the pipeline run activity grid for details.')",
+                                "value": "@concat('Dose failed details. Bronze: ', variables('v_bronze_method_results_json'), ' Silver: ', variables('v_silver_method_result_json'))",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -198,7 +201,7 @@ Parent:
                         },
                         "Pipeline_EndTime": {
                             "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -207,7 +210,7 @@ Parent:
                 }
             },
             {
-                "name": "nb_get_taskconfigs",
+                "name": "nb_get_taskconfig",
                 "type": "TridentNotebook",
                 "dependsOn": [],
                 "policy": {
@@ -303,7 +306,7 @@ Parent:
                         },
                         "p_taskconfig_json": {
                             "value": {
-                                "value": "@activity('nb_get_taskconfigs').output.result.exitValue",
+                                "value": "@activity('nb_get_taskconfig').output.result.exitValue",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -375,7 +378,7 @@ Parent:
                         },
                         "p_taskconfig_json": {
                             "value": {
-                                "value": "@activity('nb_get_taskconfigs').output.result.exitValue",
+                                "value": "@activity('nb_get_taskconfig').output.result.exitValue",
                                 "type": "Expression"
                             },
                             "type": "string"
@@ -414,7 +417,7 @@ Parent:
                 "type": "SetVariable",
                 "dependsOn": [
                     {
-                        "activity": "Src_to_Brz",
+                        "activity": "Src_to_Brz1",
                         "dependencyConditions": [
                             "Completed"
                         ]
@@ -427,7 +430,7 @@ Parent:
                 "typeProperties": {
                     "variableName": "v_bronze_method_results_json",
                     "value": {
-                        "value": "@coalesce(if(and(and(contains(activity('Src_to_Brz').output,'properties'),contains(activity('Src_to_Brz').output.properties,'returnValue')),contains(activity('Src_to_Brz').output.properties.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.properties.returnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'pipelineReturnValue'),contains(activity('Src_to_Brz').output.pipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.pipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'PipelineReturnValue'),contains(activity('Src_to_Brz').output.PipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.PipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz').output,'returnValue'),contains(activity('Src_to_Brz').output.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz').output.returnValue['v_bronze_method_results_json']),null),'{\"DoseExcuse\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for DoseExcuse\"},\"Dose\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for Dose\"}}')",
+                        "value": "@coalesce(if(and(and(contains(activity('Src_to_Brz1').output,'properties'),contains(activity('Src_to_Brz1').output.properties,'returnValue')),contains(activity('Src_to_Brz1').output.properties.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz1').output.properties.returnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz1').output,'pipelineReturnValue'),contains(activity('Src_to_Brz1').output.pipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz1').output.pipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz1').output,'PipelineReturnValue'),contains(activity('Src_to_Brz1').output.PipelineReturnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz1').output.PipelineReturnValue['v_bronze_method_results_json']),null),if(and(contains(activity('Src_to_Brz1').output,'returnValue'),contains(activity('Src_to_Brz1').output.returnValue,'v_bronze_method_results_json')),string(activity('Src_to_Brz1').output.returnValue['v_bronze_method_results_json']),null),'{\"DoseExcuse\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for DoseExcuse\"},\"Dose\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Child Bronze pipeline did not return method-level result for Dose\"}}')",
                         "type": "Expression"
                     }
                 }
@@ -1274,8 +1277,8 @@ Parent:
                 "type": "String"
             }
         },
-        "lastModifiedByObjectId": "16bd3f28-b8cb-49cb-98f3-566527c19303",
-        "lastPublishTime": "2026-07-21T09:50:07Z"
+        "lastModifiedByObjectId": "bd4b63e3-7995-4ef5-b12f-c542b2777eef",
+        "lastPublishTime": "2026-07-27T10:13:32Z"
     }
 }
 
@@ -1658,12 +1661,13 @@ def project_final_columns(df, columns):
         projected.append(col(actual).alias(c) if actual else lit(None).alias(c))
     return df.select(*projected)
 
-def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+def result_payload(status, rows_read=0, rows_written=None, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
     body = {
         "method": method_name,
         "layer": "SL",
         "status": status,
         "rows_read": int(rows_read or 0),
+        "rows_written": int(rows_written if rows_written is not None else ((rows_inserted or 0) + (rows_updated or 0))),
         "rows_inserted": int(rows_inserted or 0),
         "rows_updated": int(rows_updated or 0),
         "rows_skipped": int(rows_skipped or 0)
@@ -1918,6 +1922,7 @@ src_df.unpersist()
 notebook_exit(result_payload(
     "SUCCESS",
     rows_read=rows_read,
+    rows_written=rows_read,
     rows_inserted=0,
     rows_updated=0,
     rows_skipped=0,
@@ -2034,12 +2039,13 @@ def project_final_columns(df, columns):
         projected.append(col(actual).alias(c) if actual else lit(None).alias(c))
     return df.select(*projected)
 
-def result_payload(status, rows_read=0, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
+def result_payload(status, rows_read=0, rows_written=None, rows_inserted=0, rows_updated=0, rows_skipped=0, message=None, site_results=None):
     body = {
         "method": method_name,
         "layer": "SL",
         "status": status,
         "rows_read": int(rows_read or 0),
+        "rows_written": int(rows_written if rows_written is not None else ((rows_inserted or 0) + (rows_updated or 0))),
         "rows_inserted": int(rows_inserted or 0),
         "rows_updated": int(rows_updated or 0),
         "rows_skipped": int(rows_skipped or 0)
@@ -2314,6 +2320,7 @@ src_df.unpersist()
 notebook_exit(result_payload(
     "SUCCESS",
     rows_read=rows_read,
+    rows_written=rows_read,
     rows_inserted=0,
     rows_updated=0,
     rows_skipped=0,

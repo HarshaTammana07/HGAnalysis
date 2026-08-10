@@ -1,0 +1,1581 @@
+# cell:1
+
+from datetime import datetime
+import json
+import random
+import time
+
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+from pyspark.sql.types import *
+
+try:
+    p_mode
+except NameError:
+    p_mode = "START_LAYER_RUNS"
+
+try:
+    p_config_name_prefix
+except NameError:
+    p_config_name_prefix = "SAMMS P1 Finance"
+
+try:
+    p_pipeline_name
+except NameError:
+    p_pipeline_name = "pl_execute_finance"
+
+try:
+    p_pipeline_path
+except NameError:
+    p_pipeline_path = "/pipelines/pl_execute_finance"
+
+try:
+    p_triggered_by
+except NameError:
+    p_triggered_by = "Fabric"
+
+try:
+    p_error_message
+except NameError:
+    p_error_message = None
+
+try:
+    p_audit_context_json
+except NameError:
+    p_audit_context_json = "{}"
+
+try:
+    p_ingest_run_id
+except NameError:
+    p_ingest_run_id = None
+
+try:
+    p_sites_json
+except NameError:
+    p_sites_json = "[]"
+
+try:
+    p_status
+except NameError:
+    p_status = "SUCCESS"
+
+try:
+    p_failed_target_name
+except NameError:
+    p_failed_target_name = None
+
+try:
+    p_failure_activity
+except NameError:
+    p_failure_activity = None
+
+try:
+    p_method_results_json
+except NameError:
+    p_method_results_json = None
+
+try:
+    p_bronze_method_results_json
+except NameError:
+    p_bronze_method_results_json = None
+
+try:
+    p_silver_method_results_json
+except NameError:
+    p_silver_method_results_json = None
+
+etlconfig_table = "bhg_bronze.meta.etlconfig"
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+pipelinerun_table = "bhg_bronze.meta.pipelinerun"
+taskqueue_table = "bhg_bronze.meta.taskqueue"
+taskaudit_table = "bhg_bronze.meta.taskaudit"
+dataquality_table = "bhg_bronze.meta.dataquality"
+
+gold_workspace_id = "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
+gold_warehouse_id = "d29ef036-8c2c-40b0-a8e0-3279f9a906e7"
+gold_warehouse_prefix = "bhg_gold.pats"
+
+ACTIVE_TARGET_LAYERS = ["BR", "SL"]
+TERMINAL_TARGET_NAME = "SL"
+
+BRONZE_COUNT_CONTEXT_CACHE = {}
+
+def new_bigint(offset=0):
+    return int(datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[:18]) + int(offset)
+
+def safe_int(value, default=0):
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+def row_value(row, name, default=None):
+    data = row.asDict(recursive=True) if hasattr(row, "asDict") else dict(row)
+    if name in data:
+        return data[name]
+    lower_name = str(name).lower()
+    for key, value in data.items():
+        if str(key).lower() == lower_name:
+            return value
+    return default
+
+def parse_context():
+    if not p_audit_context_json:
+        return {}
+    if isinstance(p_audit_context_json, dict):
+        return p_audit_context_json
+    return json.loads(p_audit_context_json)
+
+def parse_request_body(value):
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return value
+    text = str(value).strip()
+    if not text or text.upper() == "NULL":
+        return {}
+    try:
+        parsed = json.loads(text)
+    except Exception as exc:
+        raise Exception(f"Invalid taskconfig RequestBody JSON: {text[:500]}") from exc
+    if parsed is None:
+        return {}
+    if not isinstance(parsed, dict):
+        raise Exception(f"Taskconfig RequestBody must be a JSON object, got: {type(parsed).__name__}")
+    return parsed
+
+def get_context_for_target(ctx, target_name):
+    return ctx.get(target_name) or ctx.get(str(target_name).upper()) or {}
+
+def layer_tasks(layer):
+    if not layer:
+        return []
+    if "tasks" in layer:
+        return layer["tasks"] or []
+    if layer.get("task_id") is not None:
+        return [layer]
+    return []
+
+def method_key(method):
+    return str(method or "").replace(" ", "").lower()
+
+def task_method(task):
+    method = row_value(task, "method") or row_value(task, "Method")
+    if method:
+        return str(method)
+    task_name = row_value(task, "task_name") or row_value(task, "TaskName") or "UNKNOWN_TASK"
+    raise Exception(f"Missing Method in taskconfig/audit context for task: {task_name}")
+
+def task_metadata(task):
+    metadata = row_value(task, "metadata")
+    if isinstance(metadata, dict):
+        return metadata
+    return parse_request_body(
+        row_value(task, "RequestBody")
+        or row_value(task, "request_body")
+    )
+
+def task_target_name(task, default=None):
+    target_name = row_value(task, "target_name") or row_value(task, "TargetName")
+    return str(target_name or default or "").upper()
+
+def task_display_table(task, target_name=None):
+    return (
+        row_value(task, "target_table")
+        or row_value(task, "TargetTable")
+        or task_full_table(task, target_name).split(".")[-1]
+    )
+
+def task_full_table(task, target_name=None):
+    metadata = task_metadata(task)
+    configured_table = row_value(task, "full_table") or metadata.get("full_table")
+    if configured_table:
+        return str(configured_table).strip()
+
+    target = task_target_name(task, target_name)
+    target_table = row_value(task, "target_table") or row_value(task, "TargetTable")
+    target_schema = row_value(task, "target_schema") or row_value(task, "TargetSchema")
+    if not target_table:
+        raise Exception(f"Missing full_table in RequestBody and TargetTable for task {task}")
+
+    if target == "BR":
+        return f"bhg_bronze.{target_schema}.{target_table}" if target_schema else f"bhg_bronze.{target_table}"
+    if target == "SL":
+        return f"bhg_silver.{target_schema}.{target_table}" if target_schema else f"bhg_silver.{target_table}"
+    if target == "GL":
+        return str(target_table)
+    return str(target_table)
+
+def task_ingest_column(task):
+    return row_value(task, "ingest_column") or task_metadata(task).get("ingest_column") or "_ingest_run_id"
+
+def task_site_column(task):
+    return row_value(task, "site_column") or task_metadata(task).get("site_column") or "_site_code"
+
+def task_database_column(task):
+    return row_value(task, "database_column") or task_metadata(task).get("database_column") or "_source_database"
+
+def task_dq_keys(task):
+    keys = row_value(task, "dq_keys") or task_metadata(task).get("dq_keys") or task_metadata(task).get("key_columns") or []
+    if isinstance(keys, str):
+        text = keys.strip()
+        if text.startswith("["):
+            keys = json.loads(text)
+        elif text:
+            keys = [item.strip() for item in text.split(",") if item.strip()]
+        else:
+            keys = []
+    return [str(key) for key in keys]
+
+def filter_layer_by_method(layer, method_name):
+    """Return a copy of layer containing only tasks matching method_name (case-insensitive)."""
+    mk = method_key(method_name)
+    tasks = [t for t in layer_tasks(layer) if method_key(task_method(t)) == mk]
+    if not tasks:
+        return None
+    result = dict(layer)
+    result["tasks"] = tasks
+    return result
+
+def resolve_method_outcome(method_results, method_name):
+    """Look up a method's outcome from method_results dict, case-insensitive key match."""
+    mk = method_key(method_name)
+    for k, v in method_results.items():
+        if method_key(k) == mk:
+            return v
+    return {"status": "FAILED", "failed_stage": "BR", "error_message": None}
+
+def is_success_status(status):
+    return str(status or "").upper() in ("SUCCESS", "SUCCEEDED")
+
+def is_skipped_status(status):
+    return str(status or "").upper() == "SKIPPED"
+
+def parse_method_results_json(value):
+    if not value:
+        return {}
+    if isinstance(value, dict):
+        return value
+    try:
+        parsed = json.loads(str(value))
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+def method_result_from(results, method_name, default_status="SUCCESS"):
+    mk = method_key(method_name)
+    for key, value in results.items():
+        if method_key(key) == mk and isinstance(value, dict):
+            return value
+    global_result = results.get("P1Reference")
+    if isinstance(global_result, dict):
+        return global_result
+    return {"status": default_status, "failed_stage": "", "error_message": None}
+
+def result_error_message(result):
+    return (
+        result.get("error_message")
+        or result.get("message")
+        or result.get("error")
+    )
+
+def result_count_value(value, default=0):
+    if value is None:
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        try:
+            return int(float(value))
+        except Exception:
+            return int(default)
+
+def silver_audit_counts_from_results(method_name, silver_results):
+    result = method_result_from(silver_results, method_name, default_status="")
+    if not isinstance(result, dict):
+        return None
+
+    has_count_payload = any(
+        key in result
+        for key in ("rows_read", "rows_written", "rows_inserted", "rows_updated")
+    )
+    if not has_count_payload:
+        return None
+
+    rows_read = result_count_value(result.get("rows_read"), 0)
+    if "rows_written" in result:
+        rows_written = result_count_value(result.get("rows_written"), 0)
+    else:
+        rows_written = (
+            result_count_value(result.get("rows_inserted"), 0)
+            + result_count_value(result.get("rows_updated"), 0)
+        )
+    return rows_read, rows_written
+
+def result_site_results(result):
+    if not isinstance(result, dict):
+        return []
+    value = result.get("site_results")
+    if not value:
+        return []
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except Exception:
+            return []
+    return value if isinstance(value, list) else []
+
+def combined_site_results(br_result, sl_result, sl_status):
+    site_results = result_site_results(sl_result) or result_site_results(br_result)
+    if not site_results:
+        return None
+
+    if not is_success_status(sl_status) and not is_skipped_status(sl_status):
+        silver_error = result_error_message(sl_result) or "Silver task failed"
+        adjusted = []
+        for item in site_results:
+            row = dict(item) if isinstance(item, dict) else {}
+            if is_success_status(row.get("status")):
+                row["status"] = "FAILED"
+                row["failed_stage"] = "SL"
+                row["error_message"] = silver_error
+            adjusted.append(row)
+        return adjusted
+
+    return site_results
+
+def resolve_existing_column(df, configured_name, fallback_names=()):
+    by_lower = {str(col).lower(): col for col in df.columns}
+    candidates = []
+    if configured_name:
+        candidates.append(configured_name)
+    candidates.extend(fallback_names or [])
+
+    for candidate in candidates:
+        found = by_lower.get(str(candidate).lower())
+        if found:
+            return found
+    return None
+
+def bronze_row_success_markers(br_layer, method_name):
+    if not p_ingest_run_id:
+        return set()
+    method_layer = filter_layer_by_method(br_layer, method_name)
+    if not method_layer:
+        return set()
+
+    markers = set()
+    table_specs = {}
+    for task in layer_tasks(method_layer):
+        table_specs[(
+            task_full_table(task, "BR"),
+            task_ingest_column(task),
+            task_site_column(task),
+            task_database_column(task)
+        )] = True
+
+    for table_name, ingest_col, site_col, database_col in table_specs:
+        try:
+            bronze_df = spark.table(table_name)
+            actual_ingest_col = resolve_existing_column(
+                bronze_df,
+                ingest_col,
+                ("IngestRunId", "_ingest_run_id")
+            )
+            actual_site_col = resolve_existing_column(
+                bronze_df,
+                site_col,
+                ("SiteCode", "_site_code")
+            )
+            actual_database_col = resolve_existing_column(
+                bronze_df,
+                database_col,
+                ("SourceDatabase", "_source_database")
+            )
+
+            if actual_ingest_col:
+                bronze_df = bronze_df.where(F.col(actual_ingest_col) == F.lit(p_ingest_run_id))
+            if not actual_site_col:
+                continue
+
+            select_exprs = [F.col(actual_site_col).cast("string").alias("SiteCode")]
+            if actual_database_col:
+                select_exprs.append(F.col(actual_database_col).cast("string").alias("SourceDatabase"))
+            else:
+                select_exprs.append(F.lit(None).cast("string").alias("SourceDatabase"))
+
+            for row in (
+                bronze_df
+                .select(*select_exprs)
+                .where(F.col("SiteCode").isNotNull())
+                .distinct()
+                .collect()
+            ):
+                site_code = normalized_text(row["SiteCode"])
+                source_database = normalized_text(row["SourceDatabase"])
+                if site_code:
+                    markers.add((site_code, source_database))
+                    markers.add((site_code, None))
+        except Exception:
+            continue
+
+    return markers
+
+def site_results_from_bronze_rows(br_layer, method_name, br_result):
+    method_layer = filter_layer_by_method(br_layer, method_name)
+    if not method_layer:
+        return None
+
+    markers = bronze_row_success_markers(br_layer, method_name)
+
+    br_status = str(br_result.get("status", "")).upper() if isinstance(br_result, dict) else ""
+    bronze_had_failure = br_status in {"FAILED", "ERROR"}
+    results = []
+
+    for task in layer_tasks(method_layer):
+        site_code = normalized_text(task.get("site_code") or row_value(task, "SiteCode"))
+        database_name = normalized_text(task.get("data_base_name") or row_value(task, "DataBaseName"))
+        if not site_code:
+            continue
+
+        item = {
+            "site_code": site_code,
+            "database_name": database_name,
+        }
+        if (site_code, database_name) in markers or (site_code, None) in markers:
+            item["status"] = "SUCCESS"
+        elif bronze_had_failure:
+            item.update({
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": result_error_message(br_result) or f"{method_name} Bronze site failed or wrote no rows for this ingest run."
+            })
+        else:
+            item["status"] = "SUCCESS"
+        results.append(item)
+
+    return results or None
+
+def normalized_layer_status(status):
+    if is_success_status(status):
+        return "SUCCESS"
+    if is_skipped_status(status):
+        return "SKIPPED"
+    return "FAILED"
+
+def build_terminal_method_results(br_layer, sl_layer, bronze_json, silver_json):
+    bronze_results = parse_method_results_json(bronze_json)
+    silver_results = parse_method_results_json(silver_json)
+    methods = sorted({
+        task_method(task)
+        for task in (layer_tasks(br_layer) + layer_tasks(sl_layer))
+    }, key=method_key)
+
+    combined = {}
+    for method in methods:
+        br_result = method_result_from(bronze_results, method, default_status="SUCCESS")
+        sl_result = method_result_from(silver_results, method, default_status="SUCCESS")
+        br_status = br_result.get("status")
+        sl_status = sl_result.get("status")
+        site_results = (
+            combined_site_results(br_result, sl_result, sl_status)
+            or site_results_from_bronze_rows(br_layer, method, br_result)
+        )
+        layer_statuses = {
+            "BR": normalized_layer_status(br_status),
+            "SL": normalized_layer_status(sl_status),
+        }
+
+        if not is_success_status(br_status):
+            combined[method] = {
+                "status": "FAILED",
+                "failed_stage": "BR",
+                "error_message": result_error_message(br_result),
+                "layer_statuses": layer_statuses,
+            }
+        elif is_success_status(sl_status):
+            combined[method] = {
+                "status": "SUCCESS",
+                "failed_stage": "",
+                "error_message": None,
+                "layer_statuses": layer_statuses,
+            }
+        else:
+            combined[method] = {
+                "status": "FAILED",
+                "failed_stage": "SL",
+                "error_message": result_error_message(sl_result)
+                or ("Silver task was skipped" if is_skipped_status(sl_status) else "Silver task failed"),
+                "layer_statuses": layer_statuses,
+            }
+        if site_results is not None:
+            combined[method]["site_results"] = site_results
+
+    return combined
+
+def method_layer_status(outcome, target_name):
+    """Given a method's end-to-end outcome dict, return its status at a configured layer."""
+    m_status = str(outcome.get("status", "FAILED")).upper()
+    if is_success_status(m_status):
+        return "SUCCESS"
+    layer_order = ACTIVE_TARGET_LAYERS
+    failed_stage = str(outcome.get("failed_stage") or "BR").upper()
+    if failed_stage == "GL" and "GL" not in layer_order:
+        failed_stage = TERMINAL_TARGET_NAME
+    failed_idx = layer_order.index(failed_stage) if failed_stage in layer_order else 0
+    target_idx = layer_order.index(target_name) if target_name in layer_order else 0
+    if target_idx < failed_idx:
+        return "SUCCESS"
+    elif target_idx == failed_idx:
+        return "FAILED"
+    else:
+        return "SKIPPED"
+
+def normalized_text(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+def task_site_result(outcome, task):
+    site_results = result_site_results(outcome)
+    if not site_results:
+        return None
+
+    task_site = normalized_text(task.get("site_code") or row_value(task, "SiteCode"))
+    task_db = normalized_text(task.get("data_base_name") or row_value(task, "DataBaseName"))
+    if not task_site:
+        return None
+
+    site_only_match = None
+    for item in site_results:
+        if not isinstance(item, dict):
+            continue
+        item_site = normalized_text(item.get("site_code") or item.get("SiteCode"))
+        item_db = normalized_text(item.get("database_name") or item.get("DataBaseName") or item.get("source_database"))
+        if item_site != task_site:
+            continue
+        if task_db and item_db == task_db:
+            return item
+        if site_only_match is None:
+            site_only_match = item
+    return site_only_match
+
+def layer_status_from_failed_stage(site_status, failed_stage, target_name):
+    target = str(target_name).upper()
+    stage = str(failed_stage or "BR").upper()
+    if stage == "GL" and "GL" not in ACTIVE_TARGET_LAYERS:
+        stage = TERMINAL_TARGET_NAME
+    target_idx = ACTIVE_TARGET_LAYERS.index(target) if target in ACTIVE_TARGET_LAYERS else 0
+    failed_idx = ACTIVE_TARGET_LAYERS.index(stage) if stage in ACTIVE_TARGET_LAYERS else 0
+
+    if is_success_status(site_status):
+        return "SUCCESS"
+    if is_skipped_status(site_status):
+        return "SKIPPED"
+    if target_idx < failed_idx:
+        return "SUCCESS"
+    if target_idx == failed_idx:
+        return "FAILED"
+    return "SKIPPED"
+
+def task_layer_status(outcome, target_name, task):
+    site_result = task_site_result(outcome, task)
+    if site_result:
+        return layer_status_from_failed_stage(
+            site_result.get("status", "FAILED"),
+            site_result.get("failed_stage") or outcome.get("failed_stage") or "BR",
+            target_name
+        )
+    layer_statuses = outcome.get("layer_statuses")
+    if isinstance(layer_statuses, dict):
+        layer_status = layer_statuses.get(str(target_name).upper())
+        if layer_status:
+            return normalized_layer_status(layer_status)
+    return method_layer_status(outcome, target_name)
+
+def task_layer_error(outcome, target_name, task, failure_message):
+    status = task_layer_status(outcome, target_name, task)
+    site_result = task_site_result(outcome, task)
+    if status == "FAILED":
+        if site_result:
+            return str(result_error_message(site_result) or result_error_message(outcome) or failure_message)
+        return str(outcome.get("error_message") or failure_message)
+    if status == "SKIPPED":
+        stage = "BR"
+        if site_result:
+            stage = site_result.get("failed_stage") or outcome.get("failed_stage") or "BR"
+        else:
+            stage = outcome.get("failed_stage", "BR")
+        return f"Skipped: {task_method(task)} failed at {stage}"
+    return None
+
+def normalize_gold_table_name(table_name):
+    name = str(table_name).strip()
+    prefix = f"{gold_warehouse_prefix}."
+    if name.lower().startswith(prefix.lower()):
+        return name[len(prefix):]
+    if name.lower().startswith("bhg_gold."):
+        return name.split(".")[-1]
+    if "." in name and name.split(".")[-2].lower() == "pats":
+        return name.split(".")[-1]
+    return name
+
+def read_task_table_df(task, target_name):
+    table_name = task_full_table(task, target_name)
+    if str(target_name).upper() == "GL":
+        return read_gold_df(table_name)
+    return spark.table(table_name)
+
+def layer_task_for_method(layer, method):
+    for task in layer_tasks(layer):
+        if method_key(task_method(task)) == method_key(method):
+            return task
+    return None
+
+def table_schema(table_name):
+    return spark.table(table_name).schema
+
+def align_to_table(table_name, df):
+    target_schema = table_schema(table_name)
+    cols = []
+    for field in target_schema:
+        if field.name in df.columns:
+            if field.name.lower() == "pipelinerunid":
+                cols.append(
+                    F.coalesce(F.col(field.name), F.lit(p_ingest_run_id))
+                    .cast(field.dataType)
+                    .alias(field.name)
+                )
+            else:
+                cols.append(F.col(field.name).cast(field.dataType).alias(field.name))
+        elif field.name.lower() == "pipelinerunid":
+            cols.append(F.lit(p_ingest_run_id).cast(field.dataType).alias(field.name))
+        else:
+            cols.append(F.lit(None).cast(field.dataType).alias(field.name))
+    return df.select(*cols)
+
+def is_delta_concurrency_error(exc):
+    msg = str(exc)
+    retry_tokens = [
+        "ConcurrentAppendException",
+        "ConcurrentWriteException",
+        "ConcurrentDeleteReadException",
+        "DELTA_CONCURRENT_APPEND",
+        "DELTA_CONCURRENT"
+    ]
+    return any(token in msg for token in retry_tokens)
+
+def with_delta_retry(action, label, max_attempts=6, base_sleep_seconds=2):
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return action()
+        except Exception as exc:
+            last_error = exc
+            if attempt >= max_attempts or not is_delta_concurrency_error(exc):
+                raise
+            sleep_seconds = base_sleep_seconds * (2 ** (attempt - 1)) + random.uniform(0, 1.5)
+            print(f"{label}: concurrent Delta write detected; retrying in {sleep_seconds:.1f}s")
+            time.sleep(sleep_seconds)
+    raise last_error
+
+def delta_upsert(table_name, df, keys):
+    df = align_to_table(table_name, df)
+    condition = " AND ".join([f"t.{k} = s.{k}" for k in keys])
+    updates = {c: f"s.{c}" for c in df.columns if c not in keys}
+    inserts = {c: f"s.{c}" for c in df.columns}
+
+    def action():
+        return (
+            DeltaTable.forName(spark, table_name).alias("t")
+            .merge(df.alias("s"), condition)
+            .whenMatchedUpdate(set=updates)
+            .whenNotMatchedInsert(values=inserts)
+            .execute()
+        )
+
+    return with_delta_retry(action, f"MERGE {table_name}")
+
+def insert_append(table_name, df):
+    aligned_df = align_to_table(table_name, df)
+
+    def action():
+        return aligned_df.write.mode("append").format("delta").saveAsTable(table_name)
+
+    return with_delta_retry(action, f"APPEND {table_name}")
+
+def exit_json(payload):
+    result = json.dumps(payload)
+    print(result)
+    try:
+        mssparkutils.notebook.exit(result)
+    except NameError:
+        pass
+
+def read_gold_df(table_name):
+    from com.microsoft.spark.fabric.Constants import Constants
+    gold_table_name = normalize_gold_table_name(table_name)
+    return (
+        spark.read
+        .option(Constants.WorkspaceId, gold_workspace_id)
+        .option(Constants.DatawarehouseId, gold_warehouse_id)
+        .synapsesql(f"{gold_warehouse_prefix}.{gold_table_name}")
+    )
+
+def dq_counts_for_df(df, key_cols):
+    row_count = df.count()
+    null_cond = None
+    for c in key_cols:
+        cond = F.col(c).isNull()
+        null_cond = cond if null_cond is None else (null_cond | cond)
+    null_count = df.where(null_cond).count() if null_cond is not None else 0
+    duplicate_count = (
+        df.groupBy(*key_cols)
+        .count()
+        .where(F.col("count") > 1)
+        .count()
+    )
+    return int(row_count), int(null_count), int(duplicate_count)
+
+def resolve_df_key_cols(df, key_cols, label):
+    available = {c.lower(): c for c in df.columns}
+    resolved = []
+    missing = []
+    for key in key_cols:
+        actual = available.get(str(key).lower())
+        if actual:
+            resolved.append(actual)
+        else:
+            missing.append(str(key))
+    if missing:
+        raise Exception(f"DQ keys {missing} are not present in {label}. Available columns: {df.columns}")
+    return resolved
+
+def lookup_value(value):
+    return None if value is None else str(value)
+
+def bronze_count_group_key(task):
+    return (
+        method_key(task_method(task)),
+        task_full_table(task, "BR"),
+        task_ingest_column(task),
+        task_site_column(task),
+        task_database_column(task)
+    )
+
+def empty_bronze_count_context():
+    return {
+        "task_counts": {},
+        "method_totals": {}
+    }
+
+def bronze_count_cache_key(br_layer, ingest_run_id):
+    task_ids = tuple(sorted([
+        safe_int(task.get("task_config_id"))
+        for task in layer_tasks(br_layer)
+        if task.get("task_config_id") is not None
+    ]))
+    return (safe_int(row_value(br_layer, "run_id")), str(ingest_run_id), task_ids)
+
+def build_bronze_count_context(br_layer, ingest_run_id):
+    context = empty_bronze_count_context()
+    grouped_tasks = {}
+    for task in layer_tasks(br_layer):
+        grouped_tasks.setdefault(bronze_count_group_key(task), []).append(task)
+
+    for group_key in grouped_tasks:
+        method, table_name, ingest_col, site_col, database_col = group_key
+        df = spark.table(table_name).where(F.col(ingest_col) == F.lit(ingest_run_id))
+        available_cols = set(df.columns)
+        group_cols = []
+        if site_col in available_cols:
+            group_cols.append(site_col)
+        if database_col in available_cols and database_col != site_col:
+            group_cols.append(database_col)
+
+        if group_cols:
+            grouped_rows = df.groupBy(*group_cols).count().collect()
+            for row in grouped_rows:
+                site_value = lookup_value(row[site_col]) if site_col in group_cols else None
+                database_value = lookup_value(row[database_col]) if database_col in group_cols else None
+                row_count = int(row["count"] or 0)
+                context["task_counts"][(group_key, site_value, database_value)] = row_count
+                context["method_totals"][method] = context["method_totals"].get(method, 0) + row_count
+        else:
+            row_count = int(df.count())
+            context["task_counts"][(group_key, None, None)] = row_count
+            context["method_totals"][method] = context["method_totals"].get(method, 0) + row_count
+
+    return context
+
+def get_bronze_count_context(br_layer, ingest_run_id, status=None):
+    if status == "SKIPPED":
+        return empty_bronze_count_context()
+    cache_key = bronze_count_cache_key(br_layer, ingest_run_id)
+    if cache_key not in BRONZE_COUNT_CONTEXT_CACHE:
+        BRONZE_COUNT_CONTEXT_CACHE[cache_key] = build_bronze_count_context(br_layer, ingest_run_id)
+    return BRONZE_COUNT_CONTEXT_CACHE[cache_key]
+
+def bronze_count_for_task_from_context(task, bronze_counts):
+    group_key = bronze_count_group_key(task)
+    site_code = lookup_value(row_value(task, "site_code") or row_value(task, "SiteCode"))
+    data_base_name = lookup_value(row_value(task, "data_base_name") or row_value(task, "DataBaseName"))
+    task_counts = bronze_counts.get("task_counts", {})
+    fallback_keys = [
+        (group_key, site_code, data_base_name),
+        (group_key, site_code, None),
+        (group_key, None, data_base_name),
+        (group_key, None, None)
+    ]
+    for key in fallback_keys:
+        if key in task_counts:
+            return int(task_counts[key])
+    return 0
+
+def bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts=None):
+    context = bronze_counts or get_bronze_count_context(br_layer, ingest_run_id)
+    return int(context.get("method_totals", {}).get(method_key(method), 0))
+
+def taskaudit_schema():
+    return StructType([
+        StructField("AuditId", LongType()),
+        StructField("TaskId", LongType()),
+        StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()),
+        StructField("TaskConfigId", LongType()),
+        StructField("TaskName", StringType()),
+        StructField("TableName", StringType()),
+        StructField("StepName", StringType()),
+        StructField("Status", StringType()),
+        StructField("LogLevel", StringType()),
+        StructField("RowsRead", LongType()),
+        StructField("RowsWritten", LongType()),
+        StructField("RowsFailed", LongType()),
+        StructField("ErrorMessage", StringType()),
+        StructField("SiteCode", StringType()),
+        StructField("DataBaseName", StringType()),
+        StructField("SiteName", StringType()),
+        StructField("StartTime", TimestampType()),
+        StructField("EndTime", TimestampType()),
+        StructField("DurationSeconds", LongType())
+    ])
+
+def append_taskaudit_rows(rows):
+    if not rows:
+        return
+    audit_df = (
+        spark.createDataFrame(rows, taskaudit_schema())
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("CreatedAt", F.current_timestamp())
+    )
+    audit_df = audit_df.withColumn(
+        "DurationSeconds",
+        F.unix_timestamp("EndTime") - F.unix_timestamp("StartTime")
+    )
+    insert_append(taskaudit_table, audit_df)
+
+def update_pipelinerun(run_id, status, success_tasks, failed_tasks, skipped_tasks):
+    pr_df = spark.sql(f"SELECT * FROM {pipelinerun_table} WHERE RunId = {int(run_id)}").limit(1)
+    if pr_df.count() == 0:
+        raise Exception(f"No pipelinerun row found for RunId={run_id}")
+
+    pr_update_df = (
+        pr_df
+        .withColumn("Status", F.lit(status))
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("SuccessTasks", F.lit(int(success_tasks)))
+        .withColumn("FailedTasks", F.lit(int(failed_tasks)))
+        .withColumn("SkippedTasks", F.lit(int(skipped_tasks)))
+    )
+    delta_upsert(pipelinerun_table, pr_update_df, ["RunId"])
+
+def update_taskqueue_for_tasks(task_ids, status, error_message=None):
+    if not task_ids:
+        return
+    ids = ",".join([str(int(x)) for x in task_ids])
+    tq_df = spark.sql(f"SELECT * FROM {taskqueue_table} WHERE TaskId IN ({ids})")
+    if tq_df.count() == 0:
+        raise Exception(f"No taskqueue rows found for TaskIds {ids}")
+
+    tq_update_df = (
+        tq_df
+        .withColumn("Status", F.lit(status))
+        .withColumn("EndTime", F.current_timestamp())
+        .withColumn("ErrorMessage", F.lit(error_message).cast("string"))
+    )
+    delta_upsert(taskqueue_table, tq_update_df, ["TaskId"])
+
+def finish_bronze_tasks(br_layer, ingest_run_id, status, log_level, error_message=None, audit_offset_base=100, bronze_counts=None, skip_run_update=False):
+    tasks = layer_tasks(br_layer)
+    if not tasks:
+        raise Exception("No BR tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    update_taskqueue_for_tasks(task_ids, status, error_message)
+
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+    if bronze_counts is None:
+        bronze_counts = get_bronze_count_context(br_layer, ingest_run_id, status)
+
+    rows = []
+    total_rows = 0
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        rows_copied = bronze_count_for_task_from_context(task, bronze_counts) if status != "SKIPPED" else 0
+        total_rows += rows_copied
+        rows_failed = 1 if status == "FAILED" else 0
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or br_layer.get("run_id")),
+            safe_int(task.get("config_id") or br_layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or br_layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            rows_copied,
+            rows_copied if status != "SKIPPED" else 0,
+            rows_failed,
+            error_message,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    append_taskaudit_rows(rows)
+    if not skip_run_update:
+        update_pipelinerun(
+            safe_int(br_layer["run_id"]),
+            status,
+            len(task_ids) if status == "SUCCESS" else 0,
+            len(task_ids) if status == "FAILED" else 0,
+            len(task_ids) if status == "SKIPPED" else 0
+        )
+    return total_rows
+
+def finish_layer_tasks(layer, target_name, ingest_run_id, status, log_level, error_message=None, audit_offset_base=300, br_layer=None, sl_layer=None, bronze_counts=None, silver_method_results=None, skip_run_update=False):
+    tasks = layer_tasks(layer)
+    if not tasks:
+        raise Exception(f"No {target_name} tasks found in audit context")
+
+    task_ids = [safe_int(t["task_id"]) for t in tasks]
+    update_taskqueue_for_tasks(task_ids, status, error_message)
+
+    tq_df = spark.sql(
+        f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in task_ids])})"
+    )
+    start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+
+    rows = []
+    for idx, task in enumerate(tasks, start=1):
+        task_id = safe_int(task["task_id"])
+        method = task_method(task)
+        if target_name == "SL":
+            if silver_method_results is None:
+                silver_method_results = parse_method_results_json(p_silver_method_results_json)
+            silver_counts = silver_audit_counts_from_results(method, silver_method_results)
+            if silver_counts is not None:
+                rows_read, rows_written = silver_counts
+            else:
+                rows_read = bronze_count_for_method_from_layer(br_layer, method, ingest_run_id, bronze_counts) if status != "SKIPPED" and br_layer else 0
+                rows_written = read_task_table_df(task, "SL").count() if status == "SUCCESS" else 0
+        elif target_name == "GL":
+            silver_task = layer_task_for_method(sl_layer, method) if sl_layer else None
+            rows_read = read_task_table_df(silver_task, "SL").count() if status != "SKIPPED" and silver_task else 0
+            rows_written = read_task_table_df(task, "GL").count() if status == "SUCCESS" else 0
+        else:
+            rows_read = rows_written = 0
+
+        rows_failed = 1 if status == "FAILED" else 0
+        rows.append((
+            new_bigint(audit_offset_base + idx),
+            task_id,
+            safe_int(task.get("run_id") or layer.get("run_id")),
+            safe_int(task.get("config_id") or layer.get("config_id")),
+            safe_int(task.get("task_config_id")),
+            task.get("task_name"),
+            task.get("target_table") or layer.get("target_table"),
+            "TASK_COMPLETE",
+            status,
+            log_level,
+            int(rows_read),
+            int(rows_written),
+            rows_failed,
+            error_message,
+            task.get("site_code"),
+            task.get("data_base_name"),
+            task.get("site_name"),
+            start_by_task.get(task_id),
+            None,
+            None
+        ))
+
+    append_taskaudit_rows(rows)
+    if not skip_run_update:
+        update_pipelinerun(
+            safe_int(layer["run_id"]),
+            status,
+            len(task_ids) if status == "SUCCESS" else 0,
+            len(task_ids) if status == "FAILED" else 0,
+            len(task_ids) if status == "SKIPPED" else 0
+        )
+
+def finalize_method_results_batched(br_layer, sl_layer, method_results, ingest_run_id, failure_message):
+    layers = {"BR": br_layer, "SL": sl_layer}
+    layer_order = ACTIVE_TARGET_LAYERS
+    full_bronze_counts = get_bronze_count_context(br_layer, ingest_run_id)
+    silver_method_results = parse_method_results_json(p_silver_method_results_json)
+
+    all_task_ids = []
+    for target_name in layer_order:
+        all_task_ids.extend([safe_int(t["task_id"]) for t in layer_tasks(layers[target_name])])
+    all_task_ids = [task_id for task_id in all_task_ids if task_id]
+
+    start_by_task = {}
+    if all_task_ids:
+        tq_df = spark.sql(
+            f"SELECT TaskId, StartTime FROM {taskqueue_table} WHERE TaskId IN ({','.join([str(x) for x in all_task_ids])})"
+        )
+        start_by_task = {safe_int(r["TaskId"]): r["StartTime"] for r in tq_df.collect()}
+
+    rows = []
+    task_updates = {}
+    audit_idx = 1
+
+    for method_name, outcome in method_results.items():
+        for target_name in layer_order:
+            layer = layers[target_name]
+            method_sub_layer = filter_layer_by_method(layer, method_name)
+            if not method_sub_layer:
+                continue
+
+            for task in layer_tasks(method_sub_layer):
+                m_status = task_layer_status(outcome, target_name, task)
+                log_level = "ERROR" if m_status == "FAILED" else ("WARN" if m_status == "SKIPPED" else "INFO")
+                err = task_layer_error(outcome, target_name, task, failure_message)
+                task_id = safe_int(task["task_id"])
+                task_updates.setdefault((m_status, err), []).append(task_id)
+
+                if target_name == "BR":
+                    rows_read = bronze_count_for_task_from_context(task, full_bronze_counts) if m_status != "SKIPPED" else 0
+                    rows_written = rows_read if m_status != "SKIPPED" else 0
+                    audit_offset = 500
+                else:
+                    silver_counts = silver_audit_counts_from_results(task_method(task), silver_method_results)
+                    if silver_counts is not None:
+                        rows_read, rows_written = silver_counts
+                    else:
+                        rows_read = bronze_count_for_method_from_layer(br_layer, task_method(task), ingest_run_id, full_bronze_counts) if m_status != "SKIPPED" else 0
+                        rows_written = read_task_table_df(task, "SL").count() if m_status == "SUCCESS" else 0
+                    audit_offset = 600
+
+                rows_failed = 1 if m_status == "FAILED" else 0
+                rows.append((
+                    new_bigint(audit_offset + audit_idx),
+                    task_id,
+                    safe_int(task.get("run_id") or layer.get("run_id")),
+                    safe_int(task.get("config_id") or layer.get("config_id")),
+                    safe_int(task.get("task_config_id")),
+                    task.get("task_name"),
+                    task.get("target_table") or layer.get("target_table"),
+                    "TASK_COMPLETE",
+                    m_status,
+                    log_level,
+                    int(rows_read),
+                    int(rows_written),
+                    rows_failed,
+                    err,
+                    task.get("site_code"),
+                    task.get("data_base_name"),
+                    task.get("site_name"),
+                    start_by_task.get(task_id),
+                    None,
+                    None
+                ))
+                audit_idx += 1
+
+    for (status, err), task_ids in task_updates.items():
+        update_taskqueue_for_tasks(task_ids, status, err)
+
+    append_taskaudit_rows(rows)
+
+    for target_name in layer_order:
+        layer_obj = layers[target_name]
+        all_tasks = layer_tasks(layer_obj)
+        n_success = sum(1 for t in all_tasks if task_layer_status(resolve_method_outcome(method_results, task_method(t)), target_name, t) == "SUCCESS")
+        n_failed  = sum(1 for t in all_tasks if task_layer_status(resolve_method_outcome(method_results, task_method(t)), target_name, t) == "FAILED")
+        n_skipped = sum(1 for t in all_tasks if task_layer_status(resolve_method_outcome(method_results, task_method(t)), target_name, t) == "SKIPPED")
+        layer_run_status = "FAILED" if n_failed > 0 else ("SKIPPED" if n_skipped > 0 else "SUCCESS")
+        update_pipelinerun(safe_int(layer_obj["run_id"]), layer_run_status, n_success, n_failed, n_skipped)
+
+def successful_layer_subset(layer, target_name, method_results):
+    tasks = [
+        task
+        for task in layer_tasks(layer)
+        if task_layer_status(resolve_method_outcome(method_results, task_method(task)), target_name, task) == "SUCCESS"
+    ]
+    if not tasks:
+        return None
+    result = dict(layer)
+    result["tasks"] = tasks
+    return result
+
+def append_dataquality_for_layer(layer, target_name, reference_layer=None, ingest_run_id=None):
+    rows = []
+    target_name = str(target_name).upper()
+    offset_base = {"BR": 700, "SL": 800, "GL": 900}.get(target_name, 900)
+
+    dq_tasks = layer_tasks(layer)
+    if target_name == "BR":
+        grouped = {}
+        for task in dq_tasks:
+            group_key = (
+                method_key(task_method(task)),
+                task_full_table(task, "BR"),
+                task_ingest_column(task)
+            )
+            if group_key not in grouped:
+                grouped[group_key] = task
+        dq_tasks = list(grouped.values())
+
+    for idx, task in enumerate(dq_tasks, start=1):
+        key_cols = task_dq_keys(task)
+        if not key_cols and target_name == "BR" and reference_layer:
+            reference_task = layer_task_for_method(reference_layer, task_method(task))
+            if reference_task:
+                key_cols = task_dq_keys(reference_task)
+        if not key_cols:
+            raise Exception(f"Missing dq_keys in taskconfig RequestBody for {target_name} task {task_display_table(task, target_name)}")
+
+        if target_name == "BR":
+            table_name = task_display_table(task, "BR")
+            dq_df = read_task_table_df(task, "BR")
+            ingest_col = task_ingest_column(task)
+            if ingest_run_id and ingest_col in dq_df.columns:
+                dq_df = dq_df.where(F.col(ingest_col) == F.lit(ingest_run_id))
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(dq_df, resolved_keys)
+        elif target_name == "SL":
+            table_name = task_display_table(task, "SL")
+            dq_df = read_task_table_df(task, "SL")
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(
+                dq_df,
+                resolved_keys
+            )
+        elif target_name == "GL":
+            table_name = task_display_table(task, "GL")
+            dq_df = read_task_table_df(task, "GL")
+            resolved_keys = resolve_df_key_cols(dq_df, key_cols, f"{target_name} table {table_name}")
+            row_count, null_count, duplicate_count = dq_counts_for_df(
+                dq_df,
+                resolved_keys
+            )
+        else:
+            continue
+
+        rows.append((
+            new_bigint(offset_base + idx),
+            safe_int(task.get("run_id") or layer.get("run_id")),
+            safe_int(task.get("config_id") or layer.get("config_id")),
+            None,
+            table_name,
+            row_count,
+            null_count,
+            duplicate_count,
+            "SUCCESS" if null_count == 0 and duplicate_count == 0 else "FAILED"
+        ))
+
+    if not rows:
+        return
+
+    dq_schema = StructType([
+        StructField("DqId", LongType()),
+        StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()),
+        StructField("TaskConfigId", LongType()),
+        StructField("TableName", StringType()),
+        StructField("RowCount", LongType()),
+        StructField("NullCount", LongType()),
+        StructField("DuplicateCount", LongType()),
+        StructField("ValidationStatus", StringType())
+    ])
+    dq_df = spark.createDataFrame(rows, dq_schema).withColumn("CreatedAt", F.current_timestamp())
+    insert_append(dataquality_table, dq_df)
+
+
+
+# cell2:
+
+ctx = parse_context()
+mode = p_mode.upper().strip()
+
+if mode == "START_LAYER_RUNS":
+    active_targets_sql = ",".join([f"'{target}'" for target in ACTIVE_TARGET_LAYERS])
+    configs_df = spark.sql(f"""
+        SELECT *
+        FROM {etlconfig_table}
+        WHERE IsActive = 1
+          AND ConfigName LIKE '{p_config_name_prefix}%'
+          AND TargetName IN ({active_targets_sql})
+    """)
+    configs = configs_df.collect()
+    if len(configs) != len(ACTIVE_TARGET_LAYERS):
+        raise Exception(
+            f"Expected {len(ACTIVE_TARGET_LAYERS)} active etlconfig rows for prefix {p_config_name_prefix} "
+            f"and targets {ACTIVE_TARGET_LAYERS}, found {len(configs)}"
+        )
+
+    config_by_id = {safe_int(r["ConfigId"]): r for r in configs}
+    config_by_target = {str(r["TargetName"]).upper(): r for r in configs}
+    for required_target in ACTIVE_TARGET_LAYERS:
+        if required_target not in config_by_target:
+            raise Exception(f"Missing active {required_target} etlconfig row for prefix {p_config_name_prefix}")
+
+    config_ids = ",".join([str(r["ConfigId"]) for r in configs])
+    tasks_df = spark.sql(f"""
+        SELECT *
+        FROM {taskconfig_table}
+        WHERE IsActive = 1
+          AND ConfigId IN ({config_ids})
+    """)
+    tasks = tasks_df.collect()
+    if not tasks:
+        raise Exception(f"No active taskconfig rows found for ConfigIds {config_ids}")
+
+    tasks_by_target = {target_name: [] for target_name in ACTIVE_TARGET_LAYERS}
+    for task in tasks:
+        cfg = config_by_id.get(safe_int(task["ConfigId"]))
+        if not cfg:
+            continue
+        target = str(cfg["TargetName"]).upper()
+        method = row_value(task, "Method")
+        if not method:
+            continue
+        if target == "BR":
+            if row_value(task, "SiteCode") and row_value(task, "DataBaseName"):
+                tasks_by_target[target].append(task)
+        else:
+            tasks_by_target[target].append(task)
+
+    if len(tasks_by_target["BR"]) == 0:
+        raise Exception("Expected at least one active BR taskconfig row with SiteCode and DataBaseName")
+    if len(tasks_by_target["SL"]) == 0:
+        raise Exception("Expected at least one active SL taskconfig row")
+
+    for target_name in tasks_by_target:
+        tasks_by_target[target_name] = sorted(
+            tasks_by_target[target_name],
+            key=lambda r: (
+                safe_int(row_value(r, "ExecutionOrder"), 0),
+                str(row_value(r, "Method") or ""),
+                str(row_value(r, "SiteCode") or "")
+            )
+        )
+
+    run_rows = []
+    task_rows = []
+    audit_context = {}
+    base_id = new_bigint(0)
+    targets_in_order = [
+        str(r["TargetName"]).upper()
+        for r in sorted(configs, key=lambda row: safe_int(row_value(row, "ExecutionSequence"), 0))
+    ]
+
+    for target_idx, target_name in enumerate(targets_in_order, start=1):
+        cfg = config_by_target[target_name]
+        config_id = safe_int(cfg["ConfigId"])
+        layer_tasks_cfg = tasks_by_target[target_name]
+        run_id = base_id + (target_idx * 100000)
+        layer_task_context = []
+
+        for task_idx, task in enumerate(layer_tasks_cfg, start=1):
+            task_id = run_id + task_idx
+            site_code = row_value(task, "SiteCode")
+            data_base_name = row_value(task, "DataBaseName")
+            site_name = row_value(task, "SiteName")
+            method = row_value(task, "Method")
+            metadata = parse_request_body(row_value(task, "RequestBody"))
+            target_path = row_value(task, "TargetPath")
+            watermark_column = row_value(task, "WatermarkColumn")
+            dq_keys = metadata.get("dq_keys") or metadata.get("key_columns")
+            if not dq_keys and watermark_column:
+                dq_keys = [item.strip() for item in str(watermark_column).split(",") if item.strip()]
+
+            task_ctx = {
+                "run_id": run_id,
+                "config_id": config_id,
+                "config_name": cfg["ConfigName"],
+                "target_name": target_name,
+                "task_config_id": safe_int(task["TaskConfigId"]),
+                "task_id": task_id,
+                "task_name": task["TaskName"],
+                "target_table": task["TargetTable"],
+                "target_schema": row_value(task, "TargetSchema"),
+                "method": method,
+                "source_table": row_value(task, "SourceTable"),
+                "site_code": site_code,
+                "data_base_name": data_base_name,
+                "site_name": site_name,
+                "target_path": target_path,
+                "full_table": metadata.get("full_table") or target_path or task_full_table(task, target_name),
+                "ingest_column": metadata.get("ingest_column") or ("IngestRunId" if target_name == "BR" else "_ingest_run_id"),
+                "site_column": metadata.get("site_column") or ("SiteCode" if target_name == "BR" else "_site_code"),
+                "database_column": metadata.get("database_column") or ("SourceDatabase" if target_name == "BR" else "_source_database"),
+                "dq_keys": dq_keys or []
+            }
+            layer_task_context.append(task_ctx)
+
+            task_rows.append((
+                task_id,
+                run_id,
+                config_id,
+                safe_int(task["TaskConfigId"]),
+                task["TaskName"],
+                cfg["SourceType"],
+                task["TargetTable"],
+                safe_int(row_value(task, "ExecutionOrder"), 0),
+                1,
+                "RUNNING",
+                0,
+                0,
+                1,
+                0,
+                0,
+                site_code,
+                data_base_name,
+                site_name,
+                None,
+                None,
+                None
+            ))
+
+        audit_context[target_name] = {
+            "run_id": run_id,
+            "config_id": config_id,
+            "config_name": cfg["ConfigName"],
+            "target_name": target_name,
+            "target_table": layer_task_context[0]["target_table"],
+            "tasks": layer_task_context
+        }
+
+        run_rows.append((
+            run_id,
+            config_id,
+            cfg["ConfigName"],
+            cfg["PipelineName"],
+            cfg["PipelinePath"],
+            cfg["SourceSystem"],
+            cfg["TargetName"],
+            cfg["EnvironmentName"],
+            None,
+            None,
+            "RUNNING",
+            cfg["TriggerType"],
+            cfg["TriggeredBy"] or p_triggered_by,
+            len(layer_task_context),
+            0,
+            0,
+            0,
+            0,
+            1
+        ))
+
+    run_schema = StructType([
+        StructField("RunId", LongType()), StructField("ConfigId", LongType()),
+        StructField("ConfigName", StringType()), StructField("PipelineName", StringType()),
+        StructField("PipelinePath", StringType()), StructField("SourceSystem", StringType()),
+        StructField("TargetName", StringType()), StructField("EnvironmentName", StringType()),
+        StructField("StartTime", TimestampType()), StructField("EndTime", TimestampType()),
+        StructField("Status", StringType()), StructField("TriggerType", StringType()),
+        StructField("TriggeredBy", StringType()), StructField("TotalTasks", IntegerType()),
+        StructField("SuccessTasks", IntegerType()), StructField("FailedTasks", IntegerType()),
+        StructField("SkippedTasks", IntegerType()), StructField("RestartFlag", IntegerType()),
+        StructField("AttemptNumber", IntegerType())
+    ])
+    task_schema = StructType([
+        StructField("TaskId", LongType()), StructField("RunId", LongType()),
+        StructField("ConfigId", LongType()), StructField("TaskConfigId", LongType()),
+        StructField("TaskName", StringType()), StructField("SourceType", StringType()),
+        StructField("TargetTable", StringType()), StructField("ExecutionOrder", IntegerType()),
+        StructField("ExecutionFlag", IntegerType()), StructField("Status", StringType()),
+        StructField("RetryAttempt", IntegerType()), StructField("RestartFlag", IntegerType()),
+        StructField("AttemptNumber", IntegerType()), StructField("HttpStatusCode", IntegerType()),
+        StructField("ApiResponseTimeMs", LongType()), StructField("SiteCode", StringType()),
+        StructField("DataBaseName", StringType()), StructField("SiteName", StringType()),
+        StructField("StartTime", TimestampType()), StructField("EndTime", TimestampType()),
+        StructField("ErrorMessage", StringType())
+    ])
+
+    run_df = (
+        spark.createDataFrame(run_rows, run_schema)
+        .withColumn("StartTime", F.current_timestamp())
+        .withColumn("CreatedAt", F.current_timestamp())
+    )
+    task_df = (
+        spark.createDataFrame(task_rows, task_schema)
+        .withColumn("StartTime", F.current_timestamp())
+        .withColumn("CreatedAt", F.current_timestamp())
+    )
+    insert_append(pipelinerun_table, run_df)
+    insert_append(taskqueue_table, task_df)
+    exit_json(audit_context)
+
+elif mode in ("FINALIZE_SUCCESS", "FINALIZE_NOTES_SUCCESS"):
+    br = get_context_for_target(ctx, "BR")
+    sl = get_context_for_target(ctx, "SL")
+
+    if not br or not sl:
+        raise Exception(f"Missing BR/SL context for {mode}")
+    if not p_ingest_run_id:
+        raise Exception(f"p_ingest_run_id is required for {mode}")
+
+    bronze_rows = finish_bronze_tasks(
+        br,
+        p_ingest_run_id,
+        status="SUCCESS",
+        log_level="INFO",
+        error_message=None,
+        audit_offset_base=100
+    )
+
+    append_dataquality_for_layer(br, "BR", reference_layer=sl, ingest_run_id=p_ingest_run_id)
+    append_dataquality_for_layer(sl, "SL")
+
+    finish_layer_tasks(
+        sl,
+        "SL",
+        p_ingest_run_id,
+        status="SUCCESS",
+        log_level="INFO",
+        error_message=None,
+        audit_offset_base=300,
+        br_layer=br
+    )
+
+    exit_json({
+        "status": "OK",
+        "mode": mode,
+        "bronze_tasks": len(layer_tasks(br)),
+        "silver_tasks": len(layer_tasks(sl)),
+        "gold_tasks": 0,
+        "bronze_rows": int(bronze_rows)
+    })
+
+elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
+    br = get_context_for_target(ctx, "BR")
+    sl = get_context_for_target(ctx, "SL")
+
+    if not br or not sl:
+        raise Exception(f"Missing BR/SL context for {mode}")
+    if not p_ingest_run_id:
+        raise Exception(f"p_ingest_run_id is required for {mode}")
+
+    failure_message = (
+        p_error_message
+        or f"{p_config_name_prefix} pipeline failed. Check the failed parent/child activity run details."
+    )
+
+    # Parse per-method results if provided by the pipeline.
+    method_results = {}
+    if p_method_results_json:
+        try:
+            method_results = json.loads(p_method_results_json)
+        except Exception:
+            method_results = {}
+    if not method_results and (p_bronze_method_results_json or p_silver_method_results_json):
+        method_results = build_terminal_method_results(
+            br,
+            sl,
+            p_bronze_method_results_json,
+            p_silver_method_results_json
+        )
+
+    if method_results:
+        # Per-method partial failure: finalize all methods in batched taskqueue/audit writes.
+        finalize_method_results_batched(br, sl, method_results, p_ingest_run_id, failure_message)
+        br_success = successful_layer_subset(br, "BR", method_results)
+        sl_success = successful_layer_subset(sl, "SL", method_results)
+        if br_success:
+            append_dataquality_for_layer(br_success, "BR", reference_layer=sl, ingest_run_id=p_ingest_run_id)
+        if sl_success:
+            append_dataquality_for_layer(sl_success, "SL")
+
+    else:
+        # Legacy single-layer failure (used when method_results not provided).
+        failed_target = (p_failed_target_name or "ALL").upper()
+        fail_all_layers = failed_target in ("ALL", "UNKNOWN", "AUTO")
+        if failed_target == "GL":
+            failed_target = TERMINAL_TARGET_NAME
+        if failed_target not in ("BR", "SL", "ALL", "UNKNOWN", "AUTO"):
+            failed_target = "ALL"
+            fail_all_layers = True
+
+        target_order = ACTIVE_TARGET_LAYERS
+        failed_idx = 0 if fail_all_layers else target_order.index(failed_target)
+        layers = {"BR": br, "SL": sl}
+
+        for idx, target_name in enumerate(target_order):
+            layer = layers[target_name]
+            if fail_all_layers:
+                final_status = "FAILED"
+                log_level = "ERROR"
+                err = failure_message
+            elif idx < failed_idx:
+                final_status = "SUCCESS"
+                log_level = "INFO"
+                err = None
+            elif idx == failed_idx:
+                final_status = "FAILED"
+                log_level = "ERROR"
+                err = failure_message
+            else:
+                final_status = "SKIPPED"
+                log_level = "WARN"
+                err = f"Skipped because {failed_target} failed"
+
+            if target_name == "BR":
+                finish_bronze_tasks(
+                    layer,
+                    p_ingest_run_id,
+                    status=final_status,
+                    log_level=log_level,
+                    error_message=err,
+                    audit_offset_base=500
+                )
+            else:
+                finish_layer_tasks(
+                    layer,
+                    target_name,
+                    p_ingest_run_id,
+                    status=final_status,
+                    log_level=log_level,
+                    error_message=err,
+                    audit_offset_base=600 + idx * 100,
+                    br_layer=br,
+                    sl_layer=sl
+                )
+
+    payload = {
+        "status": "FAILED",
+        "mode": mode,
+        "failed_target": "PER_METHOD" if method_results else (p_failed_target_name or "ALL"),
+        "failure_activity": p_failure_activity,
+        "message": "Failure audit finalized; raising exception to keep pipeline failed."
+    }
+    print(json.dumps(payload))
+    raise Exception(json.dumps(payload))
+
+else:
+    raise Exception(f"Unsupported p_mode: {p_mode}")

@@ -90,7 +90,6 @@ pipelinerun_table = "bhg_bronze.meta.pipelinerun"
 taskqueue_table = "bhg_bronze.meta.taskqueue"
 taskaudit_table = "bhg_bronze.meta.taskaudit"
 dataquality_table = "bhg_bronze.meta.dataquality"
-reference_site_success_table = "bhg_bronze.P1Reference.br_p1_reference_site_success"
 
 gold_workspace_id = "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
 gold_warehouse_id = "d29ef036-8c2c-40b0-a8e0-3279f9a906e7"
@@ -100,18 +99,6 @@ ACTIVE_TARGET_LAYERS = ["BR", "SL"]
 TERMINAL_TARGET_NAME = "SL"
 
 BRONZE_COUNT_CONTEXT_CACHE = {}
-
-def ensure_reference_site_success_table():
-    spark.sql(f"""
-        CREATE TABLE IF NOT EXISTS {reference_site_success_table} (
-            Method STRING,
-            SiteCode STRING,
-            SourceDatabase STRING,
-            IngestRunId STRING,
-            MarkedAt TIMESTAMP
-        )
-        USING DELTA
-    """)
 
 def new_bigint(offset=0):
     return int(datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[:18]) + int(offset)
@@ -359,37 +346,89 @@ def combined_site_results(br_result, sl_result, sl_status):
 
     return site_results
 
-def reference_site_success_markers(method_name):
+def resolve_existing_column(df, configured_name, fallback_names=()):
+    by_lower = {str(col).lower(): col for col in df.columns}
+    candidates = []
+    if configured_name:
+        candidates.append(configured_name)
+    candidates.extend(fallback_names or [])
+
+    for candidate in candidates:
+        found = by_lower.get(str(candidate).lower())
+        if found:
+            return found
+    return None
+
+def bronze_row_success_markers(br_layer, method_name):
     if not p_ingest_run_id:
         return set()
-    try:
-        marker_df = (
-            spark.table(reference_site_success_table)
-            .where(F.col("IngestRunId") == F.lit(p_ingest_run_id))
-            .where(F.lower(F.col("Method")) == F.lit(str(method_name).lower()))
-            .select("SiteCode", "SourceDatabase")
-            .distinct()
-        )
-    except Exception:
+    method_layer = filter_layer_by_method(br_layer, method_name)
+    if not method_layer:
         return set()
 
     markers = set()
-    for row in marker_df.collect():
-        site_code = normalized_text(row["SiteCode"])
-        source_database = normalized_text(row["SourceDatabase"])
-        if site_code:
-            markers.add((site_code, source_database))
-            markers.add((site_code, None))
+    table_specs = {}
+    for task in layer_tasks(method_layer):
+        table_specs[(
+            task_full_table(task, "BR"),
+            task_ingest_column(task),
+            task_site_column(task),
+            task_database_column(task)
+        )] = True
+
+    for table_name, ingest_col, site_col, database_col in table_specs:
+        try:
+            bronze_df = spark.table(table_name)
+            actual_ingest_col = resolve_existing_column(
+                bronze_df,
+                ingest_col,
+                ("IngestRunId", "_ingest_run_id")
+            )
+            actual_site_col = resolve_existing_column(
+                bronze_df,
+                site_col,
+                ("SiteCode", "_site_code")
+            )
+            actual_database_col = resolve_existing_column(
+                bronze_df,
+                database_col,
+                ("SourceDatabase", "_source_database")
+            )
+
+            if actual_ingest_col:
+                bronze_df = bronze_df.where(F.col(actual_ingest_col) == F.lit(p_ingest_run_id))
+            if not actual_site_col:
+                continue
+
+            select_exprs = [F.col(actual_site_col).cast("string").alias("SiteCode")]
+            if actual_database_col:
+                select_exprs.append(F.col(actual_database_col).cast("string").alias("SourceDatabase"))
+            else:
+                select_exprs.append(F.lit(None).cast("string").alias("SourceDatabase"))
+
+            for row in (
+                bronze_df
+                .select(*select_exprs)
+                .where(F.col("SiteCode").isNotNull())
+                .distinct()
+                .collect()
+            ):
+                site_code = normalized_text(row["SiteCode"])
+                source_database = normalized_text(row["SourceDatabase"])
+                if site_code:
+                    markers.add((site_code, source_database))
+                    markers.add((site_code, None))
+        except Exception:
+            continue
+
     return markers
 
-def site_results_from_markers(br_layer, method_name, br_result):
+def site_results_from_bronze_rows(br_layer, method_name, br_result):
     method_layer = filter_layer_by_method(br_layer, method_name)
     if not method_layer:
         return None
 
-    markers = reference_site_success_markers(method_name)
-    if not markers:
-        return None
+    markers = bronze_row_success_markers(br_layer, method_name)
 
     br_status = str(br_result.get("status", "")).upper() if isinstance(br_result, dict) else ""
     bronze_had_failure = br_status in {"FAILED", "ERROR"}
@@ -411,7 +450,7 @@ def site_results_from_markers(br_layer, method_name, br_result):
             item.update({
                 "status": "FAILED",
                 "failed_stage": "BR",
-                "error_message": result_error_message(br_result) or f"{method_name} Bronze site failed before writing success marker."
+                "error_message": result_error_message(br_result) or f"{method_name} Bronze site failed or wrote no rows for this ingest run."
             })
         else:
             item["status"] = "SUCCESS"
@@ -442,7 +481,7 @@ def build_terminal_method_results(br_layer, sl_layer, bronze_json, silver_json):
         sl_status = sl_result.get("status")
         site_results = (
             combined_site_results(br_result, sl_result, sl_status)
-            or site_results_from_markers(br_layer, method, br_result)
+            or site_results_from_bronze_rows(br_layer, method, br_result)
         )
         layer_statuses = {
             "BR": normalized_layer_status(br_status),
@@ -1150,7 +1189,7 @@ def append_dataquality_for_layer(layer, target_name, reference_layer=None, inges
             new_bigint(offset_base + idx),
             safe_int(task.get("run_id") or layer.get("run_id")),
             safe_int(task.get("config_id") or layer.get("config_id")),
-            safe_int(task.get("task_config_id")),
+            None,
             table_name,
             row_count,
             null_count,
@@ -1181,8 +1220,6 @@ ctx = parse_context()
 mode = p_mode.upper().strip()
 
 if mode == "START_LAYER_RUNS":
-    ensure_reference_site_success_table()
-
     active_targets_sql = ",".join([f"'{target}'" for target in ACTIVE_TARGET_LAYERS])
     configs_df = spark.sql(f"""
         SELECT *

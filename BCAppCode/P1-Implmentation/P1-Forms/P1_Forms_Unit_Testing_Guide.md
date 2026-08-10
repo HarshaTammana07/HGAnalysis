@@ -27,9 +27,9 @@ Test sites used:
 Current test run date:
 
 ```text
-WorkDate = 2026-07-20
+WorkDate = 2026-07-28
 LookbackDays = 15
-StartDate = 2026-07-05
+StartDate = 2026-07-13
 ```
 
 If testing another run date, calculate:
@@ -254,10 +254,10 @@ These 4 tables use lookback date logic:
 - `tbl_TakeHomeAgreementandDiversionControl`
 - `tbl_NewDischargeTransferPlanForm`
 
-For the July 20, 2026 test run:
+For the July 28, 2026 test run:
 
 ```sql
-DECLARE @StartDate date = '2026-07-05';
+DECLARE @StartDate date = '2026-07-13';
 ```
 
 ### BHG_DR
@@ -265,7 +265,7 @@ DECLARE @StartDate date = '2026-07-05';
 Run in BHG_DR:
 
 ```sql
-DECLARE @StartDate date = '2026-07-05';
+DECLARE @StartDate date = '2026-07-13';
 
 SELECT 'tbl_SF_DataForms' AS TableName, COUNT(*) AS RowCount
 FROM [pats].[tbl_SF_DataForms]
@@ -310,7 +310,7 @@ Run in Fabric Silver SQL endpoint.
 Fabric table names are shown lowercase here:
 
 ```sql
-DECLARE @StartDate date = '2026-07-05';
+DECLARE @StartDate date = '2026-07-13';
 
 SELECT 'tbl_sf_dataforms' AS TableName, COUNT(*) AS RowCount
 FROM [pats].[tbl_sf_dataforms]
@@ -359,7 +359,7 @@ Example for `tbl_SF_DataForms`.
 ### BHG_DR
 
 ```sql
-DECLARE @StartDate date = '2026-07-05';
+DECLARE @StartDate date = '2026-07-13';
 
 SELECT SiteCode, COUNT(*) AS RowCount
 FROM [pats].[tbl_SF_DataForms]
@@ -375,7 +375,7 @@ ORDER BY SiteCode;
 ### Fabric Silver
 
 ```sql
-DECLARE @StartDate date = '2026-07-05';
+DECLARE @StartDate date = '2026-07-13';
 
 SELECT SiteCode, COUNT(*) AS RowCount
 FROM [pats].[tbl_sf_dataforms]
