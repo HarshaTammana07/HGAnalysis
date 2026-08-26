@@ -1,0 +1,85 @@
+﻿1,1,1,1,RI - BHOLD,RIBHOLD,NULL,NULL,NULL,MedicalStaffSignatureDate,NULL,NULL,NULL,NULL,NULL,24,CreatedOn,ModifiedOn
+2,1,1,1,RI - Health Home Care Plan Review Form,RIHealthHomeCareReview,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,25,CreatedOn,ModifiedOn
+3,1,1,1,RI - Health Home Consent to Receive,RIHealthHomeConsentToReceive,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,26,CreatedOn,ModifiedOn
+4,1,1,1,RI - Health Home Eligibility and Follow up Checklist,RIHealthHomeEligibilityFollUpChecklist,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,27,CreatedOn,ModifiedOn
+5,1,1,1,RI - Health Home History,RIHealthHomeHistory,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,28,CreatedOn,ModifiedOn
+6,1,1,1,RI - Health Home Note,RIHealthHomeNote,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,29,CreatedOn,ModifiedOn
+7,1,1,1,RI - Health Home Triage Assessment,RIHealthHomeTriageAssessment,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,30,CreatedOn,ModifiedOn
+8,1,1,1,RI - Health Home Patient Centered Plan of Care,RIHealthHomePatientCenteredPlan,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,31,CreatedOn,ModifiedOn
+9,1,1,1,RI - Overdose Prevention Education,RIOverdosePreventionEducation,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,32,CreatedOn,ModifiedOn
+10,1,1,1,RI - PHQ-9 Form,RIPHQ9,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,33,CreatedOn,ModifiedOn
+11,1,1,1,GA - Patient Rights and Responsibilities,PatientRightsandResponsibilities,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,34,CreatedOn,ModifiedOn
+12,1,1,1,GA - Order for Services,OrderforServices,NULL,NULL,NULL,NULL,NULL,ProviderSignatureDate,NULL,NULL,NULL,35,CreatedOn,ModifiedOn
+13,1,1,1,GA - Consent to Treatment with an Approved Narcotic,GAConsenttoTreatmentwithanApprovedNarcotic,NULL,NULL,NULL,NULL,PatientSignatureDate,ProviderSignatureDate,NULL,StaffSignatureDate,NULL,36,CreatedOn,ModifiedOn
+14,1,1,1,GA - Consent Central Registry Georgia,GAConsentCentralRegistryGeorgia,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,37,CreatedOn,ModifiedOn
+15,1,1,1,GA - Transition and Discharge Plan,TransitionandDischargePlan,NULL,NULL,NULL,NULL,NULL,ProviderSignatureDate,NULL,StaffSignatureDate,SupervisorSignatureDate,38,CreatedOn,ModifiedOn
+16,1,1,1,NC - Consent to Central Registry,NCConsenttoCentralRegistry,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,39,CreatedOn,ModifiedOn
+17,1,1,1,NC - Initial Transition and Discharge Plan,NCInitialTransitionDischargePlan,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,40,CreatedOn,ModifiedOn
+18,1,1,1,NC - Crisis Prevention and Intervention Plan,CrisisPrevention,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,41,CreatedOn,ModifiedOn
+19,1,1,1,NC - Consent and Auth Disclosure of Sub Disorder,NCConsentAuthDisclosureSubDisorder,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,42,CreatedOn,ModifiedOn
+20,1,1,1,NC - Person Centered Profile,NCPersonCenteredProfile,NULL,NULL,NULL,NULL,PatientSignatureDate,ProviderSignatureDate,NULL,StaffSignatureDate,SupervisorSignatureDate,43,CreatedOn,ModifiedOn
+21,1,1,1,NC - PIE,NCPIE,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,44,CreatedOn,ModifiedOn
+22,1,1,1,90 Day Review,NinetyDayReview,NULL,NULL,NULL,NULL,NULL,MedicalProviderSignatureDate,NULL,StaffSignatureDate,NULL,45,CreatedOn,ModifiedOn
+23,1,1,1,AR-State Fact form,StateFactForm,CompletedBySignatureDate,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,46,Createdon,ModifiedOn
+24,0,1,1,Authorization To Obtain/Release (PHI),RNP_AuthorizationToObtainOrRelease,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,47,Created,Modified
+25,1,1,1,MN - Consent to Treatment Via Telehealth,ConsenttoTreatmentViaTelehealth,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,23,CreatedOn,ModifiedOn
+26,1,1,1,MN - DAANES Notification Form,tblDAANESNotification,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,22,CreatedOn,ModifiedOn
+27,1,1,1,MN - Authorization for Release of Information to the MAARC,tblMAARC,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,21,CreatedOn,ModifiedDate
+28,1,1,1,Initial Services Plan and Vulnerable Adult Determination,InitialServicesPlanandVAD,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,20,CreatedOn,ModifiedOn
+29,1,1,1,State Fact Form,StateFactForm,CompletedBySignatureDate,NULL,NULL,NULL,NULL,NULL,NULL,CompletedBySignatureDate,NULL,19,CreatedOn,ModifiedOn
+30,1,1,1,MN - Mental Health Informed Consent,MentalHealthInformedConsent,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,18,CreatedOn,ModifiedOn
+31,1,1,1,Insurance Benefit Verification,InsuranceBenefitVerification,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,17,CreatedOn,ModifiedOn
+32,1,1,1,Patient Information sheet,PatientInformationsheet,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,16,CreatedOn,ModifiedOn
+33,1,1,1,Adverse Childhood Experiences,AdverseChildhood,NULL,StaffSignatureDate,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,15,CreatedDate,ModifiedDate
+35,1,1,1,MN - Consent to Central Registry,GeneralConsentAuthforReleaseInfo,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,14,CreatedOn,ModifiedOn
+36,1,1,1,CO - Consent Central Registry Colorado,ConsentCentralRegistryColorado,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,13,CreatedOn,ModifiedOn
+37,1,1,1,KS Patient Rights and Responsibilities,KSPatientRightsResponsibilities,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,12,CreatedOn,ModifiedOn
+38,1,1,1,BHG Notice Of Privacy Practices,tblBHGNoticeOfPrivacyPractices,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,NULL,NULL,10,CreatedOn,ModifiedOn
+39,1,1,1,Suicide Severity Rating Scale,SuicideSeverityRatingScale,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,SupervisorSignatureDate,1,CreatedOn,ModifiedOn
+40,1,1,1,Suicide Severity Rating Scale 2.0,SAFETProtocolwithCSSRS,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,SupervisorSignatureDate,11,CreatedOn,ModifiedOn
+41,1,1,1,Health Questionnaire,HealthQuestionnaire,NULL,NULL,DoctorSignatureDate,NurseSignatureDate,NULL,NULL,NULL,NULL,NULL,2,Createddate,Modifieddate
+42,1,1,1,Infectious Disease And Behavioral Screen,InfectiousDiseaseAndBehavioralScreen,NULL,NULL,NULL,MedicalStaffSignatureDate,NULL,NULL,NULL,NULL,NULL,3,CreatedOn,ModifiedOn
+43,1,1,1,Consent to Treatment with an Approved Narcotic,ConsentToTreatmentWithAnApprovedNarcotic,NULL,NULL,DoctorSignatureDate,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,4,CreatedOn,ModifiedOn
+44,1,1,1,Financial Hardship Application,FinancialHardshipApplication,NULL,NULL,NULL,NULL,FHAPatientSignatureDate,NULL,NULL,NULL,NULL,5,CreatedOn,ModifiedOn
+45,1,1,1,Comprehensive Assessment Form,ComprehensiveAssessmentForm,NULL,NULL,NULL,NULL,CAPatientSignatureDate,NULL,NULL,CAStaffSignatureDate,NULL,6,CreatedOn,ModifiedOn
+46,1,1,1,Admission Assessment,AdmissionAssessment,NULL,NULL,NULL,NULL,AdmissionAssessmentPatientSignatureDate,NULL,NULL,AdmissionAssessmentStaffSignatureDate,AdmissionAssessmentSupervisorSignatureDate,7,CreatedOn,ModifiedOn
+47,1,1,1,Treatment Plan,tblTP17REVIEW,NULL,NULL,NULL,NULL,tprCLIRNTSIGDate,tprDRSIGDate,NULL,tprCOUNSSIGDate,tprSUPERSIGDate,8,tprDT,NULL
+48,1,1,1,Level Justification,tblORDERREQ,NULL,NULL,NULL,NULL,NULL,DrSigDt,NULL,NULL,NULL,9,DateAdded,statusDate
+49,1,1,1,Consent for Release of Confidential Info V0,ConsentforReleaseConInfoRevised,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,48,CreatedOn,ModifiedOn
+50,0,1,1,Consent For Release Of Confidential Information For Emergency Contact,SF_ConsentForEmergencyContact,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,BHGTeamMemberSignatureDate,NULL,49,CreatedOn,LastUpdateOn
+51,0,1,1,Discharge Summary,DischargeSummary,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,SupervisorSignatureDate,50,CreatedOn,UpdatedOn
+52,0,1,1,Discharge Transfer Plan Form,DischargeTransferPlanForm,NULL,NULL,MedicalProviderSignatureDate,NULL,NULL,NULL,NULL,StaffSignatureDate,SupervisorSignatureDate,51,CreatedOn,ModifiedOn
+53,1,1,1,Guest Dosing/Permanent Transfer,GuestDosingPermanentTransfer,NULL,CounselorSignatureDate,NULL,MedicalStaffSignatureDate,PatientSignatureDate,ProviderSignatureDate,NULL,NULL,NULL,52,CreatedOn,ModifiedOn
+54,0,1,1,History And Physical Short Form,RNP_AdmissionPhysicalHistory,NULL,NULL,PhysicianDate,MDSignatureDate,PatientSignatureDate,NULL,NULL,NULL,NULL,53,Created,Modified
+55,0,1,1,Individual Counseling,DAPAssessment,NULL,NULL,NULL,NULL,NULL,NULL,NULL,DAPStaffSignatureDate,NULL,54,CreatedDate,ModifiedDate
+56,0,1,1,MAT Orientation Checklist,RNP_OrientationChecklist,NULL,NULL,NULL,NULL,ClientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,56,Created,Modified
+57,0,1,1,OTP Universal Guest Dosing Form,OpioidTretamentProgram,NULL,CounselorSignatureDate,PhysicianSignatureDate,NULL,PatientSignatureDate,NULL,NULL,NurseSignatureDate,NULL,57,CreatedOn,ModifiedOn
+58,1,1,0,Pre Admission,SF_PatientPreAdmission,NULL,NULL,NULL,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,58,CreatedOn,LastUpdateOn
+59,0,1,1,ReAssessment,ReAssessment,NULL,ReassessmentClientSignatureDate,NULL,NULL,NULL,NULL,NULL,ReAssessmentStaffSignatureDate,NULL,59,CreatedOn,ModifiedOn
+60,1,1,1,Referral,ReferralForm,NULL,NULL,NULL,NULL,patientsignaturedate,NULL,NULL,StaffSignDate,NULL,60,createdon,updatedon
+61,1,1,1,Understanding of Treatment,SF_UnderstandingOfTreatment,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,CounselorSignatureDate,NULL,61,Createddate,UpdatedDate
+62,1,1,1,MO - Consent Central Registry Missouri,MOConsentCentralRegistryMissouri,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,62,CreatedOn,ModifiedOn
+63,1,1,1,SC - Consent Central Registry,SCConsentReleaseCentralRegistry,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,63,CreatedOn,ModifiedOn
+64,1,1,1,Consent to Disclose Assignment of Benefits Ver 1,ConsentToDiscloseAssignmentofBenefits,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,64,CreatedOn,ModifiedOn
+65,1,1,1,Consent to Treatment for IOP Or EOP Or OP,ConsenttoTreatmentforIOPOrEOPOrOP,NULL,NULL,NULL,NULL,PatientSignatureDate,ProviderSignatureDate,NULL,StaffSignatureDate,NULL,65,Createdon,Modifiedon
+66,1,1,1,GPRA,GPRA,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,66,Createdon,Modifiedon
+67,1,1,1,MAT and Driving,MATandDriving,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,67,CreatedOn,ModifiedOn
+68,1,1,1,Patient Rights And Responsibilities V2,PatientRightsAndResponsibilitiesV2,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,68,CreatedOn,ModifiedOn
+69,1,1,1,Request Release of Medical Records V2,RequestReleaseofMedicalRecordsV2,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,69,CreatedOn,ModifiedOn
+70,1,1,1,Take Home Risk Assessment,TakeHomeRiskAssessment,NULL,NULL,NULL,NULL,NULL,NULL,NULL,StaffSignatureDate,NULL,70,CreatedOn,ModifiedOn
+71,1,1,1,Adult Nutritional Screen,AdultNutritionalScreen,NULL,NULL,NULL,MedicalStaffSignatureDate,PatientSignatureDate,ProviderSignatureDate,NULL,NULL,NULL,71,CreatedOn,ModifiedOn
+74,1,1,1,Consent For Follow-Up Contact,ConsentForFollowUpContact,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,72,CreatedOn,ModifiedOn
+75,1,1,1,Consent for Release of Confidential Information to Emergency Contact Ver 1,ConsentReleaseEmergencyContact,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,73,CreatedOn,ModifiedOn
+76,1,1,1,AL - Consent to Central Registry,ConsentCentralRegistryAlabama,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,NULL,NULL,74,CreatedOn,ModifiedOn
+78,1,1,1,LA - Consent to Central Registry,ConsentCentralRegistryLouisiana,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,75,CreatedOn,ModifiedOn
+79,1,1,1,Overdose Education,OpioidOverdoseRisks,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,76,CreatedOn,ModifiedOn
+80,1,1,1,Notice of Privacy Practice DC,NoticeofPrivacyPracticesDC,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,NULL,NULL,77,CreatedOn,ModifiedOn
+81,1,1,1,Admission Assessment V1,NewAdmissionAssessment,NULL,CounselorSignatureDate,NULL,NULL,PatientSignatureDate,ProviderSignatureDate,NULL,NULL,SupervisorSignatureDate,78,CreatedOn,ModifiedOn
+82,1,1,1,Consent and Screen for Tuberculosis Skin Test,ConsentandScreenFTST,NULL,NULL,NULL,NULL,PatientSignatureDate,ProviderSignatureDate,NULL,StaffSignatureDate,NULL,79,CreatedOn,ModifiedOn
+84,1,1,1,Consent to Release Information to the Health Department,ConsenttoReleaseInformationtotheHealthDepartmentRevised,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,80,CreatedOn,ModifiedOn
+86,1,1,1,Take Home Agreement and Diversion Control Plan,TakeHomeAgreementandDiversionControl,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,81,CreatedOn,ModifiedOn
+88,1,1,1,Take Home Guidelines,TakeHomeGuidelinesForm,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,82,CreatedOn,ModifiedOn
+89,1,1,1,KY - Patient Rights and Responsibilities,KYPatientRightsandResp,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,83,CreatedOn,ModifiedOn
+90,1,1,1,PPD Test,PPDTest,NULL,NULL,NULL,NULL,NULL,ProviderSignatureDate,NULL,StaffSignatureDate,NULL,84,CreatedOn,ModifiedOn
+91,1,1,1,MN - Comprehensive Assessment,MNComprehensiveAssessment,NULL,CounselorSignatureDate,NULL,NULL,PatientSignatureDate,NULL,NULL,NULL,SupervisorSignatureDate,85,CreatedOn,ModifiedOn
+92,1,1,1,Take Home Agreement,TakeHomeAgreement,NULL,NULL,NULL,NULL,PatientSignatureDate,NULL,NULL,StaffSignatureDate,NULL,86,CreatedOn,ModifiedOn

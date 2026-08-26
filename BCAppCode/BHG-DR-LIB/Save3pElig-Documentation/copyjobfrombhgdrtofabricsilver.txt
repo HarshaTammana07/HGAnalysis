@@ -1,0 +1,144 @@
+{
+    "name": "pl_copy",
+    "objectId": "90d8b85a-dc12-4b93-970c-505acc5c86f0",
+    "properties": {
+        "activities": [
+            {
+                "name": "Copy data1",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": "SELECT\n    SiteCode AS SiteCode,\n    arnID AS ArnID,\n    arnLIID AS ArnLIID,\n    arnNOTE AS ArnNOTE,\n    arnUSER AS ArnUSER,\n    arnDATE AS ArnDATE,\n    arnDtRemoved AS ArnDtRemoved,\n    arnStrRemovedReason AS ArnStrRemovedReason,\n    arnStrRemovedUser AS ArnStrRemovedUser,\n    bid AS Bid,\n    arnDBnotes AS ArnDBnotes,\n    globalBatchId AS GlobalBatchId,\n    RowChkSum AS RowChkSum,\n    LastModAt AS LastModAt,\n    RowState AS RowState\nFROM pats.tbl_3pARNOTE;",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "type": "SqlServerTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "database": "BHG_DR"
+                            },
+                            "externalReferences": {
+                                "connection": "5437c796-67a5-4039-b990-78f47b42db8d"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "applyVOrder": false,
+                        "enableTimestampNtz": false,
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                        "artifactId": "fc0a9180-7208-428d-b12f-7b69750d204e",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "tbl_3pARNOTE"
+                            }
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Copy data2",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": "SELECT\n    SiteCode AS SiteCode,\n    tpcn AS Tpcn,\n    tpcnTPCID AS TpcnTPCID,\n    tpcnDtmAdded AS TpcnDtmAdded,\n    tpcnStrAdded AS TpcnStrAdded,\n    tpcnStrNote AS TpcnStrNote,\n    tpcnStrType AS TpcnStrType,\n    tpcnDtTickler AS TpcnDtTickler,\n    tpcnDtTicklerRemoved AS TpcnDtTicklerRemoved,\n    tpcnStrTicklerRemovedNote AS TpcnStrTicklerRemovedNote,\n    tpcnStrTicklerRemovedUser AS TpcnStrTicklerRemovedUser,\n    tpcnStrTicklerType AS TpcnStrTicklerType,\n    globalBatchId AS GlobalBatchId,\n    RowChkSum AS RowChkSum,\n    LastModAt AS LastModAt,\n    RowState AS RowState\nFROM pats.tbl_3pClaimNote;",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "type": "SqlServerTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "database": "BHG_DR"
+                            },
+                            "externalReferences": {
+                                "connection": "5437c796-67a5-4039-b990-78f47b42db8d"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "applyVOrder": false,
+                        "enableTimestampNtz": false,
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_silver",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                        "artifactId": "fc0a9180-7208-428d-b12f-7b69750d204e",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": "pats",
+                                "table": "tbl_3pClaimNote"
+                            }
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            }
+        ],
+        "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
+        "lastPublishTime": "2026-08-25T20:19:55Z"
+    }
+}

@@ -15,7 +15,7 @@
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 1,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_answersig_table",
@@ -267,7 +267,7 @@
                                             "source": {
                                                 "type": "SqlServerSource",
                                                 "sqlReaderQuery": {
-                                                    "value": "@concat(\n'SELECT table_name = t.name, column_name = c.name\nFROM [', item().DataBaseName, '].sys.tables t\nJOIN [', item().DataBaseName, '].sys.columns c\n  ON t.object_id = c.object_id'\n)",
+                                                    "value": "@concat(\n'SELECT table_name = t.name, column_name = c.name\nFROM [', item().DataBaseName, '].sys.tables t\nJOIN [', item().DataBaseName, '].sys.columns c\n  ON t.object_id = c.object_id\nWHERE t.name IN (\n      ''AdmissionAssessment'',\n      ''AdultNutritionalScreen'',\n      ''AdverseChildhood'',\n      ''ComprehensiveAssessmentForm'',\n      ''ConsentandScreenFTST'',\n      ''ConsentCentralRegistryAlabama'',\n      ''ConsentCentralRegistryColorado'',\n      ''ConsentCentralRegistryLouisiana'',\n      ''ConsentForFollowUpContact'',\n      ''ConsentforReleaseConInfoRevised'',\n      ''ConsentReleaseEmergencyContact'',\n      ''ConsentToDiscloseAssignmentofBenefits'',\n      ''ConsenttoReleaseInformationtotheHealthDepartmentRevised'',\n      ''ConsenttoTreatmentforIOPOrEOPOrOP'',\n      ''ConsenttoTreatmentViaTelehealth'',\n      ''ConsentToTreatmentWithAnApprovedNarcotic'',\n      ''CrisisPrevention'',\n      ''FinancialHardshipApplication'',\n      ''GAConsentCentralRegistryGeorgia'',\n      ''GAConsenttoTreatmentwithanApprovedNarcotic'',\n      ''GeneralConsentAuthforReleaseInfo'',\n      ''GPRA'',\n      ''GuestDosingPermanentTransfer'',\n      ''HealthQuestionnaire'',\n      ''InfectiousDiseaseAndBehavioralScreen'',\n      ''InitialServicesPlanandVAD'',\n      ''InsuranceBenefitVerification'',\n      ''KSPatientRightsResponsibilities'',\n      ''KYPatientRightsandResp'',\n      ''MATandDriving'',\n      ''MentalHealthInformedConsent'',\n      ''MNComprehensiveAssessment'',\n      ''MOConsentCentralRegistryMissouri'',\n      ''NCConsentAuthDisclosureSubDisorder'',\n      ''NCConsenttoCentralRegistry'',\n      ''NCInitialTransitionDischargePlan'',\n      ''NCPersonCenteredProfile'',\n      ''NCPIE'',\n      ''NewAdmissionAssessment'',\n      ''NinetyDayReview'',\n      ''NoticeofPrivacyPracticesDC'',\n      ''OpioidOverdoseRisks'',\n      ''OrderforServices'',\n      ''PatientInformationsheet'',\n      ''PatientRightsandResponsibilities'',\n      ''PatientRightsAndResponsibilitiesV2'',\n      ''PPDTest'',\n      ''RequestReleaseofMedicalRecordsV2'',\n      ''RIBHOLD'',\n      ''RIHealthHomeCareReview'',\n      ''RIHealthHomeConsentToReceive'',\n      ''RIHealthHomeEligibilityFollUpChecklist'',\n      ''RIHealthHomeHistory'',\n      ''RIHealthHomeNote'',\n      ''RIHealthHomePatientCenteredPlan'',\n      ''RIHealthHomeTriageAssessment'',\n      ''RIOverdosePreventionEducation'',\n      ''RIPHQ9'',\n      ''SAFETProtocolwithCSSRS'',\n      ''SCConsentReleaseCentralRegistry'',\n      ''SF_PatientPreAdmission'',\n      ''SF_UnderstandingOfTreatment'',\n      ''StateFactForm'',\n      ''SuicideSeverityRatingScale'',\n      ''TakeHomeAgreementandDiversionControl'',\n      ''TakeHomeGuidelinesForm'',\n      ''TakeHomeRiskAssessment'',\n      ''tblBHGNoticeOfPrivacyPractices'',\n      ''tblDAANESNotification'',\n      ''tblMAARC'',\n      ''tblORDERREQ'',\n      ''tblTP17REVIEW'',\n      ''TransitionandDischargePlan''\n   )\nORDER BY t.name, c.column_id'\n)",
                                                     "type": "Expression"
                                                 },
                                                 "queryTimeout": "02:00:00",
@@ -347,7 +347,7 @@
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-17T18:53:37Z"
+        "lastPublishTime": "2026-07-31T13:58:31Z"
     }
 }
 
@@ -1324,11 +1324,11 @@ print(f"Existing tables in SAMMS (count): {len(existing_tables)}")
 # NOTE: The base Form/AnswerSignature query does NOT use wrkdt.
 # wrkdt only affects the optional WHERE clauses on Forms2Process UNIONs.
 if p_reload:
-    wrkdt = "2010-01-01"
+    wrkdt = None
 else:
     wrkdt = (datetime.now() - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
 
-print(f"wrkdt (for Forms2Process date filters): {wrkdt}")
+print(f"wrkdt (for Forms2Process date filters): {wrkdt if wrkdt else 'FULL LOAD - no date filter'}")
 
 # -- Read Forms2Process from bhg_silver.ctrl ---------------------------
 # NOTE: No ORDER BY Prefix — unlike FormQuestionAnswers which sorts by Prefix.
@@ -1376,7 +1376,7 @@ meta_cols = (
     f"  '{p_source_database}' AS SourceDatabase,\n"
     f"  '{p_ingest_run_id}' AS IngestRunId,\n"
     f"  GETDATE() AS ExtractedAt,\n"
-    f"  '{wrkdt}' AS LookbackDate,\n"
+    f"  {repr(wrkdt) if wrkdt else 'NULL'} AS LookbackDate,\n"
 )
 
 # -- Standard IsDeleted expression (alias 'a') — used in Forms2Process loop
@@ -1589,6 +1589,13 @@ for _, xf in f2p_df.iterrows():
     col_staff         = col_val("Staff")
     col_supervisor    = col_val("Supervisor")
 
+    # Legacy Consent form uses direct signature-date columns on the source table.
+    # Keep this fallback so stale/incomplete Forms2Process metadata does not emit NULLs.
+    if table_name == "ConsentToTreatmentWithAnApprovedNarcotic":
+        col_doctor = col_doctor or "DoctorSignatureDate"
+        col_patient = col_patient or "PatientSignatureDate"
+        col_staff = col_staff or "StaffSignatureDate"
+
     if str(table_name).strip().lower() == "admissionassessment":
         print("AdmissionAssessment loop values:")
         print("Patient =", col_patient)
@@ -1644,7 +1651,7 @@ for _, xf in f2p_df.iterrows():
             f"FROM {tbl('tblORDERREQ')}\n"
             f"WHERE {test_filter}\n"
         )
-        if date_filter:
+        if date_filter and wrkdt:
             block += (
                 f"  AND (DateAdded >= '{wrkdt}'"
                 f" OR ISNULL(statusDate, DateAdded) >= '{wrkdt}')\n"
@@ -1707,7 +1714,7 @@ for _, xf in f2p_df.iterrows():
             f"  FROM {tbl('tblTP17REVIEW')}\n"
             f") tp\n"
         )
-        if date_filter:
+        if date_filter and wrkdt:
             # 7-column date filter for TP17REVIEW
             block += (
                 f"WHERE (CreatedOn >= '{wrkdt}'\n"
@@ -1920,12 +1927,12 @@ for _, xf in f2p_df.iterrows():
                 print(f"  WARN: MNComprehensiveAssessmentSocialHistory not found — b sig cols will be null")
 
         # Date filter WHERE clause
-        if date_filter and modified_on and str(modified_on) not in ("", "nan", "None"):
+        if date_filter and wrkdt and modified_on and str(modified_on) not in ("", "nan", "None"):
             block += (
                 f"WHERE a.{created_on} >= '{wrkdt}'\n"
                 f"   OR ISNULL(a.{modified_on}, a.{created_on}) >= '{wrkdt}'\n"
             )
-        elif date_filter:
+        elif date_filter and wrkdt:
             block += f"WHERE a.{created_on} >= '{wrkdt}'\n"
 
         strCmd += block

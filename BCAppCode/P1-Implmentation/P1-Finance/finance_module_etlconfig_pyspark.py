@@ -9,7 +9,9 @@ from delta.tables import DeltaTable
 
 etlconfig_table = "bhg_bronze.meta.etlconfig"
 
-created_by = "Harsha"
+# Naming standard: DEV_<first two letters of developer name>, uppercase.
+created_by = "DEV_HA"
+finance_config_ids = (46, 47, 48)
 environment_name = "DEV"
 trigger_type = "SCHEDULE"
 trigger_frequency = "DAILY"
@@ -122,6 +124,14 @@ DeltaTable.forName(spark, etlconfig_table).alias("target") \
     .whenMatchedUpdate(set=etl_update) \
     .whenNotMatchedInsert(values=etl_insert) \
     .execute()
+
+# Merge preserves CreatedBy on matched rows; normalize audit columns for finance configs.
+finance_config_filter = ", ".join(str(config_id) for config_id in finance_config_ids)
+spark.sql(f"""
+UPDATE {etlconfig_table}
+SET CreatedBy = '{created_by}', ModifiedBy = '{created_by}'
+WHERE ConfigId IN ({finance_config_filter})
+""")
 
 spark.sql("""
 SELECT

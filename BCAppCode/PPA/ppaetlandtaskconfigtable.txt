@@ -1,721 +1,1374 @@
 ETLConfig three rows..
 
 ConfigId	ConfigName	PipelineName	PipelinePath	TransformationModule	SourceSystem	SourceType	TargetName	EnvironmentName	PipelineDependency	ExecutionSequence	TriggerType	TriggerFrequency	TriggeredBy	IsActive	ConnectionConfig	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy
-76	SAMMS PatientPreAdmission Bronze Pipeline	pl_ppa	NULL	NULL	SAMMS	DATA BASE	BR	DEV	NULL	1	SCHEDULE	DAILY	Fabric	1	NULL	2026-06-18 19:04:16.005165	Prasanna	2026-06-18 19:04:16.005165	Prasanna
-78	SAMMS PatientPreAdmission Gold Pipeline	pl_ppa	NULL	NULL	Fabric	Lakehouse	GL	DEV	SAMMS PatientPreAdmission Silver Pipeline	3	SCHEDULE	DAILY	Fabric	1	NULL	2026-06-18 18:58:52.878978	Prasanna	2026-06-18 18:58:52.878978	Prasanna
-77	SAMMS PatientPreAdmission Silver Pipeline	pl_ppa	NULL	NULL	Fabric	Lakehouse	SL	DEV	SAMMS PatientPreAdmission Bronze Pipeline	2	SCHEDULE	DAILY	Fabric	1	NULL	2026-06-18 18:56:26.761032	Prasanna	2026-06-18 18:56:26.761032	Prasanna
+76	SAMMS PatientPreAdmission Bronze Pipeline	pl_ppa	NULL	NULL	SAMMS	DATABASE	BR	DEV	NULL	1	SCHEDULE	DAILY	Fabric	1	NULL	2026-06-18 19:04:16.005165	Prasanna	2026-07-29 17:15:43.673850	Harsha
+78	SAMMS PatientPreAdmission Gold Pipeline	pl_ppa	NULL	NULL	Fabric	Lakehouse	GL	DEV	SAMMS PatientPreAdmission Silver Pipeline	3	SCHEDULE	DAILY	Fabric	0	NULL	2026-06-18 18:58:52.878978	Prasanna	2026-07-29 17:15:43.673850	Harsha
+77	SAMMS PatientPreAdmission Silver Pipeline	pl_ppa	NULL	NULL	Fabric	Lakehouse	SL	DEV	SAMMS PatientPreAdmission Bronze Pipeline	2	SCHEDULE	DAILY	Fabric	1	NULL	2026-06-18 18:56:26.761032	Prasanna	2026-07-29 17:15:43.673850	Harsha
 
 
-Bronze:76 Taskconfig
-
-TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
-144388	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	AHK	SAMMS-Ahoskie	Ahoskie
-144389	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B12B	SAMMS-ColoradoSpringsV5	ColoradoSprings
-144390	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B24	SAMMS-PaintsvilleV5	Paintsville
-144391	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B25	SAMMS-PikevilleV5	Pikeville
-144392	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B26	SAMMS-HazardV5	Hazard
-144393	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B27	SAMMS-SavannahV6	Savannah
-144394	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B28	SAMMS-WestPlainesV5	WestPlaines
-144395	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B29	SAMMS-PoplarBluffV5	PoplarBluff
-144396	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B30	SAMMS-KCNv5	KCN
-144397	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B31	SAMMS-DyersburgV5	Dyersburg
-144398	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B33	SAMMS-Paducah	Paducah
-144399	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B34	SAMMS-CorbinV5	Corbin
-144400	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B35	SAMMS-LexingtonV5	Lexington
-144401	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B35A	SAMMS-BereaV5	Berea
-144402	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B36	SAMMS-AshevilleV5	Asheville
-144403	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B37	SAMMS-ClydeV5	Clyde
-144404	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B38	SAMMS-SpartanburgV5	Spartanburg
-144405	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B39	SAMMS-AikenV5	Aiken
-144406	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B41	SAMMS-ChesapeakeV5	Chesapeake
-144407	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B42	SAMMS-VirginiaBeachV5	VirginiaBeach
-144408	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B42A	SAMMS-NewportNewsV5	NewportNews
-144409	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B42B	SAMMS-FranklinV5	Franklin
-144410	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B42C	SAMMS-GlenAllenV5	GlenAllen
-144411	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B42D	SAMMS-ChesapeakeSouthV5	ChesapeakeSouth
-144412	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B44	SAMMS-AlbanyV5	Albany
-144413	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B45	SAMMS-TiftonV5	Tifton
-144414	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B46	SAMMS-WashingtonDCv5	WashingtonDC
-144415	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B47	SAMMS-MobileV5	Mobile
-144416	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B48	SAMMS-TuscaloosaV5	Tuscaloosa
-144417	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B51	SAMMS-NorthLittleRockV6	NorthLittleRock
-144418	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B52	SAMMS-JacksonGAV5	JacksonGA
-144419	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B54	SAMMS-GadsdenV5	Gadsden
-144420	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B55	SAMMS-ShoalsV5	Shoals
-144421	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B57	SAMMS-Pawtucket	Pawtucket
-144422	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B57A	SAMMS-Johnston	Johnston
-144423	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B57B	SAMMS-Middletown	Middletown
-144424	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B57C	SAMMS-Providence	Providence
-144425	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B57D	SAMMS-Westerly	Westerly
-144426	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B66A	SAMMS-Bremen	Bremen
-144427	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B72	SAMMS-Mobile-OBOT	Mobile-OBOT
-144428	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B73	SAMMS-Montgomery	Montgomery
-144429	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B75	SAMMS-LawrenceV6	Lawrence
-144430	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	B76	SAMMS-Huntsville-OBOT	Huntsville-OBOT
-144431	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	BAT	SAMMS-Batesville	Batesville
-144432	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	BG	SAMMS-BowlingGreen	BowlingGreen
-144433	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	BOI	SAMMS-Boise	Boise
-144434	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	1	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	CBC	SAMMS-CoeurdAleneV6	CoeurdAlene
-144435	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	CON	SAMMS-Conway	Conway
-144436	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	D07	SAMMS-KnoxvilleV6	Knoxville
-144437	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	D08	SAMMS-MadisonV6	Madison
-144438	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	D09	SAMMS-MurfreesboroV6	Murfreesboro
-144439	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DA	SAMMS-Davenport	Davenport
-144440	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DM	SAMMS-DesMoines	DesMoines
-144441	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-CO	SAMMS-ColumbiaV5	Columbia
-144442	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-KC	SAMMS-KCv5	KC
-144443	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-KVB	SAMMS-KVBv5	KVB
-144444	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-KVC	SAMMS-KVCv5	KVC
-144445	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-NOLA	SAMMS-NOLAv5	NOLA
-144446	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	DRD-SF	SAMMS-SFv5	SF
-144447	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	ELC	SAMMS-ElizabethCity	ElizabethCity
-144448	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	ET	SAMMS-Elizabethtown	Elizabethtown
-144449	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	FAY	SAMMS-Fayetteville	Fayetteville
-144450	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	FR	SAMMS-Frankfort	Frankfort
-144451	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	FS	SAMMS-FortSmith	FortSmith
-144452	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	FW	SAMMS-FortWayne	FortWayne
-144453	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	GAL	SAMMS-Gaylord	Gaylord
-144454	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	Global	SAMMSGLOBAL	NULL
-144455	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	HGT	SAMMS-Hagerstown	Hagerstown
-144456	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	HNT	SAMMS-Huntsville	Huntsville
-144457	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	1	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	HS	SAMMS-HotSprings	HotSprings
-144458	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	JON	SAMMS-Jonesboro	Jonesboro
-144459	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	LAN	SAMMS-Lansing	Lansing
-144460	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	LO	SAMMS-Louisville	Louisville
-144461	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	LV1	SAMMS-Cheyenne	Cheyenne
-144462	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	LV2	SAMMS-DesertInn	DesertInn
-144463	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	LV3	SAMMS-McDaniel	McDaniel
-144464	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	MNRE	SAMMS-Monroe	Monroe
-144465	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	MP	SAMMS-MtPleasant	MtPleasant
-144466	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	MRD	SAMMS-Meridian	Meridian
-144467	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	NC	SAMMS-NorthCharleston	NorthCharleston
-144468	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	NLR	SAMMS-NLROBOT	NLROBOT
-144469	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	PH	SAMMS-Phoenix	Phoenix
-144470	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	RE	SAMMS-Reno	Reno
-144471	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	RMD	SAMMS-Richmond	Richmond
-144472	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	SFN	SAMMS-SFNv5	SFN
-144473	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	SHP	SAMMS-Shreveport	Shreveport
-144474	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	STN	SAMMS-Staunton	Staunton
-144475	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	STVN	SAMMS-Stevenson	Stevenson
-144476	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TE	SAMMS-Tempe	Tempe
-144477	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TEX	SAMMS-Texarkana	Texarkana
-144478	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TTCA	SAMMS-BessemerV5	Bessemer
-144479	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TTCB	SAMMS-CullmanV5	Cullman
-144480	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	1	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TTCC	SAMMS-GrandBay	GrandBay
-144481	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	TU	SAMMS-Tucson	Tucson
-144482	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V1	SAMMS-VCPHCS-I-MemphisV5	VCPHCS-I-Memphis
-144483	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V10	SAMMS-BoulderV5	Boulder
-144484	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V10A	SAMMS-FortCollinsV5	FortCollins
-144485	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V11	SAMMS-VCPHCS-XI-NorthDenverV5	VCPHCS-XI-NorthDenver
-144486	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V12	SAMMS-VCPHCS-XII-DowntownDenverV5	VCPHCS-XII-DowntownDenver
-144487	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V12A	SAMMS-CentennialV5	Centennial
-144488	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V14	SAMMS-VCPHCS-XIV-BridgewayV5	VCPHCS-XIV-Bridgeway
-144489	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V15	SAMMS-JoplinV5	Joplin
-144490	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V17	SAMMS-ColumbiaTNv5	ColumbiaTN
-144491	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V19	SAMMS-JacksonV5	Jackson
-144492	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V20	SAMMS-ParisV5	Paris
-144493	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V21	SAMMS-RaleighV5	Raleigh
-144494	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V5	SAMMS-NONTCv5	NONTC
-144495	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V5B	SAMMS-HoumaV6	Houma
-144496	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V6	SAMMS-LCv5	LC
-144497	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V8	SAMMS-VCPHCS-VIII-MemphisV5	VCPHCS-VIII-Memphis
-144498	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	V9	SAMMS-NashvilleV5	Nashville
-144499	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	VBRA	SAMMS-BrainerdV6	Brainerd
-144500	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	VBRP	SAMMS-BrooklynParkV6	BrooklynPark
-144501	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	VMIN	SAMMS-MinneapolisV6	Minneapolis
-144502	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	VWBY	SAMMS-WoodburyV6	Woodbury
-144503	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	15	bhg_Bronze.PatientPreAdmission	br_SF_PatientPreAdmission	NULL	1	3	300	{
-      "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
-      "ingest_column": "IngestRunId",
-      "site_column": "SiteCode",
-      "database_column": "SourceDatabase"
-    }	NULL	0	2026-07-26 13:15:33.051710	Prasanna	2026-07-26 13:15:33.051710	Prasanna	NULL	WIL	SAMMS-Wilson	Wilson
+Bronze:76,77,78 Taskconfig
 
 
-
-silver and gold
-
-TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName
-144384	77	PPA Silver	NULL	SFPatientPreAdmission	br_SF_PatientPreAdmission	0	NULL	APPEND	0	NULL	0	bhg_silver.pats	sl_sf_patientpreadmission	NULL	2	3	300	{
-          "full_table": "bhg_silver.pats.sl_sf_patientpreadmission",
-          "dq_keys": ["SiteCode", "ID"]
-        }	NULL	1	2026-06-24 19:43:00.386177	Prasanna	2026-06-24 19:43:00.386177	Prasanna	NULL	NULL	NULL	NULL
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName	ScheduleFrequency	ScheduleExpression	LastRunDate
 144385	78	PPA Gold	NULL	SFPatientPreAdmission	sl_sf_patientpreadmission	0	NULL	UPSERT	0	NULL	0	bhg_gold.pats	SFPatientPreAdmission	NULL	3	3	300	{
           "full_table": "bhg_gold.pats.SFPatientPreAdmission",
           "dq_keys": ["SiteCode", "ID"]
-        }	NULL	1	2026-06-24 19:45:54.127131	Prasanna	2026-06-24 19:45:54.127131	Prasanna	NULL	NULL	NULL	NULL
+        }	NULL	0	2026-06-24 19:45:54.127131	DEV_HT	2026-08-25 10:04:10.056193	DEV_JR	NULL	NULL	NULL	NULL	Daily	NULL	NULL
+144460	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	LO	SAMMS-Louisville	Louisville	Daily	NULL	2026-08-24 20:51:42.788118
+144392	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	B26	SAMMS-HazardV5	Hazard	Daily	NULL	2026-08-24 20:51:42.788118
+144445	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	DRD-NOLA	SAMMS-NOLAv5	NOLA	Daily	NULL	2026-08-24 20:51:42.788118
+144500	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	VBRP	SAMMS-BrooklynParkV6	BrooklynPark	Daily	NULL	2026-08-24 20:51:42.788118
+144452	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	FW	SAMMS-FortWayne	FortWayne	Daily	NULL	2026-08-24 20:51:42.788118
+144415	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	B47	SAMMS-MobileV5	Mobile	Daily	NULL	2026-08-24 20:51:42.788118
+144400	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	B35	SAMMS-LexingtonV5	Lexington	Daily	NULL	2026-08-24 20:51:42.788118
+144384	77	PPA Silver	NULL	SFPatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	0	NULL	MERGE	1	NULL	0	pats	tbl_SF_PatientPreAdmission	bhg_silver.pats.tbl_SF_PatientPreAdmission	2	3	300	{
+  "full_table": "bhg_silver.pats.tbl_SF_PatientPreAdmission",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-06-24 19:43:00.386177	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	NULL	NULL	NULL	Daily	NULL	2026-08-24 20:51:42.788118
+144399	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	B34	SAMMS-CorbinV5	Corbin	Daily	NULL	2026-08-24 20:51:42.788118
+144414	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	B46	SAMMS-WashingtonDCv5	WashingtonDC	Daily	NULL	2026-08-24 20:51:42.788118
+144502	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	175	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	1	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 20:51:42.788118	Fabric	NULL	VWBY	SAMMS-WoodburyV6	Woodbury	Daily	NULL	2026-08-24 20:51:42.788118
+144503	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	WIL	SAMMS-Wilson	Wilson	Daily	NULL	NULL
+144501	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	VMIN	SAMMS-MinneapolisV6	Minneapolis	Daily	NULL	NULL
+144499	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	VBRA	SAMMS-BrainerdV6	Brainerd	Daily	NULL	NULL
+144498	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V9	SAMMS-NashvilleV5	Nashville	Daily	NULL	NULL
+144497	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V8	SAMMS-VCPHCS-VIII-MemphisV5	VCPHCS-VIII-Memphis	Daily	NULL	NULL
+144496	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V6	SAMMS-LCv5	LC	Daily	NULL	NULL
+144495	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V5B	SAMMS-HoumaV6	Houma	Daily	NULL	NULL
+144494	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V5	SAMMS-NONTCv5	NONTC	Daily	NULL	NULL
+144493	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V21	SAMMS-RaleighV5	Raleigh	Daily	NULL	NULL
+144492	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V20	SAMMS-ParisV5	Paris	Daily	NULL	NULL
+144491	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V19	SAMMS-JacksonV5	Jackson	Daily	NULL	NULL
+144490	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V17	SAMMS-ColumbiaTNv5	ColumbiaTN	Daily	NULL	NULL
+144489	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V15	SAMMS-JoplinV5	Joplin	Daily	NULL	NULL
+144488	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V14	SAMMS-VCPHCS-XIV-BridgewayV5	VCPHCS-XIV-Bridgeway	Daily	NULL	NULL
+144487	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V12A	SAMMS-CentennialV5	Centennial	Daily	NULL	NULL
+144486	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V12	SAMMS-VCPHCS-XII-DowntownDenverV5	VCPHCS-XII-DowntownDenver	Daily	NULL	NULL
+144485	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V11	SAMMS-VCPHCS-XI-NorthDenverV5	VCPHCS-XI-NorthDenver	Daily	NULL	NULL
+144484	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V10A	SAMMS-FortCollinsV5	FortCollins	Daily	NULL	NULL
+144483	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V10	SAMMS-BoulderV5	Boulder	Daily	NULL	NULL
+144482	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	V1	SAMMS-VCPHCS-I-MemphisV5	VCPHCS-I-Memphis	Daily	NULL	NULL
+144481	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TU	SAMMS-Tucson	Tucson	Daily	NULL	NULL
+144480	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TTCC	SAMMS-GrandBay	GrandBay	Daily	NULL	NULL
+144479	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TTCB	SAMMS-CullmanV5	Cullman	Daily	NULL	NULL
+144478	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TTCA	SAMMS-BessemerV5	Bessemer	Daily	NULL	NULL
+144477	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TEX	SAMMS-Texarkana	Texarkana	Daily	NULL	NULL
+144476	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	TE	SAMMS-Tempe	Tempe	Daily	NULL	NULL
+144475	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	STVN	SAMMS-Stevenson	Stevenson	Daily	NULL	NULL
+144474	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	STN	SAMMS-Staunton	Staunton	Daily	NULL	NULL
+144473	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	SHP	SAMMS-Shreveport	Shreveport	Daily	NULL	NULL
+144472	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	SFN	SAMMS-SFNv5	SFN	Daily	NULL	NULL
+144471	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	RMD	SAMMS-Richmond	Richmond	Daily	NULL	NULL
+144470	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	RE	SAMMS-Reno	Reno	Daily	NULL	NULL
+144469	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	PH	SAMMS-Phoenix	Phoenix	Daily	NULL	NULL
+144468	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	NLR	SAMMS-NLROBOT	NLROBOT	Daily	NULL	NULL
+144467	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	NC	SAMMS-NorthCharleston	NorthCharleston	Daily	NULL	NULL
+144466	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	MRD	SAMMS-Meridian	Meridian	Daily	NULL	NULL
+144465	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	MP	SAMMS-MtPleasant	MtPleasant	Daily	NULL	NULL
+144464	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	MNRE	SAMMS-Monroe	Monroe	Daily	NULL	NULL
+144463	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	LV3	SAMMS-McDaniel	McDaniel	Daily	NULL	NULL
+144462	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	LV2	SAMMS-DesertInn	DesertInn	Daily	NULL	NULL
+144461	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	LV1	SAMMS-Cheyenne	Cheyenne	Daily	NULL	NULL
+144459	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	LAN	SAMMS-Lansing	Lansing	Daily	NULL	NULL
+144458	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	JON	SAMMS-Jonesboro	Jonesboro	Daily	NULL	NULL
+144457	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	HS	SAMMS-HotSprings	HotSprings	Daily	NULL	NULL
+144456	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	HNT	SAMMS-Huntsville	Huntsville	Daily	NULL	NULL
+144455	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	HGT	SAMMS-Hagerstown	Hagerstown	Daily	NULL	NULL
+144453	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	GAL	SAMMS-Gaylord	Gaylord	Daily	NULL	NULL
+144451	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	FS	SAMMS-FortSmith	FortSmith	Daily	NULL	NULL
+144450	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	FR	SAMMS-Frankfort	Frankfort	Daily	NULL	NULL
+144449	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	FAY	SAMMS-Fayetteville	Fayetteville	Daily	NULL	NULL
+144448	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	ET	SAMMS-Elizabethtown	Elizabethtown	Daily	NULL	NULL
+144447	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	ELC	SAMMS-ElizabethCity	ElizabethCity	Daily	NULL	NULL
+144446	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DRD-SF	SAMMS-SFv5	SF	Daily	NULL	NULL
+144444	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DRD-KVC	SAMMS-KVCv5	KVC	Daily	NULL	NULL
+144443	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DRD-KVB	SAMMS-KVBv5	KVB	Daily	NULL	NULL
+144442	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DRD-KC	SAMMS-KCv5	KC	Daily	NULL	NULL
+144441	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DRD-CO	SAMMS-ColumbiaV5	Columbia	Daily	NULL	NULL
+144440	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DM	SAMMS-DesMoines	DesMoines	Daily	NULL	NULL
+144439	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	DA	SAMMS-Davenport	Davenport	Daily	NULL	NULL
+144438	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	D09	SAMMS-MurfreesboroV6	Murfreesboro	Daily	NULL	NULL
+144437	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	D08	SAMMS-MadisonV6	Madison	Daily	NULL	NULL
+144436	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	D07	SAMMS-KnoxvilleV6	Knoxville	Daily	NULL	NULL
+144435	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	CON	SAMMS-Conway	Conway	Daily	NULL	NULL
+144434	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	CBCO	SAMMS-CoeurdAleneV6	CoeurdAlene	Daily	NULL	NULL
+144433	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	BOI	SAMMS-Boise	Boise	Daily	NULL	NULL
+144432	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	BG	SAMMS-BowlingGreen	BowlingGreen	Daily	NULL	NULL
+144431	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	BAT	SAMMS-Batesville	Batesville	Daily	NULL	NULL
+144430	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B76	SAMMS-Huntsville-OBOT	Huntsville-OBOT	Daily	NULL	NULL
+144429	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B75	SAMMS-LawrenceV6	Lawrence	Daily	NULL	NULL
+144428	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B73	SAMMS-Montgomery	Montgomery	Daily	NULL	NULL
+144427	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B72	SAMMS-Mobile-OBOT	Mobile-OBOT	Daily	NULL	NULL
+144426	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B66A	SAMMS-Bremen	Bremen	Daily	NULL	NULL
+144425	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B57D	SAMMS-Westerly	Westerly	Daily	NULL	NULL
+144424	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B57C	SAMMS-Providence	Providence	Daily	NULL	NULL
+144423	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B57B	SAMMS-Middletown	Middletown	Daily	NULL	NULL
+144422	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B57A	SAMMS-Johnston	Johnston	Daily	NULL	NULL
+144421	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B57	SAMMS-Pawtucket	Pawtucket	Daily	NULL	NULL
+144420	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B55	SAMMS-ShoalsV5	Shoals	Daily	NULL	NULL
+144419	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B54	SAMMS-GadsdenV5	Gadsden	Daily	NULL	NULL
+144418	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B52	SAMMS-JacksonGAV5	JacksonGA	Daily	NULL	NULL
+144417	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B51	SAMMS-NorthLittleRockV6	NorthLittleRock	Daily	NULL	NULL
+144416	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B48	SAMMS-TuscaloosaV5	Tuscaloosa	Daily	NULL	NULL
+144413	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B45	SAMMS-TiftonV5	Tifton	Daily	NULL	NULL
+144412	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B44	SAMMS-AlbanyV5	Albany	Daily	NULL	NULL
+144411	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B42D	SAMMS-ChesapeakeSouthV5	ChesapeakeSouth	Daily	NULL	NULL
+144410	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B42C	SAMMS-GlenAllenV5	GlenAllen	Daily	NULL	NULL
+144409	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B42B	SAMMS-FranklinV5	Franklin	Daily	NULL	NULL
+144408	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B42A	SAMMS-NewportNewsV5	NewportNews	Daily	NULL	NULL
+144407	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B42	SAMMS-VirginiaBeachV5	VirginiaBeach	Daily	NULL	NULL
+144406	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B41	SAMMS-ChesapeakeV5	Chesapeake	Daily	NULL	NULL
+144405	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B39	SAMMS-AikenV5	Aiken	Daily	NULL	NULL
+144404	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B38	SAMMS-SpartanburgV5	Spartanburg	Daily	NULL	NULL
+144403	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B37	SAMMS-ClydeV5	Clyde	Daily	NULL	NULL
+144402	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B36	SAMMS-AshevilleV5	Asheville	Daily	NULL	NULL
+144401	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B35A	SAMMS-BereaV5	Berea	Daily	NULL	NULL
+144398	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B33	SAMMS-Paducah	Paducah	Daily	NULL	NULL
+144397	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B31	SAMMS-DyersburgV5	Dyersburg	Daily	NULL	NULL
+144396	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B30	SAMMS-KCNv5	KCN	Daily	NULL	NULL
+144395	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B29	SAMMS-PoplarBluffV5	PoplarBluff	Daily	NULL	NULL
+144394	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B28	SAMMS-WestPlainesV5	WestPlaines	Daily	NULL	NULL
+144393	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B27	SAMMS-SavannahV6	Savannah	Daily	NULL	NULL
+144391	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B25	SAMMS-PikevilleV5	Pikeville	Daily	NULL	NULL
+144390	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B24	SAMMS-PaintsvilleV5	Paintsville	Daily	NULL	NULL
+144389	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	B12B	SAMMS-ColoradoSpringsV5	ColoradoSprings	Daily	NULL	NULL
+144388	76	PPA Bronze	NULL	SFPatientPreAdmission	dbo.SF_PatientPreAdmission	0	NULL	INCREMENTAL	0	NULL	120	PatientPreAdmission	br_SF_PatientPreAdmission	bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission	1	3	300	{
+  "full_table": "bhg_bronze.PatientPreAdmission.br_SF_PatientPreAdmission",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "ID"]
+}	NULL	0	2026-07-26 13:15:33.051710	DEV_HT	2026-08-24 15:04:49.250475	DEV_HT	NULL	AHK	SAMMS-Ahoskie	Ahoskie	Daily	NULL	NULL
+
+
+
+column name:
+
+--- COPY BELOW (tab-separated) ---
+OrdinalPosition	ColumnName	SparkDataType	Nullable
+1	SiteCode	string	True
+2	ID	int	True
+3	PatientID	int	True
+4	RegistrationModeID	int	True
+5	IsIntakeAppointmentScheduled	boolean	True
+6	IntakeAppointmentScheduledDateTime	timestamp	True
+7	ReferralSourceID	int	True
+8	ProgramID	int	True
+9	OpiatesUsageNoOfYears	int	True
+10	OpiatesUsageNoOfMonths	int	True
+11	DrugChoiceID	int	True
+12	DrugAdministrationTypeID	int	True
+13	IllicitSubstanceOther	string	True
+14	IllicitSubstanceOtherMgPerDay	int	True
+15	IsCurrentlyInOpiateProgram	boolean	True
+16	CurrentOpiateProgramLocation	string	True
+17	CurrentOpiateProgramNoOfYears	int	True
+18	CurrentOpiateProgramNoOfMonths	int	True
+19	CurrentOpiateProgramDose	string	True
+20	IsPatientAtPainManagementClinic	boolean	True
+21	PainManagementClinicLocation	string	True
+22	PainManagementClinicFromDate	timestamp	True
+23	PainManagementClinicToDate	timestamp	True
+24	IsHavingLegalPrescription	boolean	True
+25	IsAnyLegalPrescriptionForPain	boolean	True
+26	IsAnyOngoingMedicalCondition	boolean	True
+27	IsCurrentlyPregnant	boolean	True
+28	IsSuicidalThoughtWithin72Hours	boolean	True
+29	SuicidalThoughtIntentScale	int	True
+30	IsHavingPlanForHowToCommitSuicide	boolean	True
+31	IsHomicidalThoughtWithin72Hours	boolean	True
+32	IsRecentlyReleasedFromPenal	boolean	True
+33	ReleasedFromPenalDate	timestamp	True
+34	IsSpecialAccommodationRequired	boolean	True
+35	IsAbleToAttendTreatementCenterDaily	boolean	True
+36	IsAbleToPayIntakeAndWeeklyFee	boolean	True
+37	IsEligibleForFurtherAssessment	boolean	True
+38	IsReferralOffered	boolean	True
+39	ReferralOfferedList	string	True
+40	RejectedReferralOffered	boolean	True
+41	ReasonSeekingTreatment	string	True
+42	IsPatientAdmitted	boolean	True
+43	IsParticipitatingInOtherOpioidProgram	boolean	True
+44	IsPresentedWithoutIDProof	boolean	True
+45	IsPresentedAtCloseOfDay	boolean	True
+46	IsRequestedAdmissionDrUnavailable	boolean	True
+47	RequestedAdmissionDay	int	True
+48	RequestedAdmissionAMOrPM	boolean	True
+49	IsUnableToPay	boolean	True
+50	IsUnableToProvideEvidenceofAddiction	boolean	True
+51	IsAddictionToUnstableNeeding	boolean	True
+52	IsImpairment	boolean	True
+53	IsMedicalProblemsNeedingStabilization	boolean	True
+54	IsPsychiatricProblemNeedingInpatientTreatment	boolean	True
+55	IsServiceDeclined	boolean	True
+56	IsOther	boolean	True
+57	OtherDescription	string	True
+58	Comments	string	True
+59	Active	boolean	True
+60	CreatedBy	string	True
+61	CreatedOn	timestamp	True
+62	LastUpdatedBy	string	True
+63	LastUpdateOn	timestamp	True
+64	PreAdmissionDate	timestamp	True
+65	LegalPrescription1	string	True
+66	LegalPrescription2	string	True
+67	LegalPrescription3	string	True
+68	MedicalCondition1	string	True
+69	MedicalCondition2	string	True
+70	MedicalCondition3	string	True
+71	DrugofchoiceAdministered	string	True
+72	requestedAdmissionDayFri	boolean	True
+73	requestedAdmissionDayMon	boolean	True
+74	requestedAdmissionDayThu	boolean	True
+75	requestedAdmissionDayTue	boolean	True
+76	requestedAdmissionDayWed	boolean	True
+77	AccomodationNeeded	string	True
+78	AcknowledgeClientSignature	string	True
+79	AcknowledgeClientSignatureDate	timestamp	True
+80	AcknowledgeClientSignatureDateP	timestamp	True
+81	AcknowledgeClientSignatureP	string	True
+82	AcknowledgeWitnessSignature	string	True
+83	AcknowledgeWitnessSignatureDate	timestamp	True
+84	AcknowledgeWitnessSignatureDateP	timestamp	True
+85	AcknowledgeWitnessSignatureP	string	True
+86	ActiveP	boolean	True
+87	AlcoholAmount	string	True
+88	AlcoholLastDrink	string	True
+89	ApplicantName	string	True
+90	AreYouCurrentlyPregnant	int	True
+91	Biopsychosocialassessment	boolean	True
+92	BiopsychosocialassessmentP	boolean	True
+93	BiopsychosocialText	string	True
+94	BiopsychosocialTextP	string	True
+95	BringIDProof	boolean	True
+96	BringInsuranceCard	boolean	True
+97	ChronicMedicalCondition	string	True
+98	ClientDetails	string	True
+99	ClientNameP	string	True
+100	ClinicInfo	boolean	True
+101	Created	timestamp	True
+102	CreatedByP	string	True
+103	CreatedP	timestamp	True
+104	CurrentlyMedicatedTreatmentOther	string	True
+105	CurrentOpiateProgramFrom	timestamp	True
+106	CurrentOpiateProgramTo	timestamp	True
+107	CurrentOpiateWhatProgram	string	True
+108	CurrntlyRecevingTreatmentForCondition	boolean	True
+109	DailyTime	string	True
+110	DataFormId	int	True
+111	Date	timestamp	True
+112	DateP	timestamp	True
+113	daysafterdischarge	boolean	True
+114	daysafterdischargeP	boolean	True
+115	DeniedDuetoCapacity	boolean	True
+116	describeother	string	True
+117	describeother1	string	True
+118	describeother1P	string	True
+119	describeother2	string	True
+120	describeother2P	string	True
+121	describeotherP	string	True
+122	Diagnosis	boolean	True
+123	DiagnosisP	boolean	True
+124	DiagnosisText	string	True
+125	DiagnosisTextP	string	True
+126	DischargeReasonsText	string	True
+127	DischargeReasonsTextP	string	True
+128	DischargeSummary	boolean	True
+129	DischargeSummaryP	boolean	True
+130	DischargeSummaryText	string	True
+131	DischargeSummaryTextP	string	True
+132	DoctorSignature	string	True
+133	DoctorSignatureDate	timestamp	True
+134	dropdownPresentlyInPainScale1to10	int	True
+135	DrugApplicantTime	string	True
+136	DrugDaily	string	True
+137	DrugLastUsed	string	True
+138	DrugTaken	string	True
+139	DrugUsing	string	True
+140	EnrollmentId	int	True
+141	GynDoctorProviderName	string	True
+142	GynDoctorProviderPhone	string	True
+143	HasGynDoctor	boolean	True
+144	ImmediateAssessment	string	True
+145	ImmediateAssessment911	string	True
+146	InformationToObtained	int	True
+147	InformationToObtainedFax	boolean	True
+148	InformationToObtainedFaxP	boolean	True
+149	InformationToObtainedP	int	True
+150	InformationToObtainedVerbal	boolean	True
+151	InformationToObtainedVerbalP	boolean	True
+152	InformationToObtainedWritten	boolean	True
+153	InformationToObtainedWrittenP	boolean	True
+154	InitialSceeningParticipationText	string	True
+155	InitialSceeningParticipationTextP	string	True
+156	InitialScreeningSummaryText	string	True
+157	InitialScreeningSummaryTextP	string	True
+158	InsuranceDescription	string	True
+159	InsuranceType	string	True
+160	IntakeProgram	string	True
+161	IntakeProgramDate	timestamp	True
+162	IsAllergies	boolean	True
+163	IsAmPm	boolean	True
+164	IsAnyPrescriptionForPain	boolean	True
+165	IsApplicantPregnant	boolean	True
+166	IsBehaviorallyunstabldangerous	boolean	True
+167	IsClinicAddress	boolean	True
+168	IsCSUAtFullCapacity	boolean	True
+169	IsDeleted	boolean	True
+170	IsDetox	boolean	True
+171	IsDidnotMeetMedicalNecessity	boolean	True
+172	IsDrinkingAlcohol	boolean	True
+173	IsEVSCompleted	boolean	True
+174	IsInsurance	boolean	True
+175	IsInsuranceAvailable	boolean	True
+176	IsInsuranceCard	boolean	True
+177	IsMaintenance	boolean	True
+178	IsMedicalEmergency	boolean	True
+179	isOverTheCounterMedications	boolean	True
+180	IsPackets	boolean	True
+181	IsPastTreatmentHistory	boolean	True
+182	IsPhysicalHealthUnstable	boolean	True
+183	IsPictureId	boolean	True
+184	IsPlanSendTime	boolean	True
+185	IsPreviousMentalHealthTreatment	boolean	True
+186	IsTakingPrescriptionMedication	boolean	True
+187	IsTriagedtoMedicalDetoxFacility	boolean	True
+188	LastUsedTime	string	True
+189	MedicalConditionsProviderName1	string	True
+190	MedicalConditionsProviderName2	string	True
+191	MedicalConditionsProviderPhone1	string	True
+192	MedicalConditionsProviderPhone2	string	True
+193	MedicalEmergencyDescribe	string	True
+194	Medicalinformation	boolean	True
+195	MedicalinformationP	boolean	True
+196	MedicalText	string	True
+197	MedicalTextP	string	True
+198	MedicationConditions	string	True
+199	MedicationName1	string	True
+200	MedicationName2	string	True
+201	MedicationName3	string	True
+202	MedicationName4	string	True
+203	MedicationName5	string	True
+204	MentalHealthTreatmentDescription	string	True
+205	Modified	timestamp	True
+206	ModifiedBy	string	True
+207	ModifiedByP	string	True
+208	ModifiedP	timestamp	True
+209	NeedReferal	string	True
+210	ObservationComments	string	True
+211	OfficeUseTime	int	True
+212	OfficeUseWhy	string	True
+213	OngoingMedicalConditionsWha	string	True
+214	other	boolean	True
+215	other2	boolean	True
+216	other2P	boolean	True
+217	OtherCode	boolean	True
+218	otherP	boolean	True
+219	OtherText	string	True
+220	OtherTextP	string	True
+221	OverTheCounterMedicationsText1	string	True
+222	Participationininitialsceeningprocess	boolean	True
+223	ParticipationininitialsceeningprocessP	boolean	True
+224	PatientSignature	string	True
+225	PatientSignatureDate	timestamp	True
+226	PersonForIntakeProcess	boolean	True
+227	Phone1	string	True
+228	Phone2	string	True
+229	Phone3	string	True
+230	Phone4	string	True
+231	Phone5	string	True
+232	PlanOfSuicide	boolean	True
+233	PlanOnSpendingTimeAtClinic	boolean	True
+234	PreAdd_Address	string	True
+235	Prescriber1	string	True
+236	Prescriber2	string	True
+237	Prescriber3	string	True
+238	Prescriber4	string	True
+239	Prescriber5	string	True
+240	ProgressRecoveryGoalsText	string	True
+241	ProgressRecoveryGoalsTextP	string	True
+242	Progresstowardsrecoverygoals	boolean	True
+243	ProgresstowardsrecoverygoalsP	boolean	True
+244	ProofOfOpiateDependence	boolean	True
+245	PurposeOfObtainingRelease	int	True
+246	PurposeOfObtainingReleaseP	int	True
+247	Reason	string	True
+248	Reasonsfordischarge	boolean	True
+249	ReasonsfordischargeP	boolean	True
+250	RecentHeadTrauma	boolean	True
+251	Recoveryplansorgoals	boolean	True
+252	RecoveryplansorgoalsP	boolean	True
+253	RecoveryPlansText	string	True
+254	RecoveryPlansTextP	string	True
+255	Referralrecommendations	boolean	True
+256	ReferralrecommendationsP	boolean	True
+257	ReferralRecommendationsText	string	True
+258	ReferralRecommendationsTextP	string	True
+259	ReferredBy	string	True
+260	Relapseepisodes	boolean	True
+261	RelapseepisodesP	boolean	True
+262	RelapseEpisodesText	string	True
+263	RelapseEpisodesTextP	string	True
+264	RevocationClientSignature	string	True
+265	RevocationClientSignatureDate	timestamp	True
+266	RevocationClientSignatureDateP	timestamp	True
+267	RevocationClientSignatureP	string	True
+268	RevocationWitnessSignature	string	True
+269	RevocationWitnessSignatureDate	timestamp	True
+270	RevocationWitnessSignatureDateP	timestamp	True
+271	RevocationWitnessSignatureP	string	True
+272	RNPStaffSign	string	True
+273	RNPStaffSignDate	timestamp	True
+274	SammsProgramID	int	True
+275	SeizureInPast7Days	boolean	True
+276	SetupAppointment	string	True
+277	SignatureDate	timestamp	True
+278	SignatureOfConsenP	string	True
+279	SignatureOfConsent	string	True
+280	SignatureOfConsentP	string	True
+281	SignatureRnpStaff	string	True
+282	SubstanceAbuseWhat	string	True
+283	SubstanceAbuseWhen	string	True
+284	SubstanceAbuseWhere	string	True
+285	Summaryofinitialscreeningprocess	boolean	True
+286	SummaryofinitialscreeningprocessP	boolean	True
+287	SupervisorSignature	string	True
+288	SupervisorSignatureDate	timestamp	True
+289	TakenTime	string	True
+290	TimeFinishingRNtriage	string	True
+291	TimeStartingRNtriage	string	True
+292	Treatmentrecommendations	boolean	True
+293	TreatmentrecommendationsP	boolean	True
+294	TreatmentText	string	True
+295	TreatmentTextP	string	True
+296	TypeOfMedication	int	True
+297	Upondischargefromtreatment	boolean	True
+298	UpondischargefromtreatmentP	boolean	True
+299	Uponreceiptofinformationrequested	boolean	True
+300	UponreceiptofinformationrequestedP	boolean	True
+301	Uponreceiptofpaymentforservicesrendered	boolean	True
+302	UponreceiptofpaymentforservicesrenderedP	boolean	True
+303	Urinalysisresults	boolean	True
+304	UrinalysisresultsP	boolean	True
+305	UrinalysisText	string	True
+306	UrinalysisTextP	string	True
+307	WhatAccomodations	string	True
+308	ParentPreAdmissionId	int	True
+309	IsRequireChildCare	boolean	True
+310	AnswerRangeThree	boolean	True
+311	AnswerRangeSix	boolean	True
+312	AnswerRangeNine	boolean	True
+313	AnswerRangeAbove	boolean	True
+314	IsReliableTransportation	boolean	True
+315	RequireTransportationServices	int	True
+316	IsTransfer	int	True
+317	WhereTransfer	string	True
+318	dropdownNumberOfChildren	int	True
+319	Incarcenated	string	True
+320	ClientAddress	string	True
+321	IsEmployed	boolean	True
+322	IsAttemptedSuicide	boolean	True
+323	IsThoughtsOfKilling	boolean	True
+324	isMentalHealthTreatment	boolean	True
+325	MentalHealthTreatmentWhere	string	True
+326	MentalHealthTreatmentWhen	string	True
+327	MentalHealthTreatmentWhat	string	True
+328	ThoughtsOfHurtingTxt	string	True
+329	SuicideDetailsTxt	string	True
+330	ReliableTransportationTxt	string	True
+331	EmployedYesTxt	string	True
+332	EmployedNoTxt	string	True
+333	IsPlanForHowToHurtSomeElse	boolean	True
+334	PacketTypeID	int	True
+335	UsingOpioids	string	True
+336	TimeOfIntake	boolean	True
+337	SubstanceUseFromDate	timestamp	True
+338	SubstanceUseToDate	timestamp	True
+339	MentalHealthFromDate	timestamp	True
+340	MentalHealthToDate	timestamp	True
+341	ReasonForDenial	int	True
+342	DischargeReason	string	True
+343	ReferedTo	string	True
+344	DateOfStaffSignature	timestamp	True
+345	nameOfWitness	string	True
+346	staffAtHCRC	int	True
+347	SUDinformationMA	int	True
+348	protectedHealthInformationMA	int	True
+349	namedIndividualMA	string	True
+350	namedEntityMA	string	True
+351	namedThirdPartyMA	string	True
+352	namedEntityWithoutTreatmentMA	string	True
+353	namedIndividualPaticipantMA	string	True
+354	genralTreatingproviderrelationshipMA	string	True
+355	purposeOfDisclosureMA	string	True
+356	exclusionsMA	string	True
+357	representativesRelationshiptoPatientMA	string	True
+358	HCRCClinicLocationMA	string	True
+359	AddressMA	string	True
+360	PhoneMA	string	True
+361	FAXMA	string	True
+362	unlessrevokedMA	string	True
+363	istheresubstanceusehistory	boolean	True
+364	iscurrentlypatientpainmanagementmethadone	boolean	True
+365	txtpatientatpainmanagementclinicmethadone	string	True
+366	interestedtransferringetsyes	boolean	True
+367	ispreviouslybeenpatientmedicationassisted	boolean	True
+368	txtpreviouslybeenpatientmedicationassisted	string	True
+369	datepreviouslypatientmedicationassisted	timestamp	True
+370	ispregnant	boolean	True
+371	currentlypregnant	timestamp	True
+372	isplantopaytreatment	int	True
+373	txtplantopaytreatmentprivateinsurance	string	True
+374	txtplantopaytreatmentother	string	True
+375	isdoyouhavepicture	boolean	True
+376	datetimelastopioid	timestamp	True
+377	issymptomsofopioidwithdrawal	boolean	True
+378	txtsymptomsofopioidwithdrawaltrue	string	True
+379	ishadalcoholinlast12hours	boolean	True
+380	txthadanyalcohol	string	True
+381	isprioretspatientyes	boolean	True
+382	prioretspatient	timestamp	True
+383	lastprescription	timestamp	True
+384	ishaveyouhospitalizedinlast30daysyes	boolean	True
+385	txthospitalisedlast30days	string	True
+386	nameOfWitnessQ8	string	True
+387	unlessrevokedQ8	string	True
+388	FAXQ8	string	True
+389	PhoneQ8	string	True
+390	AddressQ8	string	True
+391	HCRCClinicLocationQ8	string	True
+392	representativesRelationshiptoPatientQ8	string	True
+393	exclusionsQ8	string	True
+394	purposeOfDisclosureQ8	string	True
+395	genralTreatingproviderrelationshipQ8	string	True
+396	namedIndividualPaticipantQ8	string	True
+397	namedEntityWithoutTreatmentQ8	string	True
+398	namedThirdPartyQ8	string	True
+399	namedEntityQ8	string	True
+400	namedIndividualQ8	string	True
+401	protectedHealthInformationQ8	int	True
+402	SUDinformationQ8	int	True
+403	staffAtHCRCQ8	int	True
+404	AdditionalDoc	string	True
+405	ChkboxSUDInformationQ2_1	boolean	True
+406	ChkboxSUDInformationQ2_2	boolean	True
+407	ChkboxSUDInformationQ2_3	boolean	True
+408	ChkboxSUDInformationQ2_4	boolean	True
+409	ChkboxSUDInformationQ2_5	boolean	True
+410	ChkboxSUDInformationQ2_6	boolean	True
+411	ChkboxSUDInformationQ2_7	boolean	True
+412	ChkboxSUDInformationQ2_8	boolean	True
+413	ChkboxSUDInformationQ2_9	boolean	True
+414	ChkboxSUDInformationQ2_10	boolean	True
+415	ChkboxSUDInformationQ2_11	boolean	True
+416	ChkboxProtectedHealthInformationQ2_1	boolean	True
+417	ChkboxProtectedHealthInformationQ2_2	boolean	True
+418	ChkboxProtectedHealthInformationQ2_3	boolean	True
+419	ChkboxProtectedHealthInformationQ2_4	boolean	True
+420	ChkboxSUDInformationQ8_1	boolean	True
+421	ChkboxSUDInformationQ8_2	boolean	True
+422	ChkboxSUDInformationQ8_3	boolean	True
+423	ChkboxSUDInformationQ8_4	boolean	True
+424	ChkboxSUDInformationQ8_5	boolean	True
+425	ChkboxSUDInformationQ8_6	boolean	True
+426	ChkboxSUDInformationQ8_7	boolean	True
+427	ChkboxSUDInformationQ8_8	boolean	True
+428	ChkboxSUDInformationQ8_9	boolean	True
+429	ChkboxSUDInformationQ8_10	boolean	True
+430	ChkboxSUDInformationQ8_11	boolean	True
+431	ChkboxProtectedHealthInformationQ8_1	boolean	True
+432	ChkboxProtectedHealthInformationQ8_2	boolean	True
+433	ChkboxProtectedHealthInformationQ8_3	boolean	True
+434	ChkboxProtectedHealthInformationQ8_4	boolean	True
+435	radioNamedIndividualQ2	boolean	True
+436	radioNamedthirdpartyPayerQ2	boolean	True
+437	radioNamedEntityProvideRelationWithMeQ2	boolean	True
+438	radioNamedEntityWithoutProvideRelationWithMeQ2	boolean	True
+439	radioNamedIndividualParticipantQ2	boolean	True
+440	radioGeneralDesignationQ2	boolean	True
+441	radioNamedIndividualQ8	boolean	True
+442	radioNamedthirdpartyPayerQ8	boolean	True
+443	radioNamedEntityProvideRelationWithMeQ8	boolean	True
+444	radioNamedEntityWithoutProvideRelationWithMeQ8	boolean	True
+445	radioNamedIndividualParticipantQ8	boolean	True
+446	radioGeneralDesignationQ8	boolean	True
+447	radioNamedIndividualQ2select	int	True
+448	radioNamedIndividualParticipantQ2select	int	True
+449	radioNamedIndividualQ8select	int	True
+450	radioNamedIndividualParticipantQ8select	int	True
+451	chkBoxRevokeROIQ2	boolean	True
+452	txtBoxRevokeROIQ2	string	True
+453	chkBoxRevokeROIQ8	boolean	True
+454	txtBoxRevokeROIQ8	string	True
+455	NamedEntitesIDQ2	int	True
+456	NamedEntitesIDQ8	int	True
+457	ChkboxSUDInformationQ2_12	boolean	True
+458	ChkboxSUDInformationQ2_13	boolean	True
+459	SUDInformationOtherQ2	string	True
+460	ChkboxSUDInformationQ8_12	boolean	True
+461	ChkboxSUDInformationQ8_13	boolean	True
+462	SUDInformationOtherQ8	string	True
+463	StaffSignCredentials	string	True
+464	DateofRelease	timestamp	True
+465	DoYouHaveInsuranceNo	string	True
+466	Version	string	True
+467	PrimaryReferralSourceNote	string	True
+468	SecondaryReferralSource	string	True
+469	PrimaryReferralSource	string	True
+470	InitialScreening	int	True
+471	DDLPrimarySubstance	int	True
+472	CurrentlyUsingOpoidDrug	boolean	True
+473	MedicatedAssistedTreatmentProgram	boolean	True
+474	PainManagementClinic	boolean	True
+475	ReceivedTreatmentForAddiction	boolean	True
+476	RequireAssistiveTechnologies	boolean	True
+477	HaveYouUsedOpoidDrug	boolean	True
+478	AnswerAllQuestion	boolean	True
+479	AnswerAllQuestionTxt	string	True
+480	AppointmentDate	timestamp	True
+481	AppointmentTime	string	True
+482	ScreenedBy	string	True
+483	ScreenedByDate	timestamp	True
+484	FollowupScreening	int	True
+485	ReviewedResponsesFromCallCenter	boolean	True
+486	AnyChangestoInformation	string	True
+487	HadAnySuicidalThoughts	boolean	True
+488	HadAnySuicidalThoughtsTxt	string	True
+489	HadAnyHomicidalThoughts	boolean	True
+490	HadAnyHomicidalThoughtsTxt	string	True
+491	HaveBeenCarcerated	boolean	True
+492	HaveAnyUrgentNeeds	boolean	True
+493	AdditionalComments	string	True
+494	Comment	string	True
+495	ReceiveingAnyTreatment	int	True
+496	ReasonforReferral	string	True
+497	NA	boolean	True
+498	PacketVersion	string	True
+
+--- COLUMN NAMES ONLY (one per line) ---
+SiteCode
+ID
+PatientID
+RegistrationModeID
+IsIntakeAppointmentScheduled
+IntakeAppointmentScheduledDateTime
+ReferralSourceID
+ProgramID
+OpiatesUsageNoOfYears
+OpiatesUsageNoOfMonths
+DrugChoiceID
+DrugAdministrationTypeID
+IllicitSubstanceOther
+IllicitSubstanceOtherMgPerDay
+IsCurrentlyInOpiateProgram
+CurrentOpiateProgramLocation
+CurrentOpiateProgramNoOfYears
+CurrentOpiateProgramNoOfMonths
+CurrentOpiateProgramDose
+IsPatientAtPainManagementClinic
+PainManagementClinicLocation
+PainManagementClinicFromDate
+PainManagementClinicToDate
+IsHavingLegalPrescription
+IsAnyLegalPrescriptionForPain
+IsAnyOngoingMedicalCondition
+IsCurrentlyPregnant
+IsSuicidalThoughtWithin72Hours
+SuicidalThoughtIntentScale
+IsHavingPlanForHowToCommitSuicide
+IsHomicidalThoughtWithin72Hours
+IsRecentlyReleasedFromPenal
+ReleasedFromPenalDate
+IsSpecialAccommodationRequired
+IsAbleToAttendTreatementCenterDaily
+IsAbleToPayIntakeAndWeeklyFee
+IsEligibleForFurtherAssessment
+IsReferralOffered
+ReferralOfferedList
+RejectedReferralOffered
+ReasonSeekingTreatment
+IsPatientAdmitted…

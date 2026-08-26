@@ -9,7 +9,7 @@
 | **Author** | [Name] |
 | **Department** | Developer |
 | **Created Date** | 14/07/2026 |
-| **Last Updated** | 14/07/2026 |
+| **Last Updated** | 17/08/2026 |
 | **Status** | Draft |
 | **Environment** | Dev |
 
@@ -22,6 +22,7 @@
 | Version | Date | Author | Change Summary | Approved By |
 |---------|------|--------|----------------|-------------|
 | v1.0 | 14/07/2026 | [Name] | Initial draft — generated from SAMMS Form Answer Signatures Fabric pipeline design | [Name] |
+| v1.1 | 17/08/2026 | [Name] | Added TaskConfig insert/update PySpark operations (single site, activate/deactivate, lookback, RequestBody) | [Name] |
 
 ### Reviewers
 
@@ -229,6 +230,250 @@ Bronze extraction uses a **dynamic SQL builder** — not a fixed Copy query. For
 | **destination_schema** | `Forms` | `pats` |
 | **destination_table** | `br_tblFormAnswerSig` | `sl_tblFormAnswerSignatures` |
 | **is_active** | `IsActive = 1` | `IsActive = 1` |
+
+**Control model:** One **Bronze site row per clinic** (`ConfigId = 31`, `SiteCode` + `DataBaseName` populated). One **Silver method row** (`ConfigId = 32`, no site). After bulk site seeding, the generic Bronze template row (`TaskConfigId = 94`) is deactivated — site-level rows drive the ForEach.
+
+| Layer | ConfigId | Template TaskConfigId | Generated site ID range |
+|-------|----------|----------------------|-------------------------|
+| Bronze | 31 | 94 (inactive after seed) | `94001` – `94115` (approx.) |
+| Silver | 32 | 95 | N/A — one row only |
+| Gold | 33 | 96 | Out of active documentation scope |
+
+Full seed script: `BCAppCode/Framework/etlconfigandtaskconfigsqls` (FormAnswerSignatures sections).
+
+### TaskConfig Insert and Update Operations (PySpark)
+
+Run these cells in a **Fabric PySpark notebook attached to `bhg_bronze`**. They use Delta merge/update against `bhg_bronze.meta.taskconfig`.
+
+#### What TaskConfig is used for
+
+| Consumer | How TaskConfig is used |
+|----------|------------------------|
+| `nb_get_FormAnswerSignatures_taskconfig` | Returns slim active Bronze/Silver rows (`ConfigId` 31, 32) — avoids Fabric Lookup 4 MB limit on wide `RequestBody` |
+| `flt_active_formanswersignatures_sites` | Filters to `IsActive = 1` Bronze rows with `SiteCode` + `DataBaseName` for the ForEach |
+| Bronze child ForEach | One iteration per active Bronze site row — drives connection + SQL builder |
+| Audit / data quality | `RequestBody.dq_keys` defines the 4-column business key for duplicate checks |
+| Silver notebook | Reads successful sites from Bronze via `RequestBody.full_table`, `ingest_column`, `site_column` |
+
+**Runtime lookback:** The pipeline parameter `p_lookback_days` (default **30**) is passed to `nb_answersig_build_site_sql` and `nb_answersig_bronze_to_silver`. Keep `LookbackDays` on TaskConfig rows aligned for audit parity. Use `p_reload = true` for full reload (2010-01-01 window).
+
+#### RequestBody (JSON string column)
+
+**Bronze site row** — recommended shape (set on template before bulk seed, or on each site insert):
+
+```json
+{
+  "full_table": "bhg_bronze.Forms.br_tblFormAnswerSig",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "FormName", "FormId", "ClientId"]
+}
+```
+
+**Silver method row** (`TaskConfigId = 95`):
+
+```json
+{
+  "full_table": "bhg_silver.pats.sl_tblFormAnswerSignatures",
+  "dq_keys": ["SiteCode", "FormName", "FormId", "ClientId"]
+}
+```
+
+#### 1. Insert a single new site (Bronze)
+
+Clones the Bronze template shape (`TaskConfigId = 94`) for one clinic. Adjust `site_code`, `source_database`, and IDs before running.
+
+```python
+import json
+import re
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+bronze_config_id = 31
+template_task_config_id = 94
+method_name = "FormAnswerSignatures"
+modified_by = "[Name]"
+
+new_site_code = "B99"                          # clinic SiteCode
+new_source_database = "SAMMS-ExampleV5"        # SAMMS database name on gateway connection
+
+answersig_bronze_request_body = json.dumps({
+    "full_table": "bhg_bronze.Forms.br_tblFormAnswerSig",
+    "ingest_column": "IngestRunId",
+    "site_column": "SiteCode",
+    "database_column": "SourceDatabase",
+    "dq_keys": ["SiteCode", "FormName", "FormId", "ClientId"]
+})
+
+site_name = re.sub(r"^SAMMS-", "", new_source_database)
+site_name = re.sub(r"(?i)V[0-9]+$", "", site_name).strip()
+
+template_df = (
+    spark.table(taskconfig_table)
+    .where(f"TaskConfigId = {template_task_config_id} AND ConfigId = {bronze_config_id}")
+    .limit(1)
+)
+if template_df.count() != 1:
+    raise Exception(f"Bronze template TaskConfigId={template_task_config_id} not found.")
+
+existing = (
+    spark.table(taskconfig_table)
+    .where(f"ConfigId = {bronze_config_id} AND SiteCode = '{new_site_code}'")
+    .count()
+)
+if existing > 0:
+    raise Exception(f"Site {new_site_code} already exists for ConfigId={bronze_config_id}.")
+
+max_id = (
+    spark.table(taskconfig_table)
+    .where(F.col("ConfigId") == bronze_config_id)
+    .agg(F.max("TaskConfigId"))
+    .collect()[0][0]
+)
+next_task_config_id = int(max_id or 94000) + 1
+
+task_cols = spark.table(taskconfig_table).columns
+site_df = spark.createDataFrame(
+    [(new_site_code, new_source_database, site_name, next_task_config_id)],
+    ["SiteCode", "DataBaseName", "SiteName", "TaskConfigId"]
+)
+
+new_row_df = site_df.alias("s").crossJoin(template_df.alias("t")).select([
+    F.col("s.TaskConfigId").cast("long").alias("TaskConfigId") if c == "TaskConfigId" else
+    F.lit(bronze_config_id).cast("long").alias("ConfigId") if c == "ConfigId" else
+    F.concat(F.lit("FormAnswerSignatures Bronze - "), F.col("s.SiteCode")).alias("TaskName") if c == "TaskName" else
+    F.lit(method_name).alias("Method") if c == "Method" else
+    F.col("s.SiteCode").alias("SiteCode") if c == "SiteCode" else
+    F.col("s.DataBaseName").alias("DataBaseName") if c == "DataBaseName" else
+    F.col("s.SiteName").alias("SiteName") if c == "SiteName" else
+    F.lit(answersig_bronze_request_body).alias("RequestBody") if c == "RequestBody" else
+    F.lit(None).cast("long").alias("DependencyTaskConfigId") if c == "DependencyTaskConfigId" else
+    F.lit(0).cast("int").alias("ExecutionOrder") if c == "ExecutionOrder" else
+    F.lit(1).cast("int").alias("IsActive") if c == "IsActive" else
+    F.current_timestamp().alias("CreatedAt") if c == "CreatedAt" else
+    F.current_timestamp().alias("ModifiedAt") if c == "ModifiedAt" else
+    F.lit(modified_by).alias("CreatedBy") if c == "CreatedBy" else
+    F.lit(modified_by).alias("ModifiedBy") if c == "ModifiedBy" else
+    F.col(f"t.{c}").alias(c)
+    for c in task_cols
+])
+
+new_row_df.write.format("delta").mode("append").saveAsTable(taskconfig_table)
+display(spark.sql(f"""
+SELECT TaskConfigId, ConfigId, TaskName, Method, SiteCode, DataBaseName, IsActive, LookbackDays
+FROM {taskconfig_table}
+WHERE ConfigId = {bronze_config_id} AND SiteCode = '{new_site_code}'
+"""))
+```
+
+#### 2. Activate or deactivate a site
+
+Set `IsActive = 1` to include the site in the next pipeline run; `IsActive = 0` to skip extraction without deleting the row.
+
+```python
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+bronze_config_id = 31
+site_code = "B24"          # clinic to enable/disable
+is_active = 0              # 1 = activate, 0 = deactivate
+modified_by = "[Name]"
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = {bronze_config_id} AND SiteCode = '{site_code}'",
+    set={
+        "IsActive": F.lit(is_active),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 3. Change lookback days
+
+**Option A — one pipeline run:** set the parent pipeline parameter `p_lookback_days` when triggering `pl_execute_pipeline_answersignature` (overrides the default 30).
+
+**Option B — persist on TaskConfig** (audit default / documentation):
+
+```python
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+new_lookback_days = 45
+modified_by = "[Name]"
+
+# All active Bronze site rows
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="ConfigId = 31 AND SiteCode IS NOT NULL",
+    set={
+        "LookbackDays": F.lit(new_lookback_days),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Silver method row
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition="TaskConfigId = 95 AND ConfigId = 32",
+    set={
+        "LookbackDays": F.lit(new_lookback_days),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 4. Update RequestBody (e.g. change DQ keys or Bronze table reference)
+
+```python
+import json
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+site_code = "B24"
+modified_by = "[Name]"
+
+updated_request_body = json.dumps({
+    "full_table": "bhg_bronze.Forms.br_tblFormAnswerSig",
+    "ingest_column": "IngestRunId",
+    "site_column": "SiteCode",
+    "database_column": "SourceDatabase",
+    "dq_keys": ["SiteCode", "FormName", "FormId", "ClientId"]
+})
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = 31 AND SiteCode = '{site_code}'",
+    set={
+        "RequestBody": F.lit(updated_request_body),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 5. Verification queries
+
+```python
+display(spark.sql("""
+SELECT TaskConfigId, ConfigId, TaskName, Method, SiteCode, DataBaseName,
+       LookbackDays, IsActive, TargetSchema, TargetTable
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId IN (31, 32)
+ORDER BY ConfigId, TaskConfigId
+"""))
+
+display(spark.sql("""
+SELECT SiteCode, DataBaseName, IsActive, LookbackDays, TaskConfigId
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId = 31 AND SiteCode IS NOT NULL
+ORDER BY SiteCode
+"""))
+```
 
 ### ETL Config (`meta.etlconfig`)
 

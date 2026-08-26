@@ -1,0 +1,115 @@
+Fabric 
+
+
+SiteCode	MonthEnd	RowCnt
+AHK	2026-05-31	301
+AHK	2026-06-30	261
+AHK	2026-07-31	276
+B42D	2026-05-31	1092
+B42D	2026-06-30	1375
+B42D	2026-07-31	1216
+CBCO	2026-05-31	648
+CBCO	2026-06-30	606
+CBCO	2026-07-31	551
+HS	2026-05-31	569
+HS	2026-06-30	583
+HS	2026-07-31	575
+TTCC	2026-05-31	1596
+TTCC	2026-06-30	2242
+TTCC	2026-07-31	2132
+
+
+BHG_Dr:
+
+{
+	"count": 15,
+	"value": [
+		{
+			"SiteCode": "AHK",
+			"MonthEnd": "2026-05-31T00:00:00Z",
+			"RowCnt": 296
+		},
+		{
+			"SiteCode": "AHK",
+			"MonthEnd": "2026-06-30T00:00:00Z",
+			"RowCnt": 257
+		},
+		{
+			"SiteCode": "AHK",
+			"MonthEnd": "2026-07-31T00:00:00Z",
+			"RowCnt": 276
+		},
+		{
+			"SiteCode": "B42D",
+			"MonthEnd": "2026-05-31T00:00:00Z",
+			"RowCnt": 1000
+		},
+		{
+			"SiteCode": "B42D",
+			"MonthEnd": "2026-06-30T00:00:00Z",
+			"RowCnt": 1272
+		},
+		{
+			"SiteCode": "B42D",
+			"MonthEnd": "2026-07-31T00:00:00Z",
+			"RowCnt": 1149
+		},
+		{
+			"SiteCode": "CBCO",
+			"MonthEnd": "2026-05-31T00:00:00Z",
+			"RowCnt": 618
+		},
+		{
+			"SiteCode": "CBCO",
+			"MonthEnd": "2026-06-30T00:00:00Z",
+			"RowCnt": 577
+		},
+		{
+			"SiteCode": "CBCO",
+			"MonthEnd": "2026-07-31T00:00:00Z",
+			"RowCnt": 537
+		},
+		{
+			"SiteCode": "HS",
+			"MonthEnd": "2026-05-31T00:00:00Z",
+			"RowCnt": 551
+		},
+		{
+			"SiteCode": "HS",
+			"MonthEnd": "2026-06-30T00:00:00Z",
+			"RowCnt": 562
+		},
+		{
+			"SiteCode": "HS",
+			"MonthEnd": "2026-07-31T00:00:00Z",
+			"RowCnt": 568
+		},
+		{
+			"SiteCode": "TTCC",
+			"MonthEnd": "2026-05-31T00:00:00Z",
+			"RowCnt": 1477
+		},
+		{
+			"SiteCode": "TTCC",
+			"MonthEnd": "2026-06-30T00:00:00Z",
+			"RowCnt": 2103
+		},
+		{
+			"SiteCode": "TTCC",
+			"MonthEnd": "2026-07-31T00:00:00Z",
+			"RowCnt": 2042
+		}
+	]
+}
+
+
+1	AHK	05/31/2026	301
+2	AHK	06/30/2026	261
+3	AHK	07/31/2026	276
+4	B42D	05/31/2026	1092
+5	B42D	06/30/2026	1375
+6	B42D	07/31/2026	1216
+7	CBCO	05/31/2026	648
+8	CBCO	06/30/2026	606
+9	CBCO	07/31/2026	551
+10	HS	05/31/2026	569

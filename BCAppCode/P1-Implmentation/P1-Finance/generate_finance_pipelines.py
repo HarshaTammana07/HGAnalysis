@@ -431,6 +431,15 @@ def query_expression(spec, schema_by_table, schema_row_by_table_col, map_rows_by
     return adf_concat(build_claims_compact_sql(spec, map_rows_by_table, sort_order_by_table))
 
 
+def to_pascal_column(name):
+    """Bronze sink naming: PascalCase (capitalize first letter, preserve legacy tail casing)."""
+    if not name:
+        return name
+    if name[0].isupper():
+        return name
+    return name[0].upper() + name[1:]
+
+
 def mappings_for_spec(spec, schema_by_table):
     table_key = spec["silver_table"].lower()
     cols = METADATA_COLS + [c for c in schema_by_table[table_key] if c.lower() != "sitecode"]
@@ -441,7 +450,7 @@ def mappings_for_spec(spec, schema_by_table):
         if key in seen:
             continue
         seen.add(key)
-        mappings.append({"source": {"name": col}, "sink": {"name": col}})
+        mappings.append({"source": {"name": col}, "sink": {"name": to_pascal_column(col)}})
     return mappings
 
 
@@ -696,24 +705,31 @@ def nested_or_methods(methods):
 
 
 def failure_details_expr(finance_tables):
-    args = ["'Failed items only: '"]
+    args = [
+        "'Failed methods: '",
+        "if(contains(variables('v_bronze_method_results_json'),'P1Finance'),'BR child pipeline failed before method results; ','')",
+    ]
     for spec in finance_tables:
         method = spec["method"]
         args.append(
             f"if(and(contains(variables('v_bronze_method_results_json'),'{method}'),"
             f"not(equals(json(variables('v_bronze_method_results_json'))['{method}']['status'],'SUCCESS'))),"
-            f"concat('BR {method} - ',string(json(variables('v_bronze_method_results_json'))['{method}']['error_message']),'; '),'')"
+            f"'BR {method}; ','')"
         )
+    args.append(
+        "if(contains(variables('v_silver_method_results_json'),'P1FinanceSilver'),'SL child pipeline failed before method results; ','')"
+    )
     for spec in finance_tables:
         method = spec["method"]
         args.append(
             f"if(and(contains(variables('v_silver_method_results_json'),'{method}'),"
             f"equals(json(variables('v_silver_method_results_json'))['{method}']['status'],'FAILED')),"
-            f"concat('SL {method} - ',string(json(variables('v_silver_method_results_json'))['{method}']['message']),'; '),'')"
+            f"'SL {method}; ','')"
         )
     args.append(
         "if(and(not(contains(variables('v_bronze_method_results_json'),'FAILED')),not(contains(variables('v_silver_method_results_json'),'FAILED'))),"
-        "'Pipeline failed but no method-level FAILED status was returned. Check Fabric activity details.','')"
+        "'Pipeline failed but no method-level FAILED status was returned. Check Fabric activity details.',"
+        "'See Fabric child activity output and audit tables for detailed error message.')"
     )
     return "@concat(" + ",".join(args) + ")"
 
@@ -1076,6 +1092,7 @@ def main():
 Generated: 2026-08-06
 
 Rebuilt from the Forms pipeline design for the 14 SAMMS P1 Finance methods.
+Bronze Copy translator mappings write PascalCase sink column names (source SQL aliases stay legacy SAMMS names).
 Sources used: finance_module_taskconfig_pyspark.py, columnsanddatatypesFinance.txt4, finance_vw_MapActions.csv, finance_vw_MapSrc2Dsn.csv, and the Finance transformation notes.
 
 Deployment placeholders to replace after Finance artifacts are created:

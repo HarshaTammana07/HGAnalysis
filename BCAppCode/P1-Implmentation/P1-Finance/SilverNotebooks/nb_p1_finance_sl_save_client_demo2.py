@@ -344,21 +344,6 @@ def transform_expr(transform, src_df):
     return transform(src_df) if callable(transform) else transform
 
 
-def is_string_target_type(target_type):
-    if target_type is None:
-        return False
-    if hasattr(target_type, "simpleString"):
-        type_name = target_type.simpleString().lower()
-    else:
-        type_name = str(target_type).lower()
-    return type_name == "string" or type_name.endswith("stringtype")
-
-
-def legacy_ef_string(expr):
-    """Mirror DataRow.ToString(): SQL NULL becomes empty string in legacy EF saves."""
-    return F.coalesce(expr.cast("string"), F.lit(""))
-
-
 def align_to_target(src_df, silver_table, configured_target_columns=None, configured_target_schema=None, transforms=None, drop_columns=None):
     transforms = transforms or {}
     cols = target_columns_for(src_df, silver_table, configured_target_columns, transforms, drop_columns)
@@ -374,8 +359,6 @@ def align_to_target(src_df, silver_table, configured_target_columns=None, config
         target_type = target_schema.get(target_col.lower())
         if target_type:
             expr = expr.cast(target_type)
-        if is_string_target_type(target_type):
-            expr = legacy_ef_string(expr)
         exprs.append(expr.alias(target_col))
     return src_df.select(*exprs)
 
@@ -582,8 +565,8 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             return 0
         condition = (
             f"`SiteCode` IN {site_values} "
-            f"AND year(`billDate`) >= {int(min_year)} "
-            f"AND `billDate` <= date_add(date'{max_end.isoformat()}', 15)"
+            f"AND year(`BillDate`) >= {int(min_year)} "
+            f"AND `BillDate` <= date_add(date'{max_end.isoformat()}', 15)"
         )
         return reset_rowstate_by_filter(silver_table, condition, update_lastmod=True)
 
@@ -623,7 +606,7 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             )
         if ef_sites:
             min_year = min_year_from_source(bronze_df.where(F.col(site_col).isin(ef_sites)))
-            filter_sql = f"year(tpcCreatedDate) >= {int(min_year)}" if min_year else None
+            filter_sql = f"year(TpcCreatedDate) >= {int(min_year)}" if min_year else None
             ef_source = silver_df.where(F.col(site_col).isin(ef_sites))
             changed += reset_rowstate_missing_by_key(
                 silver_table,
@@ -833,14 +816,14 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
     if not table_exists(demo1_table) or not table_exists(silver_table):
         return
     demo1 = spark.table(demo1_table).select("SiteCode", "ClientID", "RowState", "LastModAt").dropDuplicates(["SiteCode", "ClientID"])
-    demo2 = spark.table(silver_table).select("SiteCode", "clientID", "RowState")
+    demo2 = spark.table(silver_table).select("SiteCode", "ClientID", "RowState")
     changes = (
         demo2.alias("d2")
-        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.clientID") == F.col("d1.ClientID")), "inner")
+        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.ClientID") == F.col("d1.ClientID")), "inner")
         .where(~F.col("d2.RowState").eqNullSafe(F.col("d1.RowState")))
         .select(
             F.col("d1.SiteCode").alias("SiteCode"),
-            F.col("d1.ClientID").alias("clientID"),
+            F.col("d1.ClientID").alias("ClientID"),
             F.col("d1.RowState").alias("RowState"),
             F.col("d1.LastModAt").alias("LastModAt"),
         )
@@ -849,7 +832,7 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
         return
     DeltaTable.forName(spark, silver_table).alias("target").merge(
         changes.alias("source"),
-        "target.`SiteCode` <=> source.`SiteCode` AND target.`clientID` <=> source.`clientID`",
+        "target.`SiteCode` <=> source.`SiteCode` AND target.`ClientID` <=> source.`ClientID`",
     ).whenMatchedUpdate(set={
         "RowState": "source.`RowState`",
         "LastModAt": "source.`LastModAt`",
@@ -864,7 +847,7 @@ SILVER_TABLE = SAVE_CLIENT_DEMO2_CONFIG["silver_table"]
 MATCH_KEYS = SAVE_CLIENT_DEMO2_CONFIG["match_keys"]
 TARGET_SCHEMA = {
     "SiteCode": "string",
-    "clientID": "int",
+    "ClientID": "int",
     "RowChkSum": "int",
     "Counselor": "string",
     "Status": "string",
@@ -889,14 +872,14 @@ TARGET_SCHEMA = {
     "BULK": "boolean",
     "STAND": "boolean",
     "SPECIAL": "string",
-    "dtLastUA": "string",
+    "DtLastUA": "string",
     "AMSID": "string",
     "NOCENSUS": "boolean",
     "CHANGEUSER": "string",
     "RepOldClient": "decimal(18,0)",
     "UAWeekly": "timestamp",
     "OptIn": "boolean",
-    "credit": "int",
+    "Credit": "int",
     "CONTTXDT": "date",
     "INS": "string",
     "RISK": "string",
@@ -912,11 +895,11 @@ TARGET_SCHEMA = {
     "Clt911PH": "string",
     "Clt911Relation": "string",
     "HolidayPickup": "boolean",
-    "ddapid": "long",
+    "Ddapid": "long",
     "ProvClient": "long",
     "ProvClientID": "long",
     "BackFee": "decimal(19,4)",
-    "isSalesForceSync": "int",
+    "IsSalesForceSync": "int",
     "SalesForceId": "string",
     "LastModAt": "timestamp",
     "RowState": "int"

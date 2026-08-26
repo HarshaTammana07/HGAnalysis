@@ -1405,9 +1405,10 @@ def build_site_results(successful_sites, site_row_counts=None, bronze_had_failur
         results.append(item)
     return results
 
-# Compute wrkdt for Cell 2 pre-pass
+# Compute wrkdt for Cell 2 pre-pass.
+# Reload is a true full load, so Silver pre-pass should reset the full site slice.
 if p_reload:
-    wrkdt = datetime(2010, 1, 1)
+    wrkdt = None
 else:
     wrkdt = datetime.now() - timedelta(days=int(p_lookback_days))
 
@@ -1553,7 +1554,7 @@ if not spark.catalog.tableExists(silver_table):
     raise Exception(f"Silver table does not exist: {silver_table}")
 
 silver_delta = DeltaTable.forName(spark, silver_table)
-wrkdt_str = wrkdt.strftime("%Y-%m-%d")
+wrkdt_str = wrkdt.strftime("%Y-%m-%d") if wrkdt else None
 
 # Identify sites processed in this run
 sites_this_run = (
@@ -1601,17 +1602,24 @@ if uncond_parts:
     )
     print(f"Unconditional pre-pass reset applied.")
 
-# -- Date-gated reset (DateFilterEnabled = 1 + not in Forms2Process) ---
-silver_delta.update(
-    condition=(
-        f"({site_filter})"
-        f" AND RowState = 1"
-        f" AND (CreatedOn >= '{wrkdt_str}'"
-        f"      OR COALESCE(UpdatedOn, CreatedOn) >= '{wrkdt_str}')"
-    ),
-    set={"RowState": lit(0)}
-)
-print(f"Date-gated pre-pass reset applied (wrkdt={wrkdt_str}).")
+if p_reload:
+    silver_delta.update(
+        condition=f"({site_filter}) AND RowState = 1",
+        set={"RowState": lit(0)}
+    )
+    print("Full reload pre-pass reset applied for all processed sites.")
+else:
+    # -- Date-gated reset (DateFilterEnabled = 1 + not in Forms2Process) ---
+    silver_delta.update(
+        condition=(
+            f"({site_filter})"
+            f" AND RowState = 1"
+            f" AND (CreatedOn >= '{wrkdt_str}'"
+            f"      OR COALESCE(UpdatedOn, CreatedOn) >= '{wrkdt_str}')"
+        ),
+        set={"RowState": lit(0)}
+    )
+    print(f"Date-gated pre-pass reset applied (wrkdt={wrkdt_str}).")
 print("Pre-pass committed. Proceeding to MERGE.")
 
 
@@ -1755,13 +1763,13 @@ print(f"Existing source columns supplied: {len(existing_columns)}")
 
 # -- Compute lookback date --------------------------------------------
 if p_reload:
-    wrkdt = "2010-01-01"
+    wrkdt = None
 else:
     work_date = datetime.strptime(p_work_date, "%Y-%m-%d")
     wrkdt = (work_date - timedelta(days=int(p_lookback_days))).strftime("%Y-%m-%d")
 
 print(f"Work date:      {p_work_date}")
-print(f"Lookback date:  {wrkdt}")
+print(f"Lookback date:  {wrkdt if wrkdt else 'FULL LOAD - no date filter'}")
 
 # -- Read Forms2Process from bhg_silver.ctrl ---------------------------
 f2p_df = (
@@ -1782,6 +1790,12 @@ def tbl(name):
 def sys_all_columns():
     """Return the source database sys.all_columns reference."""
     return f"{db}.sys.all_columns"
+
+def date_filter_sql(created_expr, updated_expr):
+    """Return the reload-aware CreatedOn/UpdatedOn filter fragment."""
+    if not wrkdt:
+        return ""
+    return f" AND ({created_expr} >= '{wrkdt}' OR ISNULL({updated_expr}, {created_expr}) >= '{wrkdt}')"
 
 # -- Standard SQL fragments reused across cases ---------------------
 # Forms2Process custom-table UNIONs use the same legacy compound delete check
@@ -1815,10 +1829,10 @@ meta_cols = (
     f"  '{p_source_database}' AS SourceDatabase,\n"
     f"  '{p_ingest_run_id}' AS IngestRunId,\n"
     f"  GETDATE() AS ExtractedAt,\n"
-    f"  '{wrkdt}' AS LookbackDate,\n"
+    f"  {repr(wrkdt) if wrkdt else 'NULL'} AS LookbackDate,\n"
 )
 
-# -- Step 1: Base query — Form/FormTemplate/Question/Answer -----------
+# -- Step 1: Base query -- Form/FormTemplate/Question/Answer -----------
 # UNION 1: forms with answered questions (a.Value IS NOT NULL)
 # UNION 2: forms with no questions at all (q.Id IS NULL — header-only)
 #
@@ -1861,7 +1875,7 @@ FROM (
       LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
       {base_pa_join}
   WHERE a.Value IS NOT NULL
-    AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
+    {date_filter_sql('f.CreatedOn', 'f.UpdatedOn')}
 
   UNION
 
@@ -1885,12 +1899,12 @@ FROM (
       LEFT JOIN {tbl('Answer')} a        ON f.Id = a.FormId AND q.Id = a.QuestionId
       {base_pa_join}
   WHERE q.Id IS NULL
-    AND (f.CreatedOn >= '{wrkdt}' OR ISNULL(f.UpdatedOn, f.CreatedOn) >= '{wrkdt}')
+    {date_filter_sql('f.CreatedOn', 'f.UpdatedOn')}
 
 ) x
 """
 
-# -- Step 2: Loop over Forms2Process — UNION in each custom table -----
+# -- Step 2: Loop over Forms2Process -- UNION in each custom table -----
 # For each enabled row in tbl_Forms2Process:
 #   - Check if TableName exists in this SAMMS (using existing_tables set)
 #   - Dispatch to the correct switch case
@@ -2202,7 +2216,7 @@ for _, xf in f2p_df.iterrows():
         )
 
     # Append date filter WHERE clause when DateFilterEnabled = 1
-    if date_filter:
+    if date_filter and wrkdt:
         block += (
             f"\nWHERE ("
             f"v.CreatedOn >= '{wrkdt}'"

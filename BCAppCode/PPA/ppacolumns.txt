@@ -1,0 +1,4487 @@
+{
+	"count": 498,
+	"value": [
+		{
+			"OrdinalPosition": 1,
+			"ColumnName": "SiteCode",
+			"DataType": "varchar",
+			"MaxLength": 25,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": false
+		},
+		{
+			"OrdinalPosition": 2,
+			"ColumnName": "ID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": false
+		},
+		{
+			"OrdinalPosition": 3,
+			"ColumnName": "PatientID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": false
+		},
+		{
+			"OrdinalPosition": 4,
+			"ColumnName": "RegistrationModeID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 5,
+			"ColumnName": "IsIntakeAppointmentScheduled",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 6,
+			"ColumnName": "IntakeAppointmentScheduledDateTime",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 7,
+			"ColumnName": "ReferralSourceID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 8,
+			"ColumnName": "ProgramID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 9,
+			"ColumnName": "OpiatesUsageNoOfYears",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 10,
+			"ColumnName": "OpiatesUsageNoOfMonths",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 11,
+			"ColumnName": "DrugChoiceID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 12,
+			"ColumnName": "DrugAdministrationTypeID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 13,
+			"ColumnName": "IllicitSubstanceOther",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 14,
+			"ColumnName": "IllicitSubstanceOtherMgPerDay",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 15,
+			"ColumnName": "IsCurrentlyInOpiateProgram",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 16,
+			"ColumnName": "CurrentOpiateProgramLocation",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 17,
+			"ColumnName": "CurrentOpiateProgramNoOfYears",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 18,
+			"ColumnName": "CurrentOpiateProgramNoOfMonths",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 19,
+			"ColumnName": "CurrentOpiateProgramDose",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 20,
+			"ColumnName": "IsPatientAtPainManagementClinic",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 21,
+			"ColumnName": "PainManagementClinicLocation",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 22,
+			"ColumnName": "PainManagementClinicFromDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 23,
+			"ColumnName": "PainManagementClinicToDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 24,
+			"ColumnName": "IsHavingLegalPrescription",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 25,
+			"ColumnName": "IsAnyLegalPrescriptionForPain",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 26,
+			"ColumnName": "IsAnyOngoingMedicalCondition",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 27,
+			"ColumnName": "IsCurrentlyPregnant",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 28,
+			"ColumnName": "IsSuicidalThoughtWithin72Hours",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 29,
+			"ColumnName": "SuicidalThoughtIntentScale",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 30,
+			"ColumnName": "IsHavingPlanForHowToCommitSuicide",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 31,
+			"ColumnName": "IsHomicidalThoughtWithin72Hours",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 32,
+			"ColumnName": "IsRecentlyReleasedFromPenal",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 33,
+			"ColumnName": "ReleasedFromPenalDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 34,
+			"ColumnName": "IsSpecialAccommodationRequired",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 35,
+			"ColumnName": "IsAbleToAttendTreatementCenterDaily",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 36,
+			"ColumnName": "IsAbleToPayIntakeAndWeeklyFee",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 37,
+			"ColumnName": "IsEligibleForFurtherAssessment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 38,
+			"ColumnName": "IsReferralOffered",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 39,
+			"ColumnName": "ReferralOfferedList",
+			"DataType": "nvarchar",
+			"MaxLength": 240,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 40,
+			"ColumnName": "RejectedReferralOffered",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 41,
+			"ColumnName": "ReasonSeekingTreatment",
+			"DataType": "nvarchar",
+			"MaxLength": 4000,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 42,
+			"ColumnName": "IsPatientAdmitted",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 43,
+			"ColumnName": "IsParticipitatingInOtherOpioidProgram",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 44,
+			"ColumnName": "IsPresentedWithoutIDProof",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 45,
+			"ColumnName": "IsPresentedAtCloseOfDay",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 46,
+			"ColumnName": "IsRequestedAdmissionDrUnavailable",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 47,
+			"ColumnName": "RequestedAdmissionDay",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 48,
+			"ColumnName": "RequestedAdmissionAMOrPM",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 49,
+			"ColumnName": "IsUnableToPay",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 50,
+			"ColumnName": "IsUnableToProvideEvidenceofAddiction",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 51,
+			"ColumnName": "IsAddictionToUnstableNeeding",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 52,
+			"ColumnName": "IsImpairment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 53,
+			"ColumnName": "IsMedicalProblemsNeedingStabilization",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 54,
+			"ColumnName": "IsPsychiatricProblemNeedingInpatientTreatment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 55,
+			"ColumnName": "IsServiceDeclined",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 56,
+			"ColumnName": "IsOther",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 57,
+			"ColumnName": "OtherDescription",
+			"DataType": "nvarchar",
+			"MaxLength": 240,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 58,
+			"ColumnName": "Comments",
+			"DataType": "nvarchar",
+			"MaxLength": 1000,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 59,
+			"ColumnName": "Active",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 60,
+			"ColumnName": "CreatedBy",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 61,
+			"ColumnName": "CreatedOn",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 62,
+			"ColumnName": "LastUpdatedBy",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 63,
+			"ColumnName": "LastUpdateOn",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 64,
+			"ColumnName": "PreAdmissionDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 65,
+			"ColumnName": "LegalPrescription1",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 66,
+			"ColumnName": "LegalPrescription2",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 67,
+			"ColumnName": "LegalPrescription3",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 68,
+			"ColumnName": "MedicalCondition1",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 69,
+			"ColumnName": "MedicalCondition2",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 70,
+			"ColumnName": "MedicalCondition3",
+			"DataType": "nvarchar",
+			"MaxLength": 400,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 71,
+			"ColumnName": "DrugofchoiceAdministered",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 72,
+			"ColumnName": "requestedAdmissionDayFri",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 73,
+			"ColumnName": "requestedAdmissionDayMon",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 74,
+			"ColumnName": "requestedAdmissionDayThu",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 75,
+			"ColumnName": "requestedAdmissionDayTue",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 76,
+			"ColumnName": "requestedAdmissionDayWed",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 77,
+			"ColumnName": "AccomodationNeeded",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 78,
+			"ColumnName": "AcknowledgeClientSignature",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 79,
+			"ColumnName": "AcknowledgeClientSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 80,
+			"ColumnName": "AcknowledgeClientSignatureDateP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 81,
+			"ColumnName": "AcknowledgeClientSignatureP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 82,
+			"ColumnName": "AcknowledgeWitnessSignature",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 83,
+			"ColumnName": "AcknowledgeWitnessSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 84,
+			"ColumnName": "AcknowledgeWitnessSignatureDateP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 85,
+			"ColumnName": "AcknowledgeWitnessSignatureP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 86,
+			"ColumnName": "ActiveP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 87,
+			"ColumnName": "AlcoholAmount",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 88,
+			"ColumnName": "AlcoholLastDrink",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 89,
+			"ColumnName": "ApplicantName",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 90,
+			"ColumnName": "AreYouCurrentlyPregnant",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 91,
+			"ColumnName": "Biopsychosocialassessment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 92,
+			"ColumnName": "BiopsychosocialassessmentP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 93,
+			"ColumnName": "BiopsychosocialText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 94,
+			"ColumnName": "BiopsychosocialTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 95,
+			"ColumnName": "BringIDProof",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 96,
+			"ColumnName": "BringInsuranceCard",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 97,
+			"ColumnName": "ChronicMedicalCondition",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 98,
+			"ColumnName": "ClientDetails",
+			"DataType": "varchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 99,
+			"ColumnName": "ClientNameP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 100,
+			"ColumnName": "ClinicInfo",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 101,
+			"ColumnName": "Created",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 102,
+			"ColumnName": "CreatedByP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 103,
+			"ColumnName": "CreatedP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 104,
+			"ColumnName": "CurrentlyMedicatedTreatmentOther",
+			"DataType": "nvarchar",
+			"MaxLength": 240,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 105,
+			"ColumnName": "CurrentOpiateProgramFrom",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 106,
+			"ColumnName": "CurrentOpiateProgramTo",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 107,
+			"ColumnName": "CurrentOpiateWhatProgram",
+			"DataType": "nvarchar",
+			"MaxLength": 80,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 108,
+			"ColumnName": "CurrntlyRecevingTreatmentForCondition",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 109,
+			"ColumnName": "DailyTime",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 110,
+			"ColumnName": "DataFormId",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 111,
+			"ColumnName": "Date",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 112,
+			"ColumnName": "DateP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 113,
+			"ColumnName": "daysafterdischarge",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 114,
+			"ColumnName": "daysafterdischargeP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 115,
+			"ColumnName": "DeniedDuetoCapacity",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 116,
+			"ColumnName": "describeother",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 117,
+			"ColumnName": "describeother1",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 118,
+			"ColumnName": "describeother1P",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 119,
+			"ColumnName": "describeother2",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 120,
+			"ColumnName": "describeother2P",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 121,
+			"ColumnName": "describeotherP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 122,
+			"ColumnName": "Diagnosis",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 123,
+			"ColumnName": "DiagnosisP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 124,
+			"ColumnName": "DiagnosisText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 125,
+			"ColumnName": "DiagnosisTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 126,
+			"ColumnName": "DischargeReasonsText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 127,
+			"ColumnName": "DischargeReasonsTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 128,
+			"ColumnName": "DischargeSummary",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 129,
+			"ColumnName": "DischargeSummaryP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 130,
+			"ColumnName": "DischargeSummaryText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 131,
+			"ColumnName": "DischargeSummaryTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 132,
+			"ColumnName": "DoctorSignature",
+			"DataType": "ntext",
+			"MaxLength": 16,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 133,
+			"ColumnName": "DoctorSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 134,
+			"ColumnName": "dropdownPresentlyInPainScale1to10",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 135,
+			"ColumnName": "DrugApplicantTime",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 136,
+			"ColumnName": "DrugDaily",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 137,
+			"ColumnName": "DrugLastUsed",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 138,
+			"ColumnName": "DrugTaken",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 139,
+			"ColumnName": "DrugUsing",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 140,
+			"ColumnName": "EnrollmentId",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 141,
+			"ColumnName": "GynDoctorProviderName",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 142,
+			"ColumnName": "GynDoctorProviderPhone",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 143,
+			"ColumnName": "HasGynDoctor",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 144,
+			"ColumnName": "ImmediateAssessment",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 145,
+			"ColumnName": "ImmediateAssessment911",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 146,
+			"ColumnName": "InformationToObtained",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 147,
+			"ColumnName": "InformationToObtainedFax",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 148,
+			"ColumnName": "InformationToObtainedFaxP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 149,
+			"ColumnName": "InformationToObtainedP",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 150,
+			"ColumnName": "InformationToObtainedVerbal",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 151,
+			"ColumnName": "InformationToObtainedVerbalP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 152,
+			"ColumnName": "InformationToObtainedWritten",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 153,
+			"ColumnName": "InformationToObtainedWrittenP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 154,
+			"ColumnName": "InitialSceeningParticipationText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 155,
+			"ColumnName": "InitialSceeningParticipationTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 156,
+			"ColumnName": "InitialScreeningSummaryText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 157,
+			"ColumnName": "InitialScreeningSummaryTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 158,
+			"ColumnName": "InsuranceDescription",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 159,
+			"ColumnName": "InsuranceType",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 160,
+			"ColumnName": "IntakeProgram",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 161,
+			"ColumnName": "IntakeProgramDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 162,
+			"ColumnName": "IsAllergies",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 163,
+			"ColumnName": "IsAmPm",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 164,
+			"ColumnName": "IsAnyPrescriptionForPain",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 165,
+			"ColumnName": "IsApplicantPregnant",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 166,
+			"ColumnName": "IsBehaviorallyunstabldangerous",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 167,
+			"ColumnName": "IsClinicAddress",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 168,
+			"ColumnName": "IsCSUAtFullCapacity",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 169,
+			"ColumnName": "IsDeleted",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 170,
+			"ColumnName": "IsDetox",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 171,
+			"ColumnName": "IsDidnotMeetMedicalNecessity",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 172,
+			"ColumnName": "IsDrinkingAlcohol",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 173,
+			"ColumnName": "IsEVSCompleted",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 174,
+			"ColumnName": "IsInsurance",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 175,
+			"ColumnName": "IsInsuranceAvailable",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 176,
+			"ColumnName": "IsInsuranceCard",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 177,
+			"ColumnName": "IsMaintenance",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 178,
+			"ColumnName": "IsMedicalEmergency",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 179,
+			"ColumnName": "isOverTheCounterMedications",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 180,
+			"ColumnName": "IsPackets",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 181,
+			"ColumnName": "IsPastTreatmentHistory",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 182,
+			"ColumnName": "IsPhysicalHealthUnstable",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 183,
+			"ColumnName": "IsPictureId",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 184,
+			"ColumnName": "IsPlanSendTime",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 185,
+			"ColumnName": "IsPreviousMentalHealthTreatment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 186,
+			"ColumnName": "IsTakingPrescriptionMedication",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 187,
+			"ColumnName": "IsTriagedtoMedicalDetoxFacility",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 188,
+			"ColumnName": "LastUsedTime",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 189,
+			"ColumnName": "MedicalConditionsProviderName1",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 190,
+			"ColumnName": "MedicalConditionsProviderName2",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 191,
+			"ColumnName": "MedicalConditionsProviderPhone1",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 192,
+			"ColumnName": "MedicalConditionsProviderPhone2",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 193,
+			"ColumnName": "MedicalEmergencyDescribe",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 194,
+			"ColumnName": "Medicalinformation",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 195,
+			"ColumnName": "MedicalinformationP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 196,
+			"ColumnName": "MedicalText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 197,
+			"ColumnName": "MedicalTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 198,
+			"ColumnName": "MedicationConditions",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 199,
+			"ColumnName": "MedicationName1",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 200,
+			"ColumnName": "MedicationName2",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 201,
+			"ColumnName": "MedicationName3",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 202,
+			"ColumnName": "MedicationName4",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 203,
+			"ColumnName": "MedicationName5",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 204,
+			"ColumnName": "MentalHealthTreatmentDescription",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 205,
+			"ColumnName": "Modified",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 206,
+			"ColumnName": "ModifiedBy",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 207,
+			"ColumnName": "ModifiedByP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 208,
+			"ColumnName": "ModifiedP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 209,
+			"ColumnName": "NeedReferal",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 210,
+			"ColumnName": "ObservationComments",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 211,
+			"ColumnName": "OfficeUseTime",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 212,
+			"ColumnName": "OfficeUseWhy",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 213,
+			"ColumnName": "OngoingMedicalConditionsWha",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 214,
+			"ColumnName": "other",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 215,
+			"ColumnName": "other2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 216,
+			"ColumnName": "other2P",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 217,
+			"ColumnName": "OtherCode",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 218,
+			"ColumnName": "otherP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 219,
+			"ColumnName": "OtherText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 220,
+			"ColumnName": "OtherTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 221,
+			"ColumnName": "OverTheCounterMedicationsText1",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 222,
+			"ColumnName": "Participationininitialsceeningprocess",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 223,
+			"ColumnName": "ParticipationininitialsceeningprocessP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 224,
+			"ColumnName": "PatientSignature",
+			"DataType": "ntext",
+			"MaxLength": 16,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 225,
+			"ColumnName": "PatientSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 226,
+			"ColumnName": "PersonForIntakeProcess",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 227,
+			"ColumnName": "Phone1",
+			"DataType": "nchar",
+			"MaxLength": 20,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 228,
+			"ColumnName": "Phone2",
+			"DataType": "nchar",
+			"MaxLength": 20,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 229,
+			"ColumnName": "Phone3",
+			"DataType": "nchar",
+			"MaxLength": 20,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 230,
+			"ColumnName": "Phone4",
+			"DataType": "nchar",
+			"MaxLength": 20,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 231,
+			"ColumnName": "Phone5",
+			"DataType": "nchar",
+			"MaxLength": 20,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 232,
+			"ColumnName": "PlanOfSuicide",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 233,
+			"ColumnName": "PlanOnSpendingTimeAtClinic",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 234,
+			"ColumnName": "PreAdd_Address",
+			"DataType": "nvarchar",
+			"MaxLength": 1000,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 235,
+			"ColumnName": "Prescriber1",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 236,
+			"ColumnName": "Prescriber2",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 237,
+			"ColumnName": "Prescriber3",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 238,
+			"ColumnName": "Prescriber4",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 239,
+			"ColumnName": "Prescriber5",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 240,
+			"ColumnName": "ProgressRecoveryGoalsText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 241,
+			"ColumnName": "ProgressRecoveryGoalsTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 242,
+			"ColumnName": "Progresstowardsrecoverygoals",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 243,
+			"ColumnName": "ProgresstowardsrecoverygoalsP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 244,
+			"ColumnName": "ProofOfOpiateDependence",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 245,
+			"ColumnName": "PurposeOfObtainingRelease",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 246,
+			"ColumnName": "PurposeOfObtainingReleaseP",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 247,
+			"ColumnName": "Reason",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 248,
+			"ColumnName": "Reasonsfordischarge",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 249,
+			"ColumnName": "ReasonsfordischargeP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 250,
+			"ColumnName": "RecentHeadTrauma",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 251,
+			"ColumnName": "Recoveryplansorgoals",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 252,
+			"ColumnName": "RecoveryplansorgoalsP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 253,
+			"ColumnName": "RecoveryPlansText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 254,
+			"ColumnName": "RecoveryPlansTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 255,
+			"ColumnName": "Referralrecommendations",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 256,
+			"ColumnName": "ReferralrecommendationsP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 257,
+			"ColumnName": "ReferralRecommendationsText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 258,
+			"ColumnName": "ReferralRecommendationsTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 259,
+			"ColumnName": "ReferredBy",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 260,
+			"ColumnName": "Relapseepisodes",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 261,
+			"ColumnName": "RelapseepisodesP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 262,
+			"ColumnName": "RelapseEpisodesText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 263,
+			"ColumnName": "RelapseEpisodesTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 264,
+			"ColumnName": "RevocationClientSignature",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 265,
+			"ColumnName": "RevocationClientSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 266,
+			"ColumnName": "RevocationClientSignatureDateP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 267,
+			"ColumnName": "RevocationClientSignatureP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 268,
+			"ColumnName": "RevocationWitnessSignature",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 269,
+			"ColumnName": "RevocationWitnessSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 270,
+			"ColumnName": "RevocationWitnessSignatureDateP",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 271,
+			"ColumnName": "RevocationWitnessSignatureP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 272,
+			"ColumnName": "RNPStaffSign",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 273,
+			"ColumnName": "RNPStaffSignDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 274,
+			"ColumnName": "SammsProgramID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 275,
+			"ColumnName": "SeizureInPast7Days",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 276,
+			"ColumnName": "SetupAppointment",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 277,
+			"ColumnName": "SignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 278,
+			"ColumnName": "SignatureOfConsenP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 279,
+			"ColumnName": "SignatureOfConsent",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 280,
+			"ColumnName": "SignatureOfConsentP",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 281,
+			"ColumnName": "SignatureRnpStaff",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 282,
+			"ColumnName": "SubstanceAbuseWhat",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 283,
+			"ColumnName": "SubstanceAbuseWhen",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 284,
+			"ColumnName": "SubstanceAbuseWhere",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 285,
+			"ColumnName": "Summaryofinitialscreeningprocess",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 286,
+			"ColumnName": "SummaryofinitialscreeningprocessP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 287,
+			"ColumnName": "SupervisorSignature",
+			"DataType": "ntext",
+			"MaxLength": 16,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 288,
+			"ColumnName": "SupervisorSignatureDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 289,
+			"ColumnName": "TakenTime",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 290,
+			"ColumnName": "TimeFinishingRNtriage",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 291,
+			"ColumnName": "TimeStartingRNtriage",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 292,
+			"ColumnName": "Treatmentrecommendations",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 293,
+			"ColumnName": "TreatmentrecommendationsP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 294,
+			"ColumnName": "TreatmentText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 295,
+			"ColumnName": "TreatmentTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 296,
+			"ColumnName": "TypeOfMedication",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 297,
+			"ColumnName": "Upondischargefromtreatment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 298,
+			"ColumnName": "UpondischargefromtreatmentP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 299,
+			"ColumnName": "Uponreceiptofinformationrequested",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 300,
+			"ColumnName": "UponreceiptofinformationrequestedP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 301,
+			"ColumnName": "Uponreceiptofpaymentforservicesrendered",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 302,
+			"ColumnName": "UponreceiptofpaymentforservicesrenderedP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 303,
+			"ColumnName": "Urinalysisresults",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 304,
+			"ColumnName": "UrinalysisresultsP",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 305,
+			"ColumnName": "UrinalysisText",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 306,
+			"ColumnName": "UrinalysisTextP",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 307,
+			"ColumnName": "WhatAccomodations",
+			"DataType": "nvarchar",
+			"MaxLength": 100,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 308,
+			"ColumnName": "ParentPreAdmissionId",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 309,
+			"ColumnName": "IsRequireChildCare",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 310,
+			"ColumnName": "AnswerRangeThree",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 311,
+			"ColumnName": "AnswerRangeSix",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 312,
+			"ColumnName": "AnswerRangeNine",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 313,
+			"ColumnName": "AnswerRangeAbove",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 314,
+			"ColumnName": "IsReliableTransportation",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 315,
+			"ColumnName": "RequireTransportationServices",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 316,
+			"ColumnName": "IsTransfer",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 317,
+			"ColumnName": "WhereTransfer",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 318,
+			"ColumnName": "dropdownNumberOfChildren",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 319,
+			"ColumnName": "Incarcenated",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 320,
+			"ColumnName": "ClientAddress",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 321,
+			"ColumnName": "IsEmployed",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 322,
+			"ColumnName": "IsAttemptedSuicide",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 323,
+			"ColumnName": "IsThoughtsOfKilling",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 324,
+			"ColumnName": "isMentalHealthTreatment",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 325,
+			"ColumnName": "MentalHealthTreatmentWhere",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 326,
+			"ColumnName": "MentalHealthTreatmentWhen",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 327,
+			"ColumnName": "MentalHealthTreatmentWhat",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 328,
+			"ColumnName": "ThoughtsOfHurtingTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 329,
+			"ColumnName": "SuicideDetailsTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 330,
+			"ColumnName": "ReliableTransportationTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 331,
+			"ColumnName": "EmployedYesTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 332,
+			"ColumnName": "EmployedNoTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 333,
+			"ColumnName": "IsPlanForHowToHurtSomeElse",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 334,
+			"ColumnName": "PacketTypeID",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 335,
+			"ColumnName": "UsingOpioids",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 336,
+			"ColumnName": "TimeOfIntake",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 337,
+			"ColumnName": "SubstanceUseFromDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 338,
+			"ColumnName": "SubstanceUseToDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 339,
+			"ColumnName": "MentalHealthFromDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 340,
+			"ColumnName": "MentalHealthToDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 341,
+			"ColumnName": "ReasonForDenial",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 342,
+			"ColumnName": "DischargeReason",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 343,
+			"ColumnName": "ReferedTo",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 344,
+			"ColumnName": "DateOfStaffSignature",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 345,
+			"ColumnName": "nameOfWitness",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 346,
+			"ColumnName": "staffAtHCRC",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 347,
+			"ColumnName": "SUDinformationMA",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 348,
+			"ColumnName": "protectedHealthInformationMA",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 349,
+			"ColumnName": "namedIndividualMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 350,
+			"ColumnName": "namedEntityMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 351,
+			"ColumnName": "namedThirdPartyMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 352,
+			"ColumnName": "namedEntityWithoutTreatmentMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 353,
+			"ColumnName": "namedIndividualPaticipantMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 354,
+			"ColumnName": "genralTreatingproviderrelationshipMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 355,
+			"ColumnName": "purposeOfDisclosureMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 356,
+			"ColumnName": "exclusionsMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 357,
+			"ColumnName": "representativesRelationshiptoPatientMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 358,
+			"ColumnName": "HCRCClinicLocationMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 359,
+			"ColumnName": "AddressMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 360,
+			"ColumnName": "PhoneMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 361,
+			"ColumnName": "FAXMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 362,
+			"ColumnName": "unlessrevokedMA",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 363,
+			"ColumnName": "istheresubstanceusehistory",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 364,
+			"ColumnName": "iscurrentlypatientpainmanagementmethadone",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 365,
+			"ColumnName": "txtpatientatpainmanagementclinicmethadone",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 366,
+			"ColumnName": "interestedtransferringetsyes",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 367,
+			"ColumnName": "ispreviouslybeenpatientmedicationassisted",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 368,
+			"ColumnName": "txtpreviouslybeenpatientmedicationassisted",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 369,
+			"ColumnName": "datepreviouslypatientmedicationassisted",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 370,
+			"ColumnName": "ispregnant",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 371,
+			"ColumnName": "currentlypregnant",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 372,
+			"ColumnName": "isplantopaytreatment",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 373,
+			"ColumnName": "txtplantopaytreatmentprivateinsurance",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 374,
+			"ColumnName": "txtplantopaytreatmentother",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 375,
+			"ColumnName": "isdoyouhavepicture",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 376,
+			"ColumnName": "datetimelastopioid",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 377,
+			"ColumnName": "issymptomsofopioidwithdrawal",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 378,
+			"ColumnName": "txtsymptomsofopioidwithdrawaltrue",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 379,
+			"ColumnName": "ishadalcoholinlast12hours",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 380,
+			"ColumnName": "txthadanyalcohol",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 381,
+			"ColumnName": "isprioretspatientyes",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 382,
+			"ColumnName": "prioretspatient",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 383,
+			"ColumnName": "lastprescription",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 384,
+			"ColumnName": "ishaveyouhospitalizedinlast30daysyes",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 385,
+			"ColumnName": "txthospitalisedlast30days",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 386,
+			"ColumnName": "nameOfWitnessQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 387,
+			"ColumnName": "unlessrevokedQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 388,
+			"ColumnName": "FAXQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 389,
+			"ColumnName": "PhoneQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 390,
+			"ColumnName": "AddressQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 391,
+			"ColumnName": "HCRCClinicLocationQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 392,
+			"ColumnName": "representativesRelationshiptoPatientQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 393,
+			"ColumnName": "exclusionsQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 394,
+			"ColumnName": "purposeOfDisclosureQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 395,
+			"ColumnName": "genralTreatingproviderrelationshipQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 396,
+			"ColumnName": "namedIndividualPaticipantQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 397,
+			"ColumnName": "namedEntityWithoutTreatmentQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 398,
+			"ColumnName": "namedThirdPartyQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 399,
+			"ColumnName": "namedEntityQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 400,
+			"ColumnName": "namedIndividualQ8",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 401,
+			"ColumnName": "protectedHealthInformationQ8",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 402,
+			"ColumnName": "SUDinformationQ8",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 403,
+			"ColumnName": "staffAtHCRCQ8",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 404,
+			"ColumnName": "AdditionalDoc",
+			"DataType": "varchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 405,
+			"ColumnName": "ChkboxSUDInformationQ2_1",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 406,
+			"ColumnName": "ChkboxSUDInformationQ2_2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 407,
+			"ColumnName": "ChkboxSUDInformationQ2_3",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 408,
+			"ColumnName": "ChkboxSUDInformationQ2_4",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 409,
+			"ColumnName": "ChkboxSUDInformationQ2_5",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 410,
+			"ColumnName": "ChkboxSUDInformationQ2_6",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 411,
+			"ColumnName": "ChkboxSUDInformationQ2_7",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 412,
+			"ColumnName": "ChkboxSUDInformationQ2_8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 413,
+			"ColumnName": "ChkboxSUDInformationQ2_9",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 414,
+			"ColumnName": "ChkboxSUDInformationQ2_10",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 415,
+			"ColumnName": "ChkboxSUDInformationQ2_11",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 416,
+			"ColumnName": "ChkboxProtectedHealthInformationQ2_1",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 417,
+			"ColumnName": "ChkboxProtectedHealthInformationQ2_2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 418,
+			"ColumnName": "ChkboxProtectedHealthInformationQ2_3",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 419,
+			"ColumnName": "ChkboxProtectedHealthInformationQ2_4",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 420,
+			"ColumnName": "ChkboxSUDInformationQ8_1",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 421,
+			"ColumnName": "ChkboxSUDInformationQ8_2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 422,
+			"ColumnName": "ChkboxSUDInformationQ8_3",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 423,
+			"ColumnName": "ChkboxSUDInformationQ8_4",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 424,
+			"ColumnName": "ChkboxSUDInformationQ8_5",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 425,
+			"ColumnName": "ChkboxSUDInformationQ8_6",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 426,
+			"ColumnName": "ChkboxSUDInformationQ8_7",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 427,
+			"ColumnName": "ChkboxSUDInformationQ8_8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 428,
+			"ColumnName": "ChkboxSUDInformationQ8_9",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 429,
+			"ColumnName": "ChkboxSUDInformationQ8_10",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 430,
+			"ColumnName": "ChkboxSUDInformationQ8_11",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 431,
+			"ColumnName": "ChkboxProtectedHealthInformationQ8_1",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 432,
+			"ColumnName": "ChkboxProtectedHealthInformationQ8_2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 433,
+			"ColumnName": "ChkboxProtectedHealthInformationQ8_3",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 434,
+			"ColumnName": "ChkboxProtectedHealthInformationQ8_4",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 435,
+			"ColumnName": "radioNamedIndividualQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 436,
+			"ColumnName": "radioNamedthirdpartyPayerQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 437,
+			"ColumnName": "radioNamedEntityProvideRelationWithMeQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 438,
+			"ColumnName": "radioNamedEntityWithoutProvideRelationWithMeQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 439,
+			"ColumnName": "radioNamedIndividualParticipantQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 440,
+			"ColumnName": "radioGeneralDesignationQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 441,
+			"ColumnName": "radioNamedIndividualQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 442,
+			"ColumnName": "radioNamedthirdpartyPayerQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 443,
+			"ColumnName": "radioNamedEntityProvideRelationWithMeQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 444,
+			"ColumnName": "radioNamedEntityWithoutProvideRelationWithMeQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 445,
+			"ColumnName": "radioNamedIndividualParticipantQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 446,
+			"ColumnName": "radioGeneralDesignationQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 447,
+			"ColumnName": "radioNamedIndividualQ2select",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 448,
+			"ColumnName": "radioNamedIndividualParticipantQ2select",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 449,
+			"ColumnName": "radioNamedIndividualQ8select",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 450,
+			"ColumnName": "radioNamedIndividualParticipantQ8select",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 451,
+			"ColumnName": "chkBoxRevokeROIQ2",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 452,
+			"ColumnName": "txtBoxRevokeROIQ2",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 453,
+			"ColumnName": "chkBoxRevokeROIQ8",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 454,
+			"ColumnName": "txtBoxRevokeROIQ8",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 455,
+			"ColumnName": "NamedEntitesIDQ2",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 456,
+			"ColumnName": "NamedEntitesIDQ8",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 457,
+			"ColumnName": "ChkboxSUDInformationQ2_12",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 458,
+			"ColumnName": "ChkboxSUDInformationQ2_13",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 459,
+			"ColumnName": "SUDInformationOtherQ2",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 460,
+			"ColumnName": "ChkboxSUDInformationQ8_12",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 461,
+			"ColumnName": "ChkboxSUDInformationQ8_13",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 462,
+			"ColumnName": "SUDInformationOtherQ8",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 463,
+			"ColumnName": "StaffSignCredentials",
+			"DataType": "varchar",
+			"MaxLength": 50,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 464,
+			"ColumnName": "DateofRelease",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 465,
+			"ColumnName": "DoYouHaveInsuranceNo",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 466,
+			"ColumnName": "Version",
+			"DataType": "nvarchar",
+			"MaxLength": 512,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 467,
+			"ColumnName": "PrimaryReferralSourceNote",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 468,
+			"ColumnName": "SecondaryReferralSource",
+			"DataType": "nvarchar",
+			"MaxLength": 1024,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 469,
+			"ColumnName": "PrimaryReferralSource",
+			"DataType": "nvarchar",
+			"MaxLength": 1024,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 470,
+			"ColumnName": "InitialScreening",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 471,
+			"ColumnName": "DDLPrimarySubstance",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 472,
+			"ColumnName": "CurrentlyUsingOpoidDrug",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 473,
+			"ColumnName": "MedicatedAssistedTreatmentProgram",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 474,
+			"ColumnName": "PainManagementClinic",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 475,
+			"ColumnName": "ReceivedTreatmentForAddiction",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 476,
+			"ColumnName": "RequireAssistiveTechnologies",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 477,
+			"ColumnName": "HaveYouUsedOpoidDrug",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 478,
+			"ColumnName": "AnswerAllQuestion",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 479,
+			"ColumnName": "AnswerAllQuestionTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 480,
+			"ColumnName": "AppointmentDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 481,
+			"ColumnName": "AppointmentTime",
+			"DataType": "nvarchar",
+			"MaxLength": 40,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 482,
+			"ColumnName": "ScreenedBy",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 483,
+			"ColumnName": "ScreenedByDate",
+			"DataType": "datetime",
+			"MaxLength": 8,
+			"NumericPrecision": 23,
+			"NumericScale": 3,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 484,
+			"ColumnName": "FollowupScreening",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 485,
+			"ColumnName": "ReviewedResponsesFromCallCenter",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 486,
+			"ColumnName": "AnyChangestoInformation",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 487,
+			"ColumnName": "HadAnySuicidalThoughts",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 488,
+			"ColumnName": "HadAnySuicidalThoughtsTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 489,
+			"ColumnName": "HadAnyHomicidalThoughts",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 490,
+			"ColumnName": "HadAnyHomicidalThoughtsTxt",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 491,
+			"ColumnName": "HaveBeenCarcerated",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 492,
+			"ColumnName": "HaveAnyUrgentNeeds",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 493,
+			"ColumnName": "AdditionalComments",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 494,
+			"ColumnName": "Comment",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 495,
+			"ColumnName": "ReceiveingAnyTreatment",
+			"DataType": "int",
+			"MaxLength": 4,
+			"NumericPrecision": 10,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 496,
+			"ColumnName": "ReasonforReferral",
+			"DataType": "nvarchar",
+			"MaxLength": -1,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 497,
+			"ColumnName": "NA",
+			"DataType": "bit",
+			"MaxLength": 1,
+			"NumericPrecision": 1,
+			"NumericScale": 0,
+			"IsNullable": true
+		},
+		{
+			"OrdinalPosition": 498,
+			"ColumnName": "PacketVersion",
+			"DataType": "nvarchar",
+			"MaxLength": 10,
+			"NumericPrecision": 0,
+			"NumericScale": 0,
+			"IsNullable": true
+		}
+	]
+}

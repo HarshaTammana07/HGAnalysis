@@ -6,7 +6,7 @@ import re
 import textwrap
 
 
-BASE_DIR = Path("P1-Implmentation/P1-Finance")
+BASE_DIR = Path(__file__).resolve().parent
 TASKCONFIG_PATH = BASE_DIR / "finance_module_taskconfig_pyspark.py"
 SCHEMA_PATH = BASE_DIR / "columnsanddatatypesFinance.txt4"
 OUTPUT_DIR = BASE_DIR / "SilverNotebooks"
@@ -389,21 +389,6 @@ def transform_expr(transform, src_df):
     return transform(src_df) if callable(transform) else transform
 
 
-def is_string_target_type(target_type):
-    if target_type is None:
-        return False
-    if hasattr(target_type, "simpleString"):
-        type_name = target_type.simpleString().lower()
-    else:
-        type_name = str(target_type).lower()
-    return type_name == "string" or type_name.endswith("stringtype")
-
-
-def legacy_ef_string(expr):
-    """Mirror DataRow.ToString(): SQL NULL becomes empty string in legacy EF saves."""
-    return F.coalesce(expr.cast("string"), F.lit(""))
-
-
 def align_to_target(src_df, silver_table, configured_target_columns=None, configured_target_schema=None, transforms=None, drop_columns=None):
     transforms = transforms or {}
     cols = target_columns_for(src_df, silver_table, configured_target_columns, transforms, drop_columns)
@@ -419,8 +404,6 @@ def align_to_target(src_df, silver_table, configured_target_columns=None, config
         target_type = target_schema.get(target_col.lower())
         if target_type:
             expr = expr.cast(target_type)
-        if is_string_target_type(target_type):
-            expr = legacy_ef_string(expr)
         exprs.append(expr.alias(target_col))
     return src_df.select(*exprs)
 
@@ -627,8 +610,8 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             return 0
         condition = (
             f"`SiteCode` IN {site_values} "
-            f"AND year(`billDate`) >= {int(min_year)} "
-            f"AND `billDate` <= date_add(date'{max_end.isoformat()}', 15)"
+            f"AND year(`BillDate`) >= {int(min_year)} "
+            f"AND `BillDate` <= date_add(date'{max_end.isoformat()}', 15)"
         )
         return reset_rowstate_by_filter(silver_table, condition, update_lastmod=True)
 
@@ -668,7 +651,7 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             )
         if ef_sites:
             min_year = min_year_from_source(bronze_df.where(F.col(site_col).isin(ef_sites)))
-            filter_sql = f"year(tpcCreatedDate) >= {int(min_year)}" if min_year else None
+            filter_sql = f"year(TpcCreatedDate) >= {int(min_year)}" if min_year else None
             ef_source = silver_df.where(F.col(site_col).isin(ef_sites))
             changed += reset_rowstate_missing_by_key(
                 silver_table,
@@ -878,14 +861,14 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
     if not table_exists(demo1_table) or not table_exists(silver_table):
         return
     demo1 = spark.table(demo1_table).select("SiteCode", "ClientID", "RowState", "LastModAt").dropDuplicates(["SiteCode", "ClientID"])
-    demo2 = spark.table(silver_table).select("SiteCode", "clientID", "RowState")
+    demo2 = spark.table(silver_table).select("SiteCode", "ClientID", "RowState")
     changes = (
         demo2.alias("d2")
-        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.clientID") == F.col("d1.ClientID")), "inner")
+        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.ClientID") == F.col("d1.ClientID")), "inner")
         .where(~F.col("d2.RowState").eqNullSafe(F.col("d1.RowState")))
         .select(
             F.col("d1.SiteCode").alias("SiteCode"),
-            F.col("d1.ClientID").alias("clientID"),
+            F.col("d1.ClientID").alias("ClientID"),
             F.col("d1.RowState").alias("RowState"),
             F.col("d1.LastModAt").alias("LastModAt"),
         )
@@ -894,7 +877,7 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
         return
     DeltaTable.forName(spark, silver_table).alias("target").merge(
         changes.alias("source"),
-        "target.`SiteCode` <=> source.`SiteCode` AND target.`clientID` <=> source.`clientID`",
+        "target.`SiteCode` <=> source.`SiteCode` AND target.`ClientID` <=> source.`ClientID`",
     ).whenMatchedUpdate(set={
         "RowState": "source.`RowState`",
         "LastModAt": "source.`LastModAt`",
@@ -1122,6 +1105,57 @@ def py_dict_literal(mapping, indent=0):
     return json.dumps(mapping, indent=4).replace("true", "True").replace("false", "False").replace("null", "None")
 
 
+def to_pascal_column(name):
+    """Silver naming standard: PascalCase (capitalize first letter, preserve legacy tail casing)."""
+    if not name:
+        return name
+    if name[0].isupper():
+        return name
+    return name[0].upper() + name[1:]
+
+
+def resolve_pascal_column(name, schema_rows):
+    for row in schema_rows:
+        if row["ColumnName"].lower() == str(name).lower():
+            return to_pascal_column(row["ColumnName"])
+    return to_pascal_column(name)
+
+
+def pascalize_method_options(options, schema_rows):
+    out = dict(options)
+
+    if out.get("transforms"):
+        out["transforms"] = {
+            resolve_pascal_column(col, schema_rows): expr
+            for col, expr in out["transforms"].items()
+        }
+
+    if out.get("match_key_transforms"):
+        out["match_key_transforms"] = {
+            resolve_pascal_column(col, schema_rows): transform
+            for col, transform in out["match_key_transforms"].items()
+        }
+
+    if out.get("reset_rule") and out["reset_rule"].get("target_date_column"):
+        reset_rule = dict(out["reset_rule"])
+        reset_rule["target_date_column"] = resolve_pascal_column(
+            reset_rule["target_date_column"], schema_rows
+        )
+        out["reset_rule"] = reset_rule
+
+    insert_condition = out.get("insert_condition")
+    if insert_condition:
+        updated = insert_condition
+        for row in schema_rows:
+            legacy = row["ColumnName"]
+            pascal = to_pascal_column(legacy)
+            if legacy != pascal:
+                updated = updated.replace(f"`{legacy}`", f"`{pascal}`")
+        out["insert_condition"] = updated
+
+    return out
+
+
 def variable_name(method):
     snake = re.sub(r"(?<!^)(?=[A-Z])", "_", method).upper()
     return snake.replace("3_P", "3P").replace("__", "_")
@@ -1129,9 +1163,12 @@ def variable_name(method):
 
 def build_method_cell(spec, schema_rows):
     method = spec["method"]
-    options = METHOD_OPTIONS[method]
-    target_schema = {row["ColumnName"]: spark_type(row) for row in schema_rows}
-    target_columns = [row["ColumnName"] for row in schema_rows]
+    options = pascalize_method_options(METHOD_OPTIONS[method], schema_rows)
+    target_schema = {
+        to_pascal_column(row["ColumnName"]): spark_type(row)
+        for row in schema_rows
+    }
+    target_columns = list(target_schema.keys())
     var_name = variable_name(method)
 
     lines = [
@@ -1187,11 +1224,18 @@ def write_outputs():
     md_parts = [
         "# P1 Finance Silver Notebooks\n",
         "Generated from `columnsanddatatypesFinance.txt4` and Finance taskconfig metadata.\n",
+        "Silver Cell 2 `TARGET_SCHEMA` columns use PascalCase (first letter uppercased).\n",
         "Each notebook should use Cell 1 from `nb_p1_finance_sl_common_cell1.py`, followed by its method-specific Cell 2.\n",
         "Recommended notebook names are listed with the pipeline activity name.\n",
         "\n## Cell 1 - Common Finance Silver Runtime\n",
         "```python\n" + COMMON_CELL + "```\n",
     ]
+
+    cell2_marker = "\n# Cell 2\n"
+    notebook_header = (
+        "# Cell 1: paste/import nb_p1_finance_sl_common_cell1.py\n"
+        "# Cell 2: method-specific code below\n\n"
+    )
 
     for idx, spec in enumerate(finance_tables, start=1):
         method = spec["method"]
@@ -1201,16 +1245,16 @@ def write_outputs():
         notebook_name = NOTEBOOK_BY_METHOD[method]
         activity_name = PIPELINE_ACTIVITY_BY_METHOD[method]
         cell2 = build_method_cell(spec, schemas[table_key])
+        notebook_path = OUTPUT_DIR / f"{notebook_name}.py"
         notebook_text = (
             f"# Notebook: {notebook_name}\n"
             f"# Pipeline activity: {activity_name}\n"
-            "# Cell 1: paste/import nb_p1_finance_sl_common_cell1.py\n"
-            "# Cell 2: method-specific code below\n\n"
+            + notebook_header
             + COMMON_CELL
-            + "\n# Cell 2\n"
+            + cell2_marker
             + cell2
         )
-        (OUTPUT_DIR / f"{notebook_name}.py").write_text(notebook_text, encoding="utf-8")
+        notebook_path.write_text(notebook_text, encoding="utf-8")
 
         md_parts.extend([
             f"\n## {idx}. Notebook: `{notebook_name}`\n",

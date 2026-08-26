@@ -10,7 +10,7 @@
 | **Author** | [Name] |
 | **Department** | Developer |
 | **Created Date** | 29/07/2026 |
-| **Last Updated** | 29/07/2026 |
+| **Last Updated** | 17/08/2026 |
 | **Status** | Draft |
 | **Environment** | Dev |
 
@@ -23,6 +23,7 @@
 | Version | Date | Author | Change Summary | Approved By |
 |---------|------|--------|----------------|-------------|
 | v1.0 | 29/07/2026 | [Name] | Initial draft — generated from SAMMS P1 Forms Fabric pipeline design | [Name] |
+| v1.1 | 17/08/2026 | [Name] | Added TaskConfig insert/update PySpark operations (single site, activate/deactivate, lookback, RequestBody) | [Name] |
 
 ### Reviewers
 
@@ -229,6 +230,285 @@ Each active clinic site × method is registered in `bhg_bronze.meta.taskconfig` 
 | **destination_schema** | `P1Forms` | `pats` |
 | **destination_table** | `br_samms_*` | `tbl_*` Silver table name |
 | **is_active** | `IsActive = 1` | `IsActive = 1` |
+
+**Control model:** For each of the **nine form methods**, TaskConfig has:
+
+1. One **inactive Bronze template row** (`ConfigId = 97`, `SiteCode` null, `IsActive = 0`) — shape reference only  
+2. **~115 active Bronze site rows** (`ConfigId = 97`, `SiteCode` + `DataBaseName` populated, `IsActive = 1`)  
+3. One **Silver method row** (`ConfigId = 98`, no site)
+
+| Layer | ConfigId | TaskConfigId range (seed) | Row count (approx.) |
+|-------|----------|---------------------------|---------------------|
+| Bronze | 97 | `5743` – `6795` (site + template rows interleaved by method) | 9 templates + 9 × 115 site rows = **1,044** |
+| Silver | 98 | One row per method inside same range | **9** |
+| Gold | 99 | Optional — out of active consumer scope | **9** (optional) |
+
+Full seed script: `BCAppCode/P1-Implmentation/P1-Forms/forms_module_taskconfig_pyspark.py` (sites copied from P1 Reference `ConfigId = 88`).
+
+### TaskConfig Insert and Update Operations (PySpark)
+
+Run these cells in a **Fabric PySpark notebook attached to `bhg_bronze`**. They use Delta merge/update against `bhg_bronze.meta.taskconfig`.
+
+#### What TaskConfig is used for
+
+| Consumer | How TaskConfig is used |
+|----------|------------------------|
+| `nb_get_p1_forms_taskconfig` | Returns slim active Bronze/Silver rows (`ConfigId` 97, 98) — avoids Fabric Lookup 4 MB limit on wide `RequestBody` |
+| `flt_active_p1_forms_sites` | Filters to active Bronze rows with `SiteCode` + `DataBaseName`; Bronze child groups by `Method` |
+| Bronze child (`pl_p1_forms`) | Nine parallel method loops — each ForEach iterates site rows for that method |
+| Silver child | Each notebook reads its method's Silver TaskConfig row for merge keys and Bronze `full_table` |
+| Audit / data quality | `RequestBody.dq_keys` defines per-method business keys for duplicate checks |
+
+**Runtime lookback:** Pipeline parameter `p_lookback_days` (default **15**) applies to the four incremental methods. Full-load methods ignore lookback. Keep `LookbackDays` on incremental TaskConfig rows aligned for audit parity.
+
+#### RequestBody (JSON string column)
+
+**Bronze site row** (example — Comprehensive Assessment):
+
+```json
+{
+  "full_table": "bhg_bronze.P1Forms.br_samms_comprehensive_assessment_form",
+  "ingest_column": "IngestRunId",
+  "site_column": "SiteCode",
+  "database_column": "SourceDatabase",
+  "dq_keys": ["SiteCode", "Id"]
+}
+```
+
+**Silver method row** (example — E&M Pregnancy uses `EandMFormId` key):
+
+```json
+{
+  "full_table": "bhg_silver.pats.tbl_EandMFormPregnancy",
+  "dq_keys": ["SiteCode", "EandMFormId"]
+}
+```
+
+| Method | Bronze `full_table` | Silver `dq_keys` | `LookbackDays` (TaskConfig) |
+|--------|---------------------|------------------|----------------------------|
+| `SaveComprehensiveAssessmentForm` | `bhg_bronze.P1Forms.br_samms_comprehensive_assessment_form` | `SiteCode`, `Id` | null (full load) |
+| `SaveEMFormPregnancy` | `bhg_bronze.P1Forms.br_samms_eandm_form_pregnancy` | `SiteCode`, `EandMFormId` | null (full load) |
+| `SaveEMFormMDM` | `bhg_bronze.P1Forms.br_samms_eandm_form_mdm` | `SiteCode`, `Id` | null (full load) |
+| `SaveDataForms` | `bhg_bronze.P1Forms.br_samms_sf_data_forms` | `SiteCode`, `Id` | **15** |
+| `SaveSMSTextConsentForm` | `bhg_bronze.P1Forms.br_samms_sms_text_consent_form` | `SiteCode`, `Id` | null (full load) |
+| `SaveConsenttoMarketing` | `bhg_bronze.P1Forms.br_samms_consent_to_marketing` | `SiteCode`, `Id` | **15** |
+| `SaveTakeHomeAgreementandDiversionControl` | `bhg_bronze.P1Forms.br_samms_take_home_agreement_diversion_control` | `SiteCode`, `Id` | **15** |
+| `SaveTakeHomeRiskAssessment` | `bhg_bronze.P1Forms.br_samms_take_home_risk_assessment` | `SiteCode`, `Id` | null (full load) |
+| `SaveNewDischargeTransferPlanForm` | `bhg_bronze.P1Forms.br_samms_new_discharge_transfer_plan_form` | `SiteCode`, `Id` | **15** |
+
+#### 1. Insert a single new site (all nine Bronze methods)
+
+Clones each inactive Bronze template (`ConfigId = 97`, `SiteCode IS NULL`, `IsActive = 0`) and creates **nine site rows** — one per form method. Adjust `new_site_code` and `new_source_database` before running.
+
+```python
+import json
+import re
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+bronze_config_id = 97
+modified_by = "[Name]"
+
+new_site_code = "B99"
+new_source_database = "SAMMS-ExampleV5"
+
+site_name = re.sub(r"^SAMMS-", "", new_source_database)
+site_name = re.sub(r"(?i)V[0-9]+$", "", site_name).strip()
+
+existing = (
+    spark.table(taskconfig_table)
+    .where(f"ConfigId = {bronze_config_id} AND SiteCode = '{new_site_code}'")
+    .count()
+)
+if existing > 0:
+    raise Exception(f"Site {new_site_code} already exists for ConfigId={bronze_config_id}.")
+
+template_df = (
+    spark.table(taskconfig_table)
+    .where(f"ConfigId = {bronze_config_id} AND SiteCode IS NULL AND IsActive = 0")
+)
+template_count = template_df.select("Method").distinct().count()
+if template_count != 9:
+    raise Exception(f"Expected 9 inactive Bronze templates, found {template_count}.")
+
+max_id = (
+    spark.table(taskconfig_table)
+    .agg(F.max("TaskConfigId"))
+    .collect()[0][0]
+)
+next_id = int(max_id or 6795) + 1
+
+task_cols = spark.table(taskconfig_table).columns
+site_df = spark.createDataFrame(
+    [(new_site_code, new_source_database, site_name)],
+    ["SiteCode", "DataBaseName", "SiteName"]
+)
+
+# Assign sequential TaskConfigIds — one new row per method template
+templates_with_id = (
+    template_df
+    .withColumn("rn", F.row_number().over(Window.orderBy("ExecutionOrder", "Method")))
+    .withColumn("TaskConfigId", F.lit(next_id) + F.col("rn") - 1)
+)
+
+new_rows_df = site_df.alias("s").crossJoin(templates_with_id.alias("t")).select([
+    F.col("t.TaskConfigId").cast("long").alias("TaskConfigId") if c == "TaskConfigId" else
+    F.lit(bronze_config_id).cast("long").alias("ConfigId") if c == "ConfigId" else
+    F.concat(F.col("t.TaskName"), F.lit(" - "), F.col("s.SiteCode")).alias("TaskName") if c == "TaskName" else
+    F.col("s.SiteCode").alias("SiteCode") if c == "SiteCode" else
+    F.col("s.DataBaseName").alias("DataBaseName") if c == "DataBaseName" else
+    F.col("s.SiteName").alias("SiteName") if c == "SiteName" else
+    F.lit(1).cast("int").alias("IsActive") if c == "IsActive" else
+    F.lit(None).cast("long").alias("DependencyTaskConfigId") if c == "DependencyTaskConfigId" else
+    F.current_timestamp().alias("CreatedAt") if c == "CreatedAt" else
+    F.current_timestamp().alias("ModifiedAt") if c == "ModifiedAt" else
+    F.lit(modified_by).alias("CreatedBy") if c == "CreatedBy" else
+    F.lit(modified_by).alias("ModifiedBy") if c == "ModifiedBy" else
+    F.col(f"t.{c}").alias(c)
+    for c in task_cols
+])
+
+new_rows_df.write.format("delta").mode("append").saveAsTable(taskconfig_table)
+display(spark.sql(f"""
+SELECT TaskConfigId, Method, TaskName, SiteCode, DataBaseName, IsActive, LookbackDays, TargetTable
+FROM {taskconfig_table}
+WHERE ConfigId = {bronze_config_id} AND SiteCode = '{new_site_code}'
+ORDER BY ExecutionOrder, Method
+"""))
+```
+
+#### 2. Activate or deactivate a site
+
+**All nine methods for one site** — set `IsActive = 1` to include the clinic; `IsActive = 0` to skip all P1 Forms extraction for that site.
+
+```python
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+bronze_config_id = 97
+site_code = "B24"
+is_active = 0              # 1 = activate, 0 = deactivate
+modified_by = "[Name]"
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = {bronze_config_id} AND SiteCode = '{site_code}'",
+    set={
+        "IsActive": F.lit(is_active),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+**Single method for one site** (e.g. disable only `SaveDataForms` at `B24`):
+
+```python
+method_name = "SaveDataForms"
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = {bronze_config_id} AND SiteCode = '{site_code}' AND Method = '{method_name}'",
+    set={
+        "IsActive": F.lit(is_active),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 3. Change lookback days
+
+**Option A — one pipeline run:** set parent pipeline parameter `p_lookback_days` when triggering `pl_execute_forms` (default **15**; affects incremental Copy SQL only).
+
+**Option B — persist on TaskConfig** for the four incremental methods:
+
+```python
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+new_lookback_days = 30
+modified_by = "[Name]"
+
+incremental_methods = [
+    "SaveDataForms",
+    "SaveConsenttoMarketing",
+    "SaveTakeHomeAgreementandDiversionControl",
+    "SaveNewDischargeTransferPlanForm",
+]
+methods_sql = ", ".join([f"'{m}'" for m in incremental_methods])
+
+# All Bronze site rows for incremental methods
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = 97 AND SiteCode IS NOT NULL AND Method IN ({methods_sql})",
+    set={
+        "LookbackDays": F.lit(new_lookback_days),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+
+# Matching Silver method rows
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = 98 AND Method IN ({methods_sql})",
+    set={
+        "LookbackDays": F.lit(new_lookback_days),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 4. Update RequestBody (e.g. change DQ keys or Bronze table reference)
+
+```python
+import json
+from delta.tables import DeltaTable
+from pyspark.sql import functions as F
+
+taskconfig_table = "bhg_bronze.meta.taskconfig"
+site_code = "B24"
+method_name = "SaveEMFormPregnancy"
+modified_by = "[Name]"
+
+updated_request_body = json.dumps({
+    "full_table": "bhg_bronze.P1Forms.br_samms_eandm_form_pregnancy",
+    "ingest_column": "IngestRunId",
+    "site_column": "SiteCode",
+    "database_column": "SourceDatabase",
+    "dq_keys": ["SiteCode", "EandMFormId"]
+})
+
+DeltaTable.forName(spark, taskconfig_table).update(
+    condition=f"ConfigId = 97 AND SiteCode = '{site_code}' AND Method = '{method_name}'",
+    set={
+        "RequestBody": F.lit(updated_request_body),
+        "ModifiedBy": F.lit(modified_by),
+        "ModifiedAt": F.current_timestamp()
+    }
+)
+```
+
+#### 5. Verification queries
+
+```python
+display(spark.sql("""
+SELECT ConfigId, Method, COUNT(*) AS RowCnt,
+       SUM(CASE WHEN IsActive = 1 THEN 1 ELSE 0 END) AS ActiveCnt
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId IN (97, 98)
+GROUP BY ConfigId, Method
+ORDER BY ConfigId, Method
+"""))
+
+display(spark.sql("""
+SELECT TaskConfigId, Method, SiteCode, DataBaseName, IsActive, LookbackDays, TargetTable
+FROM bhg_bronze.meta.taskconfig
+WHERE ConfigId = 97 AND SiteCode = 'B24'
+ORDER BY ExecutionOrder, Method
+"""))
+```
 
 ### ETL Config (`meta.etlconfig`)
 
