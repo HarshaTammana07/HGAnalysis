@@ -1,0 +1,852 @@
+Parent :
+
+{
+    "name": "pl_execute_dartsrv",
+    "objectId": "79e19118-cec7-447b-b224-b11a72311cb7",
+    "properties": {
+        "activities": [
+            {
+                "name": "nb_get_darts_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_cleanup_old_bronze_rows",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "7bbb2cd8-089e-4893-8a92-01ff6ca85450",
+                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\",\"SL\",\"GL\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"DartsSrv\"]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "flt_active_darts_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_darts_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_darts_taskconfig').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(equals(item().Method, 'DartsSrv'), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_darts_audit_start",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "flt_active_darts_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "3fde62f3-7016-40d3-84a3-e90b7810a686",
+                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": "pl_execute_dartsrv",
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/pl_execute_dartsrv",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_pipeline_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_active_target_layers_json": {
+                            "value": "[\"BR\",\"SL\"]",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Exected_AfterBronz",
+                "type": "InvokePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_audit_start",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "c50482db-6de8-4e8d-84dd-e0137505fd84",
+                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites": {
+                            "value": "@activity('flt_active_darts_sites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_audit_context_json": {
+                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
+                }
+            },
+            {
+                "name": "set_darts_bronze_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Exected_AfterBronz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_bronze_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('Exected_AfterBronz').Status,'Succeeded'), string(activity('Exected_AfterBronz').output.properties.returnValue.v_bronze_method_results_json), '{\"DartsSrv\":{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"DartsSrv Bronze child pipeline failed before returning method results\"}}')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_darts_bronze_to_silver",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "set_darts_bronze_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "feec0f24-8d1d-4128-a39f-ec0396ea5b0e",
+                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                    "parameters": {
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_bronze_method_results_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_audit_context_json": {
+                            "value": {
+                                "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set_darts_silver_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "nb_darts_bronze_to_silver",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@if(equals(activity('nb_darts_bronze_to_silver').Status, 'Succeeded'), activity('nb_darts_bronze_to_silver').output.result.exitValue, concat('{\"DartsSrv\":{\"method\":\"DartsSrv\",\"layer\":\"SL\",\"status\":\"',if(equals(activity('nb_darts_bronze_to_silver').Status,'Skipped'),'SKIPPED','FAILED'),'\",\"failed_stage\":\"',if(contains(variables('v_bronze_method_results_json'),'\"status\":\"FAILED\"'),'BR','SL'),'\",\"error_message\":\"',replace(replace(if(equals(activity('nb_darts_bronze_to_silver').Status,'Failed'),string(activity('nb_darts_bronze_to_silver').error),'DartsSrv Silver notebook was skipped.'),'\"',''''),'\\','\\\\'),'\"}}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if_darts_silver_result_success",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set_darts_silver_results",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(and(and(not(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_bronze_method_results_json'), '\"status\":\"ERROR\"'))), and(and(not(contains(variables('v_silver_method_results_json'), '\"status\":\"FAILED\"')), not(contains(variables('v_silver_method_results_json'), '\"status\":\"SKIPPED\"'))), not(contains(variables('v_silver_method_results_json'), '\"status\":\"ERROR\"'))))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "nb_darts_audit_finalize_failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "3fde62f3-7016-40d3-84a3-e90b7810a686",
+                                "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": "pl_execute_dartsrv",
+                                        "type": "string"
+                                    },
+                                    "p_failed_target_name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_failure_activity": {
+                                        "value": "DartsSrv_Result_Finalizer",
+                                        "type": "string"
+                                    },
+                                    "p_error_message": {
+                                        "value": {
+                                            "value": "@concat('Bronze results: ', variables('v_bronze_method_results_json'), ' Silver results: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_notify_failed",
+                            "type": "TridentNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_darts_audit_finalize_failure",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "9ad8894b-1a9c-4f68-b87a-68dae0d1b35e",
+                                "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                "parameters": {
+                                    "Pipeline_Name": {
+                                        "value": "DartsSrv ETL",
+                                        "type": "string"
+                                    },
+                                    "Status": {
+                                        "value": "Failed",
+                                        "type": "string"
+                                    },
+                                    "Config_Name": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    },
+                                    "Source_System": {
+                                        "value": "SAMMS",
+                                        "type": "string"
+                                    },
+                                    "Target_Name": {
+                                        "value": {
+                                            "value": "@if(or(contains(variables('v_bronze_method_results_json'), '\"status\":\"FAILED\"'), contains(variables('v_silver_method_results_json'), '\"failed_stage\":\"BR\"')), 'BR', 'SL')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Environment_Name": {
+                                        "value": "BHG-DATA-PLATFORM-CORE-PROD",
+                                        "type": "string"
+                                    },
+                                    "Run_Id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Description": {
+                                        "value": "DartsSrv pipeline failed or completed with partial site failures. See audit details.",
+                                        "type": "string"
+                                    },
+                                    "Error_Msg": {
+                                        "value": {
+                                            "value": "@concat('DartsSrv failed details. Bronze: ', variables('v_bronze_method_results_json'), ' Silver: ', variables('v_silver_method_results_json'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_StartTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "Pipeline_EndTime": {
+                                        "value": {
+                                            "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "flt_active_darts_gold",
+                            "type": "Filter",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [],
+                            "typeProperties": {
+                                "items": {
+                                    "value": "@json(activity('nb_get_darts_taskconfig').output.result.exitValue)",
+                                    "type": "Expression"
+                                },
+                                "condition": {
+                                    "value": "@and(equals(item().TargetName, 'GL'), equals(item().IsActive, 1))",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_darts_optional_gold_publish",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "flt_active_darts_gold",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "c1e2d16d-7945-4d2f-8cee-dced07b2e1e4",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_gold_tasks_json": {
+                                        "value": {
+                                            "value": "@string(activity('flt_active_darts_gold').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_darts_audit_finalize_success",
+                            "type": "TridentNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_darts_optional_gold_publish",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "3fde62f3-7016-40d3-84a3-e90b7810a686",
+                                "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@activity('nb_darts_audit_start').output.result.exitValue",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS DartsSrv",
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": "pl_execute_dartsrv",
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_active_target_layers_json": {
+                                        "value": "[\"BR\",\"SL\"]",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "nb_cleanup_old_bronze_rows",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "e9029c48-0433-4d74-88f1-480921c5390a",
+                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS DartsSrv",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"DartsSrv\"]",
+                            "type": "string"
+                        },
+                        "p_retention_days": {
+                            "value": "7",
+                            "type": "string"
+                        },
+                        "p_timestamp_columns_json": {
+                            "value": "[\"ExtractedAt\",\"_extracted_at\"]",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 120
+            }
+        },
+        "variables": {
+            "v_bronze_method_results_json": {
+                "type": "String"
+            },
+            "v_silver_method_results_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "73ad3665-25d7-4eb3-91b8-df32c261764c",
+        "lastPublishTime": "2026-08-21T15:50:08Z"
+    }
+}
+
+
+child:
+
+
+{
+    "name": "dartSRV_Pipeline",
+    "objectId": "c50482db-6de8-4e8d-84dd-e0137505fd84",
+    "properties": {
+        "activities": [
+            {
+                "name": "fe_each_samms_database_sites",
+                "type": "ForEach",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_sites",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 10,
+                    "activities": [
+                        {
+                            "name": "lkp_check_optional_columns_exist",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    COUNT(CASE WHEN c.name = ''ServiceType''         THEN 1 END) AS service_type_exists,\n    COUNT(CASE WHEN c.name = ''dsTelehealthSession'' THEN 1 END) AS telehealth_exists,\n    COUNT(CASE WHEN c.name = ''HoldId''              THEN 1 END) AS holdid_exists,\n    COUNT(CASE WHEN c.name = ''upsize_ts''           THEN 1 END) AS upsize_ts_exists\nFROM [', item().DataBaseName, '].sys.columns c\nINNER JOIN [', item().DataBaseName, '].sys.tables t\n    ON c.object_id = t.object_id\nINNER JOIN [', item().DataBaseName, '].sys.schemas s\n    ON t.schema_id = s.schema_id\nWHERE s.name = COALESCE(PARSENAME(''', item().SourceTable, ''', 2), ''dbo'')\n  AND t.name = PARSENAME(''', item().SourceTable, ''', 1)\n  AND c.name IN (''ServiceType'', ''dsTelehealthSession'', ''HoldId'', ''upsize_ts'');'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "Dart_Source_to_Bronz",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_optional_columns_exist",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT\n    ''', item().SiteCode, ''' AS SiteCode,\n    ''', item().DataBaseName, ''' AS SourceDatabase,\n    ''', pipeline().parameters.p_ingest_run_id, ''' AS IngestRunId,\n    GETDATE() AS ExtractedAt,\n    CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE())) AS SourceQueryStartDate,\n    CONVERT(date, GETDATE()) AS SourceQueryEndDate,\n \n    dsID,\n    dsClt,\n    dsDIM1,\n    dsDIM2,\n    dsDIM3,\n    dsDIM4,\n    dsDIM5,\n    dsDIM6,\n    dsTxtSrv,\n    dsDtStart,\n    dsDtEnd,\n    dsTxtType,\n    dsdblUnits,\n    dsNoteID,\n    dsDtAdded,\n    dstxtStaff,\n    dstxtNote,\n    dsRTBNOTE,\n    DSbilled,\n    dsGROUPNUM,\n    dsPROGRAM,\n    dsUpdate,\n    dsUPDATEStaff,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.upsize_ts_exists, 1),\n    'upsize_ts',\n    'CAST(NULL AS varbinary(8)) AS upsize_ts'\n),\n',\n    dsInvalidatedOn,\n    dsError,\n    dsTxtHIV,\n    dsDartsGroup,\n    repOldSrv,\n    dsSignature,\n    dsSigDate,\n    dssigdateCOSIGN,\n    dssignatureCOSIGN,\n    dsSigUser,\n    dsSigUserCosign,\n    dsSIGCLT,\n    dsSIGCLTDATE,\n    dsSIGCLTUSER,\n    dsAPTID,\n    dsuncharted,\n    dsTxDim1,\n    dsTxDim2,\n    dsTxDim3,\n    dsTxDim4,\n    dsTxDim5,\n    dsTxDim6,\n    dsDIAG,\n    dsArea,\n    dsGroupDefaultNote,\n    dsGroupEnd,\n    dsGroupIdentity,\n    dsGroupStart,\n    dsDIAG10,\n    SiteID,\n    dsDBnotes,\n    dsSigCltImg,\n    dsSignatureCoSignImg,\n    dsSignatureIMG,\n    MG,\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100)) AS ServiceType'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit) AS dsTelehealthSession'\n),\n',\n    ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int) AS HoldId'\n),\n',\n \n    RowChkSum = CHECKSUM(\n        dsID,\n        dsClt,\n        dsDIM1,\n        dsDIM2,\n        dsDIM3,\n        dsDIM4,\n        dsDIM5,\n        dsDIM6,\n        dsTxtSrv,\n        dsDtStart,\n        dsDtEnd,\n        dsTxtType,\n        dsdblUnits,\n        dsNoteID,\n        dsDtAdded,\n        dstxtStaff,\n        DSbilled,\n        dsGROUPNUM,\n        dsPROGRAM,\n        dsUpdate,\n        dsUPDATEStaff,\n        dsInvalidatedOn,\n        dsError,\n        dsTxtHIV,\n        dsDartsGroup,\n        repOldSrv,\n        dsSigDate,\n        dssigdateCOSIGN,\n        dsSigUser,\n        dsSigUserCosign,\n        dsSIGCLTDATE,\n        dsSIGCLTUSER,\n        dsAPTID,\n        dsuncharted,\n        dsTxDim1,\n        dsTxDim2,\n        dsTxDim3,\n        dsTxDim4,\n        dsTxDim5,\n        dsTxDim6,\n        dsDIAG,\n        dsArea,\n        dsGroupDefaultNote,\n        dsGroupEnd,\n        dsGroupIdentity,\n        dsGroupStart,\n        dsDIAG10,\n        SiteID,\n        dsDBnotes,\n        MG,\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.service_type_exists, 1),\n    'ServiceType',\n    'CAST(NULL AS varchar(100))'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.telehealth_exists, 1),\n    'dsTelehealthSession',\n    'CAST(NULL AS bit)'\n),\n',\n        ',\nif(\n    equals(activity('lkp_check_optional_columns_exist').output.firstRow.holdid_exists, 1),\n    'HoldId',\n    'CAST(NULL AS int)'\n),\n'\n    )\n \nFROM [', item().DataBaseName, '].', item().SourceTable, '\nWHERE dsClt IS NOT NULL\n  AND (\n       CONVERT(date, dsdtstart) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsDtAdded) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsUpdate) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsBilled) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR CONVERT(date, dsSigDate) >= CONVERT(date, DATEADD(day, -', string(coalesce(item().LookbackDays, pipeline().parameters.p_lookback_days)), ', GETDATE()))\n    OR dsClt <= 0\n  )\nORDER BY 1, 2'\n)\n ",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "SqlServerTable",
+                                        "schema": [],
+                                        "externalReferences": {
+                                            "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "Append",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "enableTimestampNtz": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "bhg_bronze",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "2a433150-4aaf-4df6-8c03-fe625a3e96e0",
+                                                    "artifactId": "a7e1c66f-02f0-482d-8d90-c6915cd4a121",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "Dart",
+                                            "table": "br_tblDartSrv"
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_samms_database_sites",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat('{\"DartsSrv\":{\"status\":\"',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'SUCCESS','FAILED'),'\",\"failed_stage\":\"',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'','BR'),'\",\"error_message\":',if(equals(activity('fe_each_samms_database_sites').Status,'Succeeded'),'null',concat('\"',replace(replace(string(coalesce(activity('fe_each_samms_database_sites').error,'DartsSrv Bronze ForEach failed')),'\"',''''),'\\','\\\\'),'\"')),'}}')"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "manual-run"
+            },
+            "p_lookback_days": {
+                "type": "int",
+                "defaultValue": 15
+            },
+            "p_sites": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_audit_context_json": {
+                "type": "string"
+            }
+        },
+        "lastModifiedByObjectId": "73ad3665-25d7-4eb3-91b8-df32c261764c",
+        "lastPublishTime": "2026-08-21T15:49:56Z"
+    }
+}

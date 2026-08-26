@@ -1,0 +1,2208 @@
+parent json:
+
+{
+    "name": "pl_execute_ Assessments02",
+    "objectId": "c3333039-a89e-413c-868c-71a914515a0f",
+    "properties": {
+        "activities": [
+            {
+                "name": "nb_get_activetaskconfig_assessments02",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:30:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "aea6983d-7b7d-4308-b71c-c1ec736e8272",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_ids_json": {
+                            "value": "[123,124,125]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"SavePA\",\"SavePACounselorReview\",\"SavePADimension1\",\"SavePADimension2\",\"SavePADimension3\",\"SavePADimension4\",\"SavePADimension5\",\"SavePADimension6\",\"SaveAdmissionAssessmentsSubstanceUseHistory\"]",
+                            "type": "string"
+                        },
+                        "p_target_tables_json": {
+                            "value": "[ ]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_require_source_table": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "false",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Filter_active_sites",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_activetaskconfig_assessments02",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@json(activity('nb_get_activetaskconfig_assessments02').output.result.exitValue)",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@and(equals(item().ConfigId, 123), equals(item().IsActive, 1))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "nb_audit_start_assessments02",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Filter_active_sites",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:30:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "df5165c8-017f-4d3e-9896-1c549baa26be",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_mode": {
+                            "value": "START_LAYER_RUNS",
+                            "type": "string"
+                        },
+                        "p_config_name_prefix": {
+                            "value": "P1/P2 Assessments",
+                            "type": "string"
+                        },
+                        "p_pipeline_name": {
+                            "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_pipeline_path": {
+                            "value": "/pipelines/pl_execute_Assessments-02",
+                            "type": "string"
+                        },
+                        "p_triggered_by": {
+                            "value": "Fabric",
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@if(or(equals(pipeline().parameters.p_ingest_run_id, ''), equals(pipeline().parameters.p_ingest_run_id, null)), pipeline().RunId, pipeline().parameters.p_ingest_run_id)\n",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "pl_src_to_brz_assessments02",
+                "type": "InvokePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "nb_audit_start_assessments02",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:30:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeFabricPipeline",
+                    "pipelineId": "aadf07fa-83bd-4bc6-9324-db46e8fec749",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_taskconfigs": {
+                            "value": "@activity('filter_active_sites').output.value",
+                            "type": "Expression"
+                        },
+                        "p_ingest_run_id": {
+                            "value": "@if(or(equals(pipeline().parameters.p_ingest_run_id, ''), equals(pipeline().parameters.p_ingest_run_id, null)), pipeline().RunId, pipeline().parameters.p_ingest_run_id)",
+                            "type": "Expression"
+                        },
+                        "p_work_date": {
+                            "value": "@pipeline().parameters.p_work_date",
+                            "type": "Expression"
+                        },
+                        "p_lookback_days": {
+                            "value": "@pipeline().parameters.p_lookback_days",
+                            "type": "Expression"
+                        },
+                        "p_sites_json": []
+                    }
+                },
+                "externalReferences": {
+                    "connection": "184a76ff-0d6d-4b32-aead-cb57bc45a349"
+                }
+            },
+            {
+                "name": "nb_brz_to_slv_assessments_02",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Set variable1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "dadd3b12-1aec-4b07-9b65-1db56cb350e8",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_methods_json": {
+                            "value": {
+                                "value": "@variables('v_bronze_method_results_json')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_ingest_run_id": {
+                            "value": {
+                                "value": "@if(or(empty(pipeline().parameters.p_ingest_run_id), equals(pipeline().parameters.p_ingest_run_id, '-1')), pipeline().RunId, pipeline().parameters.p_ingest_run_id)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "p_work_date": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_work_date",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set_silver_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "nb_brz_to_slv_assessments_02",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@string(coalesce(activity('nb_brz_to_slv_assessments_02').output.result.exitValue, activity('nb_brz_to_slv_assessments_02').output.result, '{}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "If_all_assessments_methods_success",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set_silver_method_results",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@and(\n  not(equals(variables('v_silver_method_results_json'), '{}')),\n  not(contains(toLower(variables('v_silver_method_results_json')), '\"status\": \"failed\"'))\n)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "nb_finalize_audit_failure",
+                            "type": "TridentNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "df5165c8-017f-4d3e-9896-1c549baa26be",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_FAILURE",
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_config_name_prefix",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": {
+                                            "value": "@pipeline().Pipeline",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_path": {
+                                        "value": {
+                                            "value": "@concat('/pipelines/', pipeline().Pipeline)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@string(coalesce(activity('nb_audit_start_assessments02').output.result.exitValue, activity('nb_audit_start_assessments02').output.result, '{}'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@if(or(empty(pipeline().parameters.p_ingest_run_id), equals(pipeline().parameters.p_ingest_run_id, '-1')), pipeline().RunId, pipeline().parameters.p_ingest_run_id)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('Filter_active_sites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_bronze_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_bronze_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "FAILED",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "flt_active_assessments_gold",
+                            "type": "Filter",
+                            "dependsOn": [],
+                            "typeProperties": {
+                                "items": {
+                                    "value": "@json(activity('nb_get_activetaskconfig_assessments02').output.result.exitValue)",
+                                    "type": "Expression"
+                                },
+                                "condition": {
+                                    "value": "@and(equals(item().ConfigId, 125), equals(item().IsActive, 1))",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_slv_to_gld_assessments02",
+                            "type": "TridentNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "flt_active_assessments_gold",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "c8f7000c-fa5b-437b-9e5e-e94bd4c53ff0",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_gold_tasks_json": {
+                                        "value": {
+                                            "value": "@string(activity('flt_active_assessments_gold').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@if(equals(pipeline().parameters.p_ingest_run_id, ''), guid(), pipeline().parameters.p_ingest_run_id)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_config_name_prefix",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_finalize audit_sucess",
+                            "type": "TridentNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_slv_to_gld_assessments02",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "df5165c8-017f-4d3e-9896-1c549baa26be",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_mode": {
+                                        "value": "FINALIZE_SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_status": {
+                                        "value": "SUCCESS",
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.p_config_name_prefix",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_name": {
+                                        "value": {
+                                            "value": "@pipeline().Pipeline",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_path": {
+                                        "value": {
+                                            "value": "@concat('/pipelines/', pipeline().Pipeline)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_triggered_by": {
+                                        "value": "Fabric",
+                                        "type": "string"
+                                    },
+                                    "p_audit_context_json": {
+                                        "value": {
+                                            "value": "@string(coalesce(activity('nb_audit_start_assessments02').output.result.exitValue, activity('nb_audit_start_assessments02').output.result, '{}'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@if(or(empty(pipeline().parameters.p_ingest_run_id), equals(pipeline().parameters.p_ingest_run_id, '-1')), pipeline().RunId, pipeline().parameters.p_ingest_run_id)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_sites_json": {
+                                        "value": {
+                                            "value": "@string(activity('Filter_active_sites').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_bronze_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_bronze_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_silver_method_results_json": {
+                                        "value": {
+                                            "value": "@variables('v_silver_method_results_json')",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_gold_method_results_json": {
+                                        "value": {
+                                            "value": "@string(coalesce(activity('nb_slv_to_gld_assessments02').output.result.exitValue, activity('nb_slv_to_gld_assessments02').output.result, '{}'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "nb_notify_failure",
+                "type": "TridentNotebook",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [
+                    {
+                        "activity": "If_all_assessments_methods_success",
+                        "dependencyConditions": [
+                            "Failed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "e11bce7a-ce68-42c1-973c-87f88dca75e3",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "Pipeline_Name": {
+                            "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Status": {
+                            "value": "Failed",
+                            "type": "string"
+                        },
+                        "Config_Name": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_config_name_prefix",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Source_System": {
+                            "value": "SAMMS ",
+                            "type": "string"
+                        },
+                        "Target_Name": {
+                            "value": "ALL",
+                            "type": "string"
+                        },
+                        "Environment_Name": {
+                            "value": {
+                                "value": "@pipeline().parameters.p_environment",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Run_Id": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_StartTime": {
+                            "value": {
+                                "value": "@pipeline().TriggerTime",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Pipeline_EndTime": {
+                            "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Error_Msg": {
+                            "value": {
+                                "value": "@concat(\n    if(equals(activity('nb_get_activetaskconfig_assessments02').Status, 'Failed'), coalesce(activity('nb_get_activetaskconfig_assessments02').output.message, 'nb_get_activetaskconfig_assessments02 failed. '), ''),\n    if(equals(activity('nb_audit_start_assessments02').Status, 'Failed'), coalesce(activity('nb_audit_start_assessments02').output.message, 'nb_audit_start_assessments02 failed. '), ''),\n    if(equals(activity('pl_src_to_brz_assessments02').Status, 'Failed'), coalesce(activity('pl_src_to_brz_assessments02').output.message, 'pl_src_to_brz_assessments02 failed. '), ''),\n    if(equals(activity('nb_brz_to_slv_assessments_02').Status, 'Failed'), coalesce(activity('nb_brz_to_slv_assessments_02').output.message, 'nb_brz_to_slv_assessments_02 failed. '), ''),\n    if(equals(activity('if_all_assessments_methods_success').Status, 'Failed'), 'if_all_assessments_methods_success condition failed. ', '')\n)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "Description": {
+                            "value": "Assessments P1/P2 pipeline execution",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Set variable1",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "pl_src_to_brz_assessments02",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "v_silver_method_results_json",
+                    "value": {
+                        "value": "@if(\n  equals(activity('pl_src_to_brz_assessments02').Status, 'Succeeded'),\n  string(activity('pl_src_to_brz_assessments02').output.properties.returnValue.v_bronze_method_results_json),\n  '{\"status\":\"FAILED\",\"failed_stage\":\"BR\",\"error_message\":\"Assessments bronze child pipeline failed before returning method results\"}'\n)",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_ingest_run_id": {
+                "type": "string"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+            },
+            "p_lookback_days": {
+                "type": "string",
+                "defaultValue": "\" \""
+            },
+            "p_config_name_prefix": {
+                "type": "string",
+                "defaultValue": "\"P1/P2 Assessments\""
+            },
+            "p_environment": {
+                "type": "string",
+                "defaultValue": "\"DEV\""
+            }
+        },
+        "variables": {
+            "v_silver_method_results_json": {
+                "type": "String"
+            },
+            "v_bronze_method_results_json": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "f8ee8459-d704-4f44-b046-aab05b040577",
+        "lastPublishTime": "2026-08-14T15:25:02Z"
+    }
+}
+
+
+Child:
+
+
+{
+    "name": "pl_src_to_brz_assessments02",
+    "objectId": "aadf07fa-83bd-4bc6-9324-db46e8fec749",
+    "properties": {
+        "activities": [
+            {
+                "name": "flt_child_PeriodicReassessment",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePA')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_NewPeriodicReassessment",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PeriodicReassessment",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PeriodicReassessment').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_pa",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_pa",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_pa",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(int(activity('lkp_check_pa').output.firstRow.IsActive), 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data1",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_CounselorReview",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePACounselorReview')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_CounselorReview",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_CounselorReview",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_CounselorReview').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_CounselorReview",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "typeProperties": {
+                                        "database": "SAMMSGLOBAL"
+                                    },
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_counselorreview",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_CounselorReview",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_counselorreview').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data2",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension1",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension1')\n",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension1').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension1",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_padimension1",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension1",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension1').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data3",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension2",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension2')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension2",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension2",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension2').output.value\n",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension2",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_padimension2",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension2",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension2').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data4",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension3",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension3')\n",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension3",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension3",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension3').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension3",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_padimension3",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension3",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension3').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data5",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension4",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension4')\n",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension4",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension4",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension4').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension4",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_padimension4",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension4",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension4').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data6",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension5",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension5')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension5",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension5",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension5').output.value\n",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension5",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_padimension5",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension5",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension5').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data7",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_PADimension6",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SavePADimension6')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_PADimension6",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_PADimension6",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_PADimension6').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_padimension6",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "If Condition1",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_padimension6",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_padimension6').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data8",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "flt_child_SubstanceuseHistory",
+                "type": "Filter",
+                "dependsOn": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@pipeline().parameters.p_taskconfigs",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().Method, 'SaveAdmissionAssessmentsSubstanceUseHistory')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "fe_each_site_SubstanceuseHistory",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "flt_child_SubstanceuseHistory",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('flt_child_SubstanceuseHistory').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "lkp_check_substanceusehistory",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlServerSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT CASE WHEN EXISTS (',\n'SELECT 1 FROM [', item().DataBaseName, '].sys.tables t ',\n'JOIN [', item().DataBaseName, '].sys.schemas s ON t.schema_id = s.schema_id ',\n'WHERE s.name = ''dbo'' AND t.name = ''',\nreplace(replace(replace(string(item().SourceTable), 'dbo.', ''), '[', ''), ']', ''),\n''') THEN 1 ELSE 0 END AS clinic_exists'\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "SqlServerTable",
+                                    "schema": [],
+                                    "externalReferences": {
+                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "if_condition_substanceusehistory",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "lkp_check_substanceusehistory",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(activity('lkp_check_substanceusehistory').output.firstRow.clinic_exists, 1)",
+                                    "type": "Expression"
+                                },
+                                "ifFalseActivities": [],
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data9",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "SqlServerSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "@concat(\n'SELECT ''', item().SiteCode, ''' AS SiteCode, ''', item().DataBaseName, ''' AS SourceDatabase, ''', if(equals(pipeline().parameters.p_ingest_run_id, ''), pipeline().RunId, pipeline().parameters.p_ingest_run_id), ''' AS IngestRunId, GETDATE() AS ExtractedAt, NULL AS SourceQueryStartDate, NULL AS SourceQueryEndDate, NULL AS LookbackDate, CHECKSUM(*) AS RowChkSum, c.* FROM [', item().DataBaseName, '].', if(contains(string(item().SourceTable), '.'), concat('[', split(string(item().SourceTable), '.')[0], '].[', split(string(item().SourceTable), '.')[1], ']'), concat('[dbo].[', item().SourceTable, ']')), ' c WHERE 1 = 1'\n)",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None",
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "type": "SqlServerTable",
+                                                    "schema": [],
+                                                    "externalReferences": {
+                                                        "connection": "9743b95a-fd66-4f7c-9767-e6eb0f1ecab7"
+                                                    }
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "LakehouseTableSink",
+                                                "tableActionOption": "Append",
+                                                "partitionOption": "None",
+                                                "applyVOrder": false,
+                                                "datasetSettings": {
+                                                    "annotations": [],
+                                                    "linkedService": {
+                                                        "name": "bhg_bronze",
+                                                        "properties": {
+                                                            "annotations": [],
+                                                            "type": "Lakehouse",
+                                                            "typeProperties": {
+                                                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                                                "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                                                "rootFolder": "Tables"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "LakehouseTable",
+                                                    "schema": [],
+                                                    "typeProperties": {
+                                                        "schema": "assessments02",
+                                                        "table": {
+                                                            "value": "@item().TargetTable",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set_child_bronze_method_results",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "fe_each_site_NewPeriodicReassessment",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_CounselorReview",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension1",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension2",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension3",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension4",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension5",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_PADimension6",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "fe_each_site_SubstanceuseHistory",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "v_bronze_method_results_json",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@concat(\n'{',\n'\"SavePA\":{\"status\":', if(equals(activity('fe_each_site_NewPeriodicReassessment').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_NewPeriodicReassessment').Status, 'Succeeded'), '\"\"', '\"fe_each_site_NewPeriodicReassessment\"'), ',\"error_message\":', if(equals(activity('fe_each_site_NewPeriodicReassessment').Status, 'Succeeded'), 'null', '\"SavePA bronze Foreach failed\"'), '},',\n'\"SavePACounselorReview\":{\"status\":', if(equals(activity('fe_each_site_CounselorReview').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_CounselorReview').Status, 'Succeeded'), '\"\"', '\"fe_each_site_CounselorReview\"'), ',\"error_message\":', if(equals(activity('fe_each_site_CounselorReview').Status, 'Succeeded'), 'null', '\"SavePACounselorReview bronze Foreach failed\"'), '},',\n'\"SavePADimension1\":{\"status\":', if(equals(activity('fe_each_site_PADimension1').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension1').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension1\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension1').Status, 'Succeeded'), 'null', '\"SavePADimension1 bronze Foreach failed\"'), '},',\n'\"SavePADimension2\":{\"status\":', if(equals(activity('fe_each_site_PADimension2').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension2').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension2\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension2').Status, 'Succeeded'), 'null', '\"SavePADimension2 bronze Foreach failed\"'), '},',\n'\"SavePADimension3\":{\"status\":', if(equals(activity('fe_each_site_PADimension3').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension3').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension3\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension3').Status, 'Succeeded'), 'null', '\"SavePADimension3 bronze Foreach failed\"'), '},',\n'\"SavePADimension4\":{\"status\":', if(equals(activity('fe_each_site_PADimension4').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension4').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension4\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension4').Status, 'Succeeded'), 'null', '\"SavePADimension4 bronze Foreach failed\"'), '},',\n'\"SavePADimension5\":{\"status\":', if(equals(activity('fe_each_site_PADimension5').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension5').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension5\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension5').Status, 'Succeeded'), 'null', '\"SavePADimension5 bronze Foreach failed\"'), '},',\n'\"SavePADimension6\":{\"status\":', if(equals(activity('fe_each_site_PADimension6').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_PADimension6').Status, 'Succeeded'), '\"\"', '\"fe_each_site_PADimension6\"'), ',\"error_message\":', if(equals(activity('fe_each_site_PADimension6').Status, 'Succeeded'), 'null', '\"SavePADimension6 bronze Foreach failed\"'), '},',\n'\"SaveAdmissionAssessmentsSubstanceUseHistory\":{\"status\":', if(equals(activity('fe_each_site_SubstanceuseHistory').Status, 'Succeeded'), '\"SUCCESS\"', '\"FAILED\"'), ',\"failed_stage\":', if(equals(activity('fe_each_site_SubstanceuseHistory').Status, 'Succeeded'), '\"\"', '\"fe_each_site_SubstanceuseHistory\"'), ',\"error_message\":', if(equals(activity('fe_each_site_SubstanceuseHistory').Status, 'Succeeded'), 'null', '\"SaveAdmissionAssessmentsSubstanceUseHistory bronze Foreach failed\"'), '}',\n'}'\n)"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            }
+        ],
+        "parameters": {
+            "p_taskconfigs": {
+                "type": "array",
+                "defaultValue": []
+            },
+            "p_ingest_run_id": {
+                "type": "string",
+                "defaultValue": "@if(or(equals(pipeline().parameters.p_ingest_run_id, ''), equals(pipeline().parameters.p_ingest_run_id, null)), pipeline().RunId, pipeline().parameters.p_ingest_run_id)"
+            },
+            "p_work_date": {
+                "type": "string",
+                "defaultValue": "@pipeline().parameters.p_work_date"
+            },
+            "p_lookback_days": {
+                "type": "string",
+                "defaultValue": "@pipeline().parameters.p_lookback_days"
+            },
+            "p_sites_json": {
+                "type": "array",
+                "defaultValue": []
+            }
+        },
+        "lastModifiedByObjectId": "f8ee8459-d704-4f44-b046-aab05b040577",
+        "lastPublishTime": "2026-08-14T13:56:15Z"
+    }
+}

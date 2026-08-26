@@ -1,0 +1,386 @@
+{
+    "name": "pl_qq_gltran",
+    "objectId": "a04ef450-c69b-487a-a62f-71a2134c46fb",
+    "properties": {
+        "activities": [
+            {
+                "name": "Pre_Execute",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "fb32d4e4-1062-4875-aa3a-ca7d8b9a0255",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "PIPELINE_RUN_ID": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "PIPELINE_NAME": {
+                            "value": {
+                                "value": "@pipeline().PipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Post_Execute",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Src_to_brz",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "5bd4ee60-d470-4aa6-a3b0-d26ab09eebad",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "RUN_ID": {
+                            "value": {
+                                "value": "@json(activity('Pre_Execute').output.result.exitValue).RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "TASK_ID": {
+                            "value": {
+                                "value": "@json(activity('Pre_Execute').output.result.exitValue).TaskId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "CONFIG_ID": {
+                            "value": {
+                                "value": "@json(activity('Pre_Execute').output.result.exitValue).ConfigId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "TASK_CONFIG_ID": {
+                            "value": {
+                                "value": "@json(activity('Pre_Execute').output.result.exitValue).TaskConfigId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "PIPELINE_NAME": {
+                            "value": "pl_qq_gltran",
+                            "type": "string"
+                        },
+                        "PIPELINE_RUN_ID": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "STATUS": {
+                            "value": {
+                                "value": "@if(equals(activity('Src_to_brz').status, 'Succeeded'), 'SUCCESS', 'FAILED')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ERROR_MESSAGE": {
+                            "value": {
+                                "value": "@if(equals(activity('Src_to_brz').status, 'Succeeded'), '', activity('Src_to_brz').error.message)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ROWS_PROCESSED": {
+                            "value": {
+                                "value": "@if(equals(activity('Src_to_brz').status, 'Succeeded'), activity('Src_to_brz').output.rowsRead, 0)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ROWS_WRITTEN": {
+                            "value": {
+                                "value": "@if(equals(activity('Src_to_brz').status, 'Succeeded'), activity('Src_to_brz').output.rowsRead, 0)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Src_to_brz",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Pre_Execute",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                            "value": "@concat('SELECT * FROM ', json(activity('Pre_Execute').output.result.exitValue).SourceTable, ' WHERE CONVERT(DATE, [CREATE DATE]) >= DATEADD(DAY, -', string(json(activity('Pre_Execute').output.result.exitValue).LookbackDays), ', CONVERT(DATE, GETDATE())) AND CONVERT(DATE, [CREATE DATE]) <= DATEADD(DAY, -1, CONVERT(DATE, GETDATE())) AND Posted = ''P''')",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                            "annotations": [],
+                            "type": "SqlServerTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "database": "DRD"
+                            },
+                            "externalReferences": {
+                                "connection": "d0a67ddc-ce9b-4333-b29d-5ac8b22626df"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "OverwriteSchema",
+                        "partitionOption": "None",
+                        "applyVOrder": false,
+                        "enableTimestampNtz": false,
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "bhg_bronze",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                        "artifactId": "77d24027-6a1c-43a8-a998-1a14dd3c0d52",
+                                        "rootFolder": "Tables"
+                                    }
+                                }
+                            },
+                            "type": "LakehouseTable",
+                            "schema": [],
+                            "typeProperties": {
+                                "schema": {
+                                    "value": "@{json(activity('Pre_Execute').output.result.exitValue).TargetSchema}",
+                                    "type": "Expression"
+                                },
+                                "table": {
+                                    "value": "@{json(activity('Pre_Execute').output.result.exitValue).TargetTable}",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Brz_to_Slv",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Post_Execute",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "88cf00a2-4e83-4a70-b3db-dd227a8d39e6",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "PIPELINE_RUN_ID": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Slv_to_Gld",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Brz_to_Slv",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "5d889fec-4e60-43ee-aa13-4e6ed06195dc",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "PIPELINE_RUN_ID": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Send_Failure_Alert",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Slv_to_Gld",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "Post_Execute",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "Pre_Execute",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "Src_to_brz",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "Brz_to_Slv",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "c2f5751b-7970-48f0-a3e4-8d3df27cde42",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "PIPELINE_RUN_ID": {
+                            "value": {
+                                "value": "@pipeline().RunId",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ENVIRONMENT_NAME": {
+                            "value": "DEV",
+                            "type": "string"
+                        },
+                        "SOURCE_SYSTEM": {
+                            "value": "QQ_GLTRAN",
+                            "type": "string"
+                        },
+                        "ACTIVITY_NAME": {
+                            "value": {
+                                "value": "@if(not(equals(activity('Pre_Execute').status, 'Succeeded')), 'Pre_Execute', if(not(equals(activity('Src_to_brz').status, 'Succeeded')), 'Src_to_brz', if(not(equals(activity('Post_Execute').status, 'Succeeded')), 'Post_Execute', if(not(equals(activity('Brz_to_Slv').status, 'Succeeded')), 'Brz_to_Slv', if(not(equals(activity('Slv_to_Gld').status, 'Succeeded')), 'Slv_to_Gld', 'Pipeline')))))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ACTIVITY_START_TIME": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ACTIVITY_END_TIME": {
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ACTIVITY_ERROR_CODE": {
+                            "value": {
+                                "value": "@if(not(equals(activity('Pre_Execute').status, 'Succeeded')), coalesce(string(activity('Pre_Execute').error.errorCode), activity('Pre_Execute').status), if(not(equals(activity('Src_to_brz').status, 'Succeeded')), coalesce(string(activity('Src_to_brz').error.errorCode), activity('Src_to_brz').status), if(not(equals(activity('Post_Execute').status, 'Succeeded')), coalesce(string(activity('Post_Execute').error.errorCode), activity('Post_Execute').status), if(not(equals(activity('Brz_to_Slv').status, 'Succeeded')), coalesce(string(activity('Brz_to_Slv').error.errorCode), activity('Brz_to_Slv').status), if(not(equals(activity('Slv_to_Gld').status, 'Succeeded')), coalesce(string(activity('Slv_to_Gld').error.errorCode), activity('Slv_to_Gld').status), '0')))))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "ACTIVITY_ERROR_MESSAGE": {
+                            "value": {
+                                "value": "@if(not(equals(activity('Pre_Execute').status, 'Succeeded')), coalesce(string(activity('Pre_Execute').error.message), concat('Pre_Execute ended with status: ', activity('Pre_Execute').status)), if(not(equals(activity('Src_to_brz').status, 'Succeeded')), coalesce(string(activity('Src_to_brz').error.message), concat('Src_to_brz ended with status: ', activity('Src_to_brz').status)), if(not(equals(activity('Post_Execute').status, 'Succeeded')), coalesce(string(activity('Post_Execute').error.message), concat('Post_Execute ended with status: ', activity('Post_Execute').status)), if(not(equals(activity('Brz_to_Slv').status, 'Succeeded')), coalesce(string(activity('Brz_to_Slv').error.message), concat('Brz_to_Slv ended with status: ', activity('Brz_to_Slv').status)), if(not(equals(activity('Slv_to_Gld').status, 'Succeeded')), coalesce(string(activity('Slv_to_Gld').error.message), concat('Slv_to_Gld ended with status: ', activity('Slv_to_Gld').status)), 'No failure detected')))))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ],
+        "lastModifiedByObjectId": "bd4b63e3-7995-4ef5-b12f-c542b2777eef",
+        "lastPublishTime": "2026-08-24T15:52:24Z"
+    }
+}

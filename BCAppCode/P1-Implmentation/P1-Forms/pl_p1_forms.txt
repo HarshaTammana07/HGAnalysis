@@ -1,4 +1,4 @@
-P1 FORMS FINAL PIPELINE JSONS
+﻿P1 FORMS FINAL PIPELINE JSONS
 Generated: 2026-07-16
 
 Bronze site success is inferred from each method's Bronze table using taskconfig RequestBody.full_table,
@@ -24,12 +24,69 @@ Child json:
     "properties": {
         "activities": [
             {
+                "name": "nb_get_p1_forms_child_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "b8091d01-8235-40fd-aa4e-083a9957435b",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS P1 Forms",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"SaveComprehensiveAssessmentForm\",\"SaveEMFormPregnancy\",\"SaveEMFormMDM\",\"SaveDataForms\",\"SaveSMSTextConsentForm\",\"SaveConsenttoMarketing\",\"SaveTakeHomeAgreementandDiversionControl\",\"SaveTakeHomeRiskAssessment\",\"SaveNewDischargeTransferPlanForm\"]",
+                            "type": "string"
+                        },
+                        "p_only_active": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_site": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_database": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_require_source_table": {
+                            "value": "true",
+                            "type": "string"
+                        },
+                        "p_output_columns_json": {
+                            "value": "[\"TaskConfigId\",\"ConfigId\",\"TargetName\",\"Method\",\"SourceTable\",\"LoadType\",\"IsIncremental\",\"WatermarkColumn\",\"LookbackDays\",\"TargetSchema\",\"TargetTable\",\"TargetPath\",\"ExecutionOrder\",\"SiteCode\",\"DataBaseName\",\"SiteName\",\"IsActive\"]",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
                 "name": "flt_child_comprehensive_assessment_form_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -55,7 +112,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_comprehensive_assessment_form",
@@ -141,6 +198,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -1457,10 +1515,17 @@ Child json:
             {
                 "name": "flt_child_eandm_form_pregnancy_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -1486,7 +1551,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_eandm_form_pregnancy",
@@ -1572,6 +1637,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -1614,10 +1680,17 @@ Child json:
             {
                 "name": "flt_child_eandm_form_mdm_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -1643,7 +1716,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_eandm_form_mdm",
@@ -1729,6 +1802,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -1771,10 +1845,17 @@ Child json:
             {
                 "name": "flt_child_sf_data_forms_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -1800,7 +1881,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_sf_data_forms",
@@ -1886,6 +1967,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -1928,10 +2010,17 @@ Child json:
             {
                 "name": "flt_child_sms_text_consent_form_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -1957,7 +2046,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_sms_text_consent_form",
@@ -2043,6 +2132,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -2085,10 +2175,17 @@ Child json:
             {
                 "name": "flt_child_consent_to_marketing_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -2114,7 +2211,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_consent_to_marketing",
@@ -2200,6 +2297,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -2242,10 +2340,17 @@ Child json:
             {
                 "name": "flt_child_take_home_agreement_diversion_control_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -2271,7 +2376,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_take_home_agreement_diversion_control",
@@ -2357,6 +2462,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -2399,10 +2505,17 @@ Child json:
             {
                 "name": "flt_child_take_home_risk_assessment_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -2428,7 +2541,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_take_home_risk_assessment",
@@ -2514,6 +2627,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -2556,10 +2670,17 @@ Child json:
             {
                 "name": "flt_child_new_discharge_transfer_plan_form_sites",
                 "type": "Filter",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "nb_get_p1_forms_child_taskconfig",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "typeProperties": {
                     "items": {
-                        "value": "@pipeline().parameters.p_sites",
+                        "value": "@json(activity('nb_get_p1_forms_child_taskconfig').output.result.exitValue)",
                         "type": "Expression"
                     },
                     "condition": {
@@ -2585,7 +2706,7 @@ Child json:
                         "type": "Expression"
                     },
                     "isSequential": false,
-                    "batchCount": 3,
+                    "batchCount": 10,
                     "activities": [
                         {
                             "name": "lkp_check_new_discharge_transfer_plan_form",
@@ -2671,6 +2792,7 @@ Child json:
                                                 "tableActionOption": "Append",
                                                 "partitionOption": "None",
                                                 "applyVOrder": false,
+                                                "enableTimestampNtz": false,
                                                 "datasetSettings": {
                                                     "annotations": [],
                                                     "linkedService": {
@@ -2803,6 +2925,10 @@ Child json:
             "p_sites": {
                 "type": "array",
                 "defaultValue": []
+            },
+            "p_sites_json": {
+                "type": "string",
+                "defaultValue": []
             }
         },
         "variables": {
@@ -2812,7 +2938,7 @@ Child json:
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-24T21:42:54Z"
+        "lastPublishTime": "2026-08-14T15:58:32Z"
     }
 }
 
@@ -2842,7 +2968,7 @@ Parent Json:
                             "type": "string"
                         },
                         "p_target_names_json": {
-                            "value": "[\"BR\",\"SL\",\"GL\"]",
+                            "value": "[\"GL\"]",
                             "type": "string"
                         },
                         "p_methods_json": {
@@ -2850,7 +2976,11 @@ Parent Json:
                             "type": "string"
                         },
                         "p_only_active": {
-                            "value": "true",
+                            "value": "false",
+                            "type": "string"
+                        },
+                        "p_only_active_config": {
+                            "value": "false",
                             "type": "string"
                         },
                         "p_require_site": {
@@ -2864,29 +2994,11 @@ Parent Json:
                         "p_require_source_table": {
                             "value": "true",
                             "type": "string"
+                        },
+                        "p_output_columns_json": {
+                            "value": "[\"TaskConfigId\",\"ConfigId\",\"TargetName\",\"Method\",\"SourceTable\",\"LoadType\",\"IsIncremental\",\"WatermarkColumn\",\"LookbackDays\",\"TargetSchema\",\"TargetTable\",\"TargetPath\",\"ExecutionOrder\",\"SiteCode\",\"DataBaseName\",\"SiteName\",\"IsActive\"]",
+                            "type": "string"
                         }
-                    }
-                }
-            },
-            {
-                "name": "flt_active_p1_forms_sites",
-                "type": "Filter",
-                "dependsOn": [
-                    {
-                        "activity": "nb_get_p1_forms_taskconfig",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "typeProperties": {
-                    "items": {
-                        "value": "@json(activity('nb_get_p1_forms_taskconfig').output.result.exitValue)",
-                        "type": "Expression"
-                    },
-                    "condition": {
-                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(or(equals(item().Method, 'SaveComprehensiveAssessmentForm'), or(equals(item().Method, 'SaveEMFormPregnancy'), or(equals(item().Method, 'SaveEMFormMDM'), or(equals(item().Method, 'SaveDataForms'), or(equals(item().Method, 'SaveSMSTextConsentForm'), or(equals(item().Method, 'SaveConsenttoMarketing'), or(equals(item().Method, 'SaveTakeHomeAgreementandDiversionControl'), or(equals(item().Method, 'SaveTakeHomeRiskAssessment'), equals(item().Method, 'SaveNewDischargeTransferPlanForm'))))))))), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
-                        "type": "Expression"
                     }
                 }
             },
@@ -2895,7 +3007,7 @@ Parent Json:
                 "type": "TridentNotebook",
                 "dependsOn": [
                     {
-                        "activity": "flt_active_p1_forms_sites",
+                        "activity": "nb_get_p1_forms_taskconfig",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -3044,10 +3156,7 @@ Parent Json:
                                         "type": "string"
                                     },
                                     "p_sites_json": {
-                                        "value": {
-                                            "value": "@string(activity('flt_active_p1_forms_sites').output.value)",
-                                            "type": "Expression"
-                                        },
+                                        "value": "[]",
                                         "type": "string"
                                     },
                                     "p_bronze_method_results_json": {
@@ -3076,6 +3185,8 @@ Parent Json:
                         {
                             "name": "flt_active_p1_forms_gold",
                             "type": "Filter",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
                             "dependsOn": [],
                             "typeProperties": {
                                 "items": {
@@ -3083,7 +3194,7 @@ Parent Json:
                                     "type": "Expression"
                                 },
                                 "condition": {
-                                    "value": "@and(equals(item().TargetName, 'GL'), equals(item().IsActive, 1))",
+                                    "value": "@and(and(equals(item().TargetName, 'GL'), equals(item().IsActive, 1)), equals(item().ConfigIsActive, 1))",
                                     "type": "Expression"
                                 }
                             }
@@ -3091,6 +3202,8 @@ Parent Json:
                         {
                             "name": "nb_p1_forms_optional_gold_publish",
                             "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
                             "dependsOn": [
                                 {
                                     "activity": "flt_active_p1_forms_gold",
@@ -3191,10 +3304,7 @@ Parent Json:
                                         "type": "string"
                                     },
                                     "p_sites_json": {
-                                        "value": {
-                                            "value": "@string(activity('flt_active_p1_forms_sites').output.value)",
-                                            "type": "Expression"
-                                        },
+                                        "value": "[]",
                                         "type": "string"
                                     },
                                     "p_bronze_method_results_json": {
@@ -3335,11 +3445,9 @@ Parent Json:
                             "value": "@pipeline().parameters.p_lookback_days",
                             "type": "Expression"
                         },
-                        "p_sites": {
-                            "value": "@activity('flt_active_p1_forms_sites').output.value",
-                            "type": "Expression"
-                        },
-                        "p_work_date": "2026-07-16"
+                        "p_sites": [],
+                        "p_work_date": "2026-07-16",
+                        "p_sites_json": "[]"
                     }
                 },
                 "externalReferences": {
@@ -3378,10 +3486,7 @@ Parent Json:
                             "value": "@variables('v_bronze_method_results_json')",
                             "type": "Expression"
                         },
-                        "p_sites_json": {
-                            "value": "@string(activity('flt_active_p1_forms_sites').output.value)",
-                            "type": "Expression"
-                        }
+                        "p_sites_json": "[]"
                     }
                 },
                 "externalReferences": {
@@ -3395,11 +3500,11 @@ Parent Json:
             },
             "p_work_date": {
                 "type": "string",
-                "defaultValue": "2026-07-20"
+                "defaultValue": "2026-08-19"
             },
             "p_lookback_days": {
                 "type": "int",
-                "defaultValue": 15
+                "defaultValue": 120
             }
         },
         "variables": {
@@ -3413,7 +3518,7 @@ Parent Json:
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-08-01T00:20:13Z"
+        "lastPublishTime": "2026-08-19T15:15:09Z"
     }
 }
 
@@ -3920,12 +4025,9 @@ bronztosilverchild json(Inside):
             }
         },
         "lastModifiedByObjectId": "97b3856e-ed4b-4c79-b2e1-24a4a133bab5",
-        "lastPublishTime": "2026-07-24T21:53:28Z"
+        "lastPublishTime": "2026-08-14T16:01:35Z"
     }
 }
-
-
-
 
 ================================================================================
 P1 FORMS SILVER NOTEBOOK CELLS
@@ -4599,6 +4701,20 @@ for bool_col in BOOLEAN_COLUMNS:
             lambda df: F.coalesce(col_or_null(df, col_name).cast("boolean"), F.lit(False))
         )
     )(bool_col)
+
+# These legacy EF properties are non-nullable int fields. If SAMMS returns NULL,
+# C# leaves them at the default 0, so Silver must do the same for BHG_DR parity.
+INT_DEFAULT_ZERO_COLUMNS = [
+    "AnyDifficultyCopingWithTrauma",
+    "HaveYouEverReceivedServices",
+    "DDLTermsofGender",
+]
+for int_col in INT_DEFAULT_ZERO_COLUMNS:
+    TRANSFORMS[int_col] = (
+        lambda col_name: (
+            lambda df: F.coalesce(col_or_null(df, col_name).cast("int"), F.lit(0))
+        )
+    )(int_col)
 INSERT_ONLY_COLUMNS = []
 
 merge_to_silver(

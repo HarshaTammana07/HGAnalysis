@@ -344,21 +344,6 @@ def transform_expr(transform, src_df):
     return transform(src_df) if callable(transform) else transform
 
 
-def is_string_target_type(target_type):
-    if target_type is None:
-        return False
-    if hasattr(target_type, "simpleString"):
-        type_name = target_type.simpleString().lower()
-    else:
-        type_name = str(target_type).lower()
-    return type_name == "string" or type_name.endswith("stringtype")
-
-
-def legacy_ef_string(expr):
-    """Mirror DataRow.ToString(): SQL NULL becomes empty string in legacy EF saves."""
-    return F.coalesce(expr.cast("string"), F.lit(""))
-
-
 def align_to_target(src_df, silver_table, configured_target_columns=None, configured_target_schema=None, transforms=None, drop_columns=None):
     transforms = transforms or {}
     cols = target_columns_for(src_df, silver_table, configured_target_columns, transforms, drop_columns)
@@ -374,8 +359,6 @@ def align_to_target(src_df, silver_table, configured_target_columns=None, config
         target_type = target_schema.get(target_col.lower())
         if target_type:
             expr = expr.cast(target_type)
-        if is_string_target_type(target_type):
-            expr = legacy_ef_string(expr)
         exprs.append(expr.alias(target_col))
     return src_df.select(*exprs)
 
@@ -582,8 +565,8 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             return 0
         condition = (
             f"`SiteCode` IN {site_values} "
-            f"AND year(`billDate`) >= {int(min_year)} "
-            f"AND `billDate` <= date_add(date'{max_end.isoformat()}', 15)"
+            f"AND year(`BillDate`) >= {int(min_year)} "
+            f"AND `BillDate` <= date_add(date'{max_end.isoformat()}', 15)"
         )
         return reset_rowstate_by_filter(silver_table, condition, update_lastmod=True)
 
@@ -623,7 +606,7 @@ def apply_pre_reset(method_name, silver_table, bronze_df, silver_df, match_keys,
             )
         if ef_sites:
             min_year = min_year_from_source(bronze_df.where(F.col(site_col).isin(ef_sites)))
-            filter_sql = f"year(tpcCreatedDate) >= {int(min_year)}" if min_year else None
+            filter_sql = f"year(TpcCreatedDate) >= {int(min_year)}" if min_year else None
             ef_source = silver_df.where(F.col(site_col).isin(ef_sites))
             changed += reset_rowstate_missing_by_key(
                 silver_table,
@@ -833,14 +816,14 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
     if not table_exists(demo1_table) or not table_exists(silver_table):
         return
     demo1 = spark.table(demo1_table).select("SiteCode", "ClientID", "RowState", "LastModAt").dropDuplicates(["SiteCode", "ClientID"])
-    demo2 = spark.table(silver_table).select("SiteCode", "clientID", "RowState")
+    demo2 = spark.table(silver_table).select("SiteCode", "ClientID", "RowState")
     changes = (
         demo2.alias("d2")
-        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.clientID") == F.col("d1.ClientID")), "inner")
+        .join(demo1.alias("d1"), (F.col("d2.SiteCode") == F.col("d1.SiteCode")) & (F.col("d2.ClientID") == F.col("d1.ClientID")), "inner")
         .where(~F.col("d2.RowState").eqNullSafe(F.col("d1.RowState")))
         .select(
             F.col("d1.SiteCode").alias("SiteCode"),
-            F.col("d1.ClientID").alias("clientID"),
+            F.col("d1.ClientID").alias("ClientID"),
             F.col("d1.RowState").alias("RowState"),
             F.col("d1.LastModAt").alias("LastModAt"),
         )
@@ -849,7 +832,7 @@ def sync_clientdemo2_rowstate_from_demo1(method_name, silver_table, silver_df):
         return
     DeltaTable.forName(spark, silver_table).alias("target").merge(
         changes.alias("source"),
-        "target.`SiteCode` <=> source.`SiteCode` AND target.`clientID` <=> source.`clientID`",
+        "target.`SiteCode` <=> source.`SiteCode` AND target.`ClientID` <=> source.`ClientID`",
     ).whenMatchedUpdate(set={
         "RowState": "source.`RowState`",
         "LastModAt": "source.`LastModAt`",
@@ -864,101 +847,101 @@ SILVER_TABLE = SAVE_CLAIMS_CONFIG["silver_table"]
 MATCH_KEYS = SAVE_CLAIMS_CONFIG["match_keys"]
 TARGET_SCHEMA = {
     "SiteCode": "string",
-    "tpcID": "int",
+    "TpcID": "int",
     "RowChkSum": "int",
     "LastModAt": "timestamp",
     "RowState": "boolean",
-    "tpccltID": "int",
-    "tpcStrStatus": "string",
-    "tpcStrPayer": "string",
-    "tpcDtmAdded": "timestamp",
-    "tpcStrAdded": "string",
-    "f10oth": "string",
-    "tpcClaimBatchID": "int",
-    "f11insnumber": "string",
-    "f11insplan": "string",
-    "f11inssex": "string",
-    "f12sig": "string",
-    "f12sigdate": "string",
-    "f13inssig": "string",
-    "f14date": "string",
-    "f15firstdate": "string",
-    "f16dateunableend": "string",
-    "f10auto": "string",
-    "tpcStrPrimary": "string",
-    "f10employ": "string",
-    "f10local": "string",
-    "f11insanother": "string",
-    "f11insdob": "string",
-    "f11insemploy": "string",
-    "f16dateunablestart": "string",
-    "f17refername": "string",
-    "f17refernpi": "string",
-    "f18datehospend": "string",
-    "f18datehospstart": "string",
-    "f19local": "string",
-    "f1id": "string",
-    "f20outsidelab": "string",
-    "f21diag1": "string",
-    "f21diag2": "string",
-    "f21diag3": "string",
-    "f21diag4": "string",
-    "f22medresub": "string",
-    "f23priorauth": "string",
-    "f25taxid": "string",
-    "f26account": "string",
-    "f27assign": "string",
-    "f28totalcharge": "string",
-    "f29amtpaid": "string",
-    "f2name": "string",
-    "f30balancedue": "string",
-    "f31date": "string",
-    "f31phys": "string",
-    "f32a": "string",
-    "f32b": "string",
-    "f32line1": "string",
-    "f32line2": "string",
-    "f32line3": "string",
-    "f32line4": "string",
-    "f33a": "string",
-    "f33b": "string",
-    "f33line1": "string",
-    "f33line2": "string",
-    "f33line3": "string",
-    "f33line4": "string",
-    "f33phone": "string",
-    "f3dob": "string",
-    "f4insname": "string",
-    "f5add": "string",
-    "f5city": "string",
-    "f5phone": "string",
-    "f5state": "string",
-    "f5zip": "string",
-    "f6insrel": "string",
-    "f7insadd": "string",
-    "f7inscity": "string",
-    "f7insphone": "string",
-    "f7insstate": "string",
-    "f7inszip": "string",
-    "f8stat": "string",
-    "f9othinsdob": "string",
-    "f9othinsemp": "string",
-    "f9othinsname": "string",
-    "f9othinsnumber": "string",
-    "f9othinsplan": "string",
-    "f9othinssex": "string",
-    "tpcCreatedDate": "timestamp",
-    "tpcEncounter": "string",
-    "tpcREBILLREASON": "string",
-    "tpcStrWeek": "string",
-    "tpcWKSTART": "date",
-    "tpcPayerCIN": "string",
-    "tpcSrvType": "string",
-    "f3sex": "string",
-    "tpcClaimType": "int",
+    "TpccltID": "int",
+    "TpcStrStatus": "string",
+    "TpcStrPayer": "string",
+    "TpcDtmAdded": "timestamp",
+    "TpcStrAdded": "string",
+    "F10oth": "string",
+    "TpcClaimBatchID": "int",
+    "F11insnumber": "string",
+    "F11insplan": "string",
+    "F11inssex": "string",
+    "F12sig": "string",
+    "F12sigdate": "string",
+    "F13inssig": "string",
+    "F14date": "string",
+    "F15firstdate": "string",
+    "F16dateunableend": "string",
+    "F10auto": "string",
+    "TpcStrPrimary": "string",
+    "F10employ": "string",
+    "F10local": "string",
+    "F11insanother": "string",
+    "F11insdob": "string",
+    "F11insemploy": "string",
+    "F16dateunablestart": "string",
+    "F17refername": "string",
+    "F17refernpi": "string",
+    "F18datehospend": "string",
+    "F18datehospstart": "string",
+    "F19local": "string",
+    "F1id": "string",
+    "F20outsidelab": "string",
+    "F21diag1": "string",
+    "F21diag2": "string",
+    "F21diag3": "string",
+    "F21diag4": "string",
+    "F22medresub": "string",
+    "F23priorauth": "string",
+    "F25taxid": "string",
+    "F26account": "string",
+    "F27assign": "string",
+    "F28totalcharge": "string",
+    "F29amtpaid": "string",
+    "F2name": "string",
+    "F30balancedue": "string",
+    "F31date": "string",
+    "F31phys": "string",
+    "F32a": "string",
+    "F32b": "string",
+    "F32line1": "string",
+    "F32line2": "string",
+    "F32line3": "string",
+    "F32line4": "string",
+    "F33a": "string",
+    "F33b": "string",
+    "F33line1": "string",
+    "F33line2": "string",
+    "F33line3": "string",
+    "F33line4": "string",
+    "F33phone": "string",
+    "F3dob": "string",
+    "F4insname": "string",
+    "F5add": "string",
+    "F5city": "string",
+    "F5phone": "string",
+    "F5state": "string",
+    "F5zip": "string",
+    "F6insrel": "string",
+    "F7insadd": "string",
+    "F7inscity": "string",
+    "F7insphone": "string",
+    "F7insstate": "string",
+    "F7inszip": "string",
+    "F8stat": "string",
+    "F9othinsdob": "string",
+    "F9othinsemp": "string",
+    "F9othinsname": "string",
+    "F9othinsnumber": "string",
+    "F9othinsplan": "string",
+    "F9othinssex": "string",
+    "TpcCreatedDate": "timestamp",
+    "TpcEncounter": "string",
+    "TpcREBILLREASON": "string",
+    "TpcStrWeek": "string",
+    "TpcWKSTART": "date",
+    "TpcPayerCIN": "string",
+    "TpcSrvType": "string",
+    "F3sex": "string",
+    "TpcClaimType": "int",
     "SiteID": "int",
-    "tpcDBnotes": "string",
-    "tpcReferring": "string"
+    "TpcDBnotes": "string",
+    "TpcReferring": "string"
 }
 TARGET_COLUMNS = list(TARGET_SCHEMA.keys())
 
@@ -986,7 +969,7 @@ merge_to_silver(
     transforms=TRANSFORMS,
     update_strategy='always',
     unchanged_update_set=UNCHANGED_UPDATE_SET,
-    insert_condition='source.`tpcID` > 0',
+    insert_condition='source.`TpcID` > 0',
     reset_rule=RESET_RULE,
     match_key_transforms=MATCH_KEY_TRANSFORMS,
     dedupe_order_columns=['ExtractedAt', 'LastModAt'],

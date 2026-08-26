@@ -1,0 +1,13 @@
+silver and gold:
+
+TaskConfigId	ConfigId	TaskName	Endpoint	Method	SourceTable	PaginationEnabled	PaginationParam	LoadType	IsIncremental	WatermarkColumn	LookbackDays	TargetSchema	TargetTable	TargetPath	ExecutionOrder	RetryCount	TimeoutSeconds	RequestBody	DependencyTaskConfigId	IsActive	CreatedAt	CreatedBy	ModifiedAt	ModifiedBy	AuthType	SiteCode	DataBaseName	SiteName	ScheduleFrequency	ScheduleExpression	LastRunDate
+148	36	3pClaimNote Gold	NULL	3pClaimNote	bhg_silver.pats.tbl_3pClaimNote	0	NULL	VERSIONED_FULL_OVERWRITE	0	NULL	NULL	pats	gd_3p_claim_note	bhg_gold.pats.gd_3p_claim_note	2	0	43200	{
+          "full_table": "gd_3p_claim_note",
+          "dq_keys": ["SiteCode", "TpcnTPCID"]
+        }	NULL	0	2026-06-12 16:39:35.689113	DEV_HT	2026-08-25 10:04:10.056193	DEV_JR	Warehouse	NULL	NULL	NULL	Daily	NULL	NULL
+147	36	3pArnote Gold	NULL	3pArnote	bhg_silver.pats.tbl_3pARNOTE	0	NULL	VERSIONED_FULL_OVERWRITE	0	NULL	NULL	pats	gd_3p_arnote	bhg_gold.pats.gd_3p_arnote	1	0	43200	{
+          "full_table": "gd_3p_arnote",
+          "dq_keys": ["SiteCode", "ArnID"]
+        }	NULL	0	2026-06-12 16:39:35.689113	DEV_HT	2026-08-25 10:04:10.056193	DEV_JR	Warehouse	NULL	NULL	NULL	Daily	NULL	NULL
+145	35	3pArnote Silver	NULL	3pArnote	bhg_bronze.Notes.br_tbl3pArnote	0	NULL	MERGE	1	IngestRunId	15	pats	tbl_3pARNOTE	/lakehouse/bhg_silver/pats/tbl_3pARNOTE	1	0	43200	{"full_table": "bhg_silver.pats.tbl_3pARNOTE", "dq_keys": ["SiteCode", "ArnID"]}	NULL	1	2026-06-12 16:39:35.689113	DEV_HT	2026-08-24 20:14:04.288092	Fabric	Lakehouse	NULL	NULL	NULL	Daily	NULL	2026-08-24 20:14:04.288092
+146	35	3pClaimNote Silver	NULL	3pClaimNote	bhg_bronze.Notes.br_tbl3pClaimNote	0	NULL	MERGE	1	IngestRunId	15	pats	tbl_3pClaimNote	/lakehouse/bhg_silver/pats/tbl_3pClaimNote	2	0	43200	{"full_table": "bhg_silver.pats.tbl_3pClaimNote", "dq_keys": ["SiteCode", "Tpcn"]}	NULL	1	2026-06-12 16:39:35.689113	DEV_HT	2026-08-24 20:14:04.288092	Fabric	Lakehouse	NULL	NULL	NULL	Daily	NULL	2026-08-24 20:14:04.288092

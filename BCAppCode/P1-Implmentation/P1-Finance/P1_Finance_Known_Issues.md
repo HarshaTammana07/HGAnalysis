@@ -13,13 +13,11 @@ Expected differences between **BHG_DR** and **Fabric Silver** during migration v
 
 **If BHG `PCID`/`PrimKey` values are required:** one-time seed from BHG_DR by business key; daily SAMMS ETL cannot reproduce historical identity values.
 
-## Empty string vs null — fixed in silver
+## Empty string vs null — expected cosmetic gap
 
-**Was:** Optional text fields showed `""` in BHG_DR and `null` in Fabric (SavePayerClient, Save3pElig, FHA, etc.) because legacy EF uses `DataRow.ToString()` (`NULL` → `""`).
+Optional text fields may show `""` in BHG_DR and `null` in Fabric (SavePayerClient, Save3pElig, FHA, etc.) because legacy EF uses `DataRow.ToString()` (`NULL` → `""`). Fabric silver keeps SQL/source nulls as null.
 
-**Fix:** `legacy_ef_string()` in `nb_p1_finance_sl_common_cell1.py` — applied in `align_to_target()` for all string columns. Does not affect dates, numbers, or booleans.
-
-**After redeploy:** Re-run affected silver notebooks (`update_strategy='always'` tables self-heal; checksum-guarded tables update on next changed row or one-time site delete).
+**Not a functional parity failure** when business keys and `RowChkSum` match. Do not blanket-coerce all string nulls to `""` in silver — that over-corrects and turns legitimate nulls into empty strings.
 
 ## Legacy bug parity (fixed in silver)
 

@@ -158,6 +158,66 @@ def layer_tasks(layer):
         return [layer]
     return []
 
+def update_taskconfig_last_run_date_from_taskqueue(layers):
+    taskconfig_cols = set(spark.table(taskconfig_table).columns)
+    if "LastRunDate" not in taskconfig_cols:
+        print("LastRunDate column is not present in taskconfig; skipping LastRunDate update.")
+        return 0
+
+    task_pairs = []
+    for target_name in ACTIVE_TARGET_LAYERS:
+        layer = layers.get(target_name)
+        for task in layer_tasks(layer):
+            task_id = safe_int(row_value(task, "task_id"), None)
+            task_config_id = safe_int(row_value(task, "task_config_id"), None)
+            if task_id is not None and task_config_id is not None:
+                task_pairs.append((int(task_id), int(task_config_id)))
+
+    if not task_pairs:
+        print("No taskqueue/taskconfig mappings found for LastRunDate update.")
+        return 0
+
+    pair_schema = StructType([
+        StructField("TaskId", LongType(), False),
+        StructField("TaskConfigId", LongType(), False)
+    ])
+    pair_df = spark.createDataFrame(list(set(task_pairs)), pair_schema)
+    success_task_df = (
+        spark.table(taskqueue_table)
+        .select("TaskId", "Status")
+        .where(F.upper(F.col("Status")) == F.lit("SUCCESS"))
+    )
+    updates_df = (
+        pair_df
+        .join(success_task_df, "TaskId", "inner")
+        .select("TaskConfigId")
+        .distinct()
+        .withColumn("LastRunDate", F.current_timestamp())
+        .withColumn("ModifiedAt", F.current_timestamp())
+        .withColumn("ModifiedBy", F.lit(str(p_triggered_by or "Fabric")))
+    )
+
+    update_count = updates_df.count()
+    if update_count == 0:
+        print("No successful taskqueue rows found for LastRunDate update.")
+        return 0
+
+    update_set = {"LastRunDate": "s.LastRunDate"}
+    if "ModifiedAt" in taskconfig_cols:
+        update_set["ModifiedAt"] = "s.ModifiedAt"
+    if "ModifiedBy" in taskconfig_cols:
+        update_set["ModifiedBy"] = "s.ModifiedBy"
+
+    (
+        DeltaTable.forName(spark, taskconfig_table)
+        .alias("t")
+        .merge(updates_df.alias("s"), "t.TaskConfigId = s.TaskConfigId")
+        .whenMatchedUpdate(set=update_set)
+        .execute()
+    )
+    print(f"Updated LastRunDate for {update_count} successful taskconfig row(s).")
+    return update_count
+
 def method_key(method):
     return str(method or "").replace(" ", "").lower()
 
@@ -1215,7 +1275,6 @@ def append_dataquality_for_layer(layer, target_name, reference_layer=None, inges
     insert_append(dataquality_table, dq_df)
 
 
-
 # cell2:
 
 ctx = parse_context()
@@ -1464,13 +1523,17 @@ elif mode in ("FINALIZE_SUCCESS", "FINALIZE_NOTES_SUCCESS"):
         br_layer=br
     )
 
+    layers = {"BR": br, "SL": sl}
+    last_run_taskconfig_count = update_taskconfig_last_run_date_from_taskqueue(layers)
+
     exit_json({
         "status": "OK",
         "mode": mode,
         "bronze_tasks": len(layer_tasks(br)),
         "silver_tasks": len(layer_tasks(sl)),
         "gold_tasks": 0,
-        "bronze_rows": int(bronze_rows)
+        "bronze_rows": int(bronze_rows),
+        "last_run_taskconfig_count": int(last_run_taskconfig_count)
     })
 
 elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
@@ -1566,6 +1629,8 @@ elif mode in ("FINALIZE_FAILURE", "FINALIZE_NOTES_FAILURE"):
                     br_layer=br,
                     sl_layer=sl
                 )
+
+    update_taskconfig_last_run_date_from_taskqueue({"BR": br, "SL": sl})
 
     payload = {
         "status": "FAILED",

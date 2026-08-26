@@ -20,7 +20,8 @@ from pyspark.sql.types import IntegerType, LongType, StringType, StructField, St
 etlconfig_table = "bhg_bronze.meta.etlconfig"
 taskconfig_table = "bhg_bronze.meta.taskconfig"
 
-created_by = "Harsha"
+# Naming standard: DEV_<first two letters of developer name>, uppercase.
+created_by = "DEV_HA"
 start_task_config_id = 8700
 
 bronze_config_id = 46
@@ -53,7 +54,7 @@ finance_tables = [
         "silver_table": "tbl_Bills",
         "gold_schema": "pats",
         "gold_table": "tbl_Bills",
-        "merge_keys": ["SiteCode", "billID"],
+        "merge_keys": ["SiteCode", "BillID"],
         "is_incremental": 1,
         "lookback_days": default_lookback_days,
         "checksum_column": "RowChkSum",
@@ -74,7 +75,7 @@ finance_tables = [
         "silver_table": "tbl_pbi3PayAuth",
         "gold_schema": "pats",
         "gold_table": "tbl_pbi3PayAuth",
-        "merge_keys": ["SiteCode", "tpaID"],
+        "merge_keys": ["SiteCode", "TpaID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -93,7 +94,7 @@ finance_tables = [
         "silver_table": "tbl_vw3pBillSub",
         "gold_schema": "pats",
         "gold_table": "tbl_vw3pBillSub",
-        "merge_keys": ["SiteCode", "dsID", "payDEFAULTSUBMIT", "pyPAYERID", "pySUBSID", "pyGROUP", "CptMod", "charge"],
+        "merge_keys": ["SiteCode", "DsID", "PayDEFAULTSUBMIT", "PyPAYERID", "PySUBSID", "PyGROUP", "CptMod", "Charge"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -103,7 +104,7 @@ finance_tables = [
         "source_filter_strategy": "FULL_DISTINCT_WITH_NULL_SUBSTITUTIONS",
         "legacy_route": "BulkDartsSrvLoader/stg.sp_BillSubMerge",
         "legacy_ef_sites": ["B41", "B42"],
-        "legacy_ef_merge_keys": ["SiteCode", "dsID", "pyPAYERID", "pySUBSID", "pyGROUP", "CptMod", "charge"],
+        "legacy_ef_merge_keys": ["SiteCode", "DsID", "PyPAYERID", "PySUBSID", "PyGROUP", "CptMod", "Charge"],
         "source_overrides": {
             "select_distinct": True,
             "null_substitutions": {"CptMod": ":(", "pySUBSID": ":(", "charge": 0},
@@ -118,7 +119,7 @@ finance_tables = [
         "silver_table": "tbl_Fmp",
         "gold_schema": "pats",
         "gold_table": "tbl_Fmp",
-        "merge_keys": ["SiteCode", "fmpID"],
+        "merge_keys": ["SiteCode", "FmpID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": None,
@@ -137,7 +138,7 @@ finance_tables = [
         "silver_table": "tbl_PayerCltHistory",
         "gold_schema": "pats",
         "gold_table": "tbl_PayerCltHistory",
-        "merge_keys": ["SiteCode", "pchID"],
+        "merge_keys": ["SiteCode", "PchID"],
         "is_incremental": 1,
         "lookback_days": default_lookback_days,
         "checksum_column": None,
@@ -178,7 +179,7 @@ finance_tables = [
         "silver_table": "tbl_3pElig",
         "gold_schema": "pats",
         "gold_table": "tbl_3pElig",
-        "merge_keys": ["SiteCode", "eID"],
+        "merge_keys": ["SiteCode", "EID"],
         "is_incremental": 1,
         "lookback_days": default_lookback_days,
         "checksum_column": "RowChkSum",
@@ -198,7 +199,7 @@ finance_tables = [
         "silver_table": "tbl_ClaimLineItem",
         "gold_schema": "pats",
         "gold_table": "tbl_ClaimLineItem",
-        "merge_keys": ["SiteCode", "tpcliID"],
+        "merge_keys": ["SiteCode", "TpcliID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -217,7 +218,7 @@ finance_tables = [
         "silver_table": "tbl_ClaimLineItemActivity",
         "gold_schema": "pats",
         "gold_table": "tbl_ClaimLineItemActivity",
-        "merge_keys": ["SiteCode", "liaID"],
+        "merge_keys": ["SiteCode", "LiaID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -236,7 +237,7 @@ finance_tables = [
         "silver_table": "tbl_Claims",
         "gold_schema": "pats",
         "gold_table": "tbl_Claims",
-        "merge_keys": ["SiteCode", "tpcID"],
+        "merge_keys": ["SiteCode", "TpcID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -258,7 +259,7 @@ finance_tables = [
         "silver_table": "tbl_PayerClient",
         "gold_schema": "pats",
         "gold_table": "tbl_PayerClient",
-        "merge_keys": ["SiteCode", "pyID", "pyCLTID"],
+        "merge_keys": ["SiteCode", "PyID", "PyCLTID"],
         "is_incremental": 1,
         "lookback_days": default_lookback_days,
         "payer_history_days": 360,
@@ -269,7 +270,7 @@ finance_tables = [
         "source_where_template": "pyid in (select distinct pyID from dbo.tblPayerCltHistory where pyDtm >= DateAdd(d, -@PayerHistoryDays, @WorkDate - @LookbackDays)) or pyACTIVE = 1 or isnull(pyEND, GetDate()) >= DateAdd(d, -@PayerHistoryDays, @WorkDate - @LookbackDays) or pyEnd >= DateAdd(d, -@PayerHistoryDays, @WorkDate - @LookbackDays)",
         "source_filter_strategy": "PAYERCLIENT_360_DAY_OR_ACTIVE",
         "legacy_route": "SavePayerClient/RemovePayerClients",
-        "merge_key_transforms": {"pyCLTID": "abs"},
+        "merge_key_transforms": {"PyCLTID": "abs"},
         "inactive_source_table": "dbo.vw_PayerClt_INACTIVE",
     },
     {
@@ -281,7 +282,7 @@ finance_tables = [
         "silver_table": "tbl_tbldiag10",
         "gold_schema": "pats",
         "gold_table": "tbl_tbldiag10",
-        "merge_keys": ["SiteCode", "dgID"],
+        "merge_keys": ["SiteCode", "DgID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": None,
@@ -321,7 +322,7 @@ finance_tables = [
         "silver_table": "tbl_ClientDemo2",
         "gold_schema": "pats",
         "gold_table": "tbl_ClientDemo2",
-        "merge_keys": ["SiteCode", "clientID"],
+        "merge_keys": ["SiteCode", "ClientID"],
         "is_incremental": 0,
         "lookback_days": None,
         "checksum_column": "RowChkSum",
@@ -744,6 +745,13 @@ DeltaTable.forName(spark, taskconfig_table).alias("target") \
     .whenMatchedUpdate(set=task_update) \
     .whenNotMatchedInsert(values=task_insert) \
     .execute()
+
+# Merge preserves CreatedBy on matched rows; normalize audit columns for finance task rows.
+spark.sql(f"""
+UPDATE {taskconfig_table}
+SET CreatedBy = '{created_by}', ModifiedBy = '{created_by}'
+WHERE TaskConfigId BETWEEN {start_task_config_id} AND {end_task_config_id}
+""")
 
 
 display(spark.sql(f"""

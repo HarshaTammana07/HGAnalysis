@@ -396,7 +396,7 @@
                         "type": "Expression"
                     },
                     "condition": {
-                        "value": "@and(and(equals(item().ConfigId, 34), equals(item().IsActive, 1)), and(or(equals(item().Method, '3pArnote'), equals(item().Method, '3pClaimNote')), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
+                        "value": "@and(and(equals(item().TargetName, 'BR'), equals(item().IsActive, 1)), and(or(equals(item().Method, '3pArnote'), equals(item().Method, '3pClaimNote')), and(not(equals(item().SiteCode, null)), and(not(equals(item().DataBaseName, null)), not(equals(item().SourceTable, null))))))",
                         "type": "Expression"
                     }
                 }
@@ -529,14 +529,6 @@
                         "p_method": {
                             "value": "3pArnote",
                             "type": "string"
-                        },
-                        "p_bronze_config_id": {
-                            "value": 34,
-                            "type": "int"
-                        },
-                        "p_silver_config_id": {
-                            "value": 35,
-                            "type": "int"
                         }
                     }
                 }
@@ -601,612 +593,8 @@
                         "p_method": {
                             "value": "3pClaimNote",
                             "type": "string"
-                        },
-                        "p_bronze_config_id": {
-                            "value": 34,
-                            "type": "int"
-                        },
-                        "p_silver_config_id": {
-                            "value": 35,
-                            "type": "int"
                         }
                     }
-                }
-            },
-            {
-                "name": "Prepare_Arnote_Gold_Table",
-                "type": "Script",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "nb_3parnote_bronze_to_silver",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
-                "typeProperties": {
-                    "scripts": [
-                        {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('IF OBJECT_ID(N''pats.[3pARNOTE]'', N''U'') IS NULL\n    THROW 51003, ''Prepare failed: target table pats.3pARNOTE does not exist.'', 1;\nTRUNCATE TABLE pats.[3pARNOTE];')",
-                                "type": "Expression"
-                            }
-                        }
-                    ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
-                }
-            },
-            {
-                "name": "Prepare_ClaimNote_Gold_Table",
-                "type": "Script",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "nb_3pclaimnote_bronze_to_silver",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
-                "typeProperties": {
-                    "scripts": [
-                        {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('IF OBJECT_ID(N''pats.[3pClaimNote]'', N''U'') IS NULL\n    THROW 51004, ''Prepare failed: target table pats.3pClaimNote does not exist.'', 1;\nTRUNCATE TABLE pats.[3pClaimNote];')",
-                                "type": "Expression"
-                            }
-                        }
-                    ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
-                }
-            },
-            {
-                "name": "copy_3parnote_silver_to_gold",
-                "type": "Copy",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "Prepare_Arnote_Gold_Table",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "source": {
-                        "type": "LakehouseTableSource",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_silver",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "Lakehouse",
-                                    "typeProperties": {
-                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
-                                        "rootFolder": "Tables"
-                                    }
-                                }
-                            },
-                            "type": "LakehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": "tbl_3parnote"
-                            }
-                        }
-                    },
-                    "sink": {
-                        "type": "DataWarehouseSink",
-                        "allowCopyCommand": true,
-                        "writeBehavior": "Insert",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_gold",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "DataWarehouse",
-                                    "typeProperties": {
-                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                                    }
-                                }
-                            },
-                            "type": "DataWarehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": "3pARNOTE"
-                            }
-                        }
-                    },
-                    "enableStaging": true,
-                    "translator": {
-                        "type": "TabularTranslator",
-                        "mappings": [
-                            {
-                                "source": {
-                                    "name": "SiteCode"
-                                },
-                                "sink": {
-                                    "name": "SiteCode"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnID"
-                                },
-                                "sink": {
-                                    "name": "arnID"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnLIID"
-                                },
-                                "sink": {
-                                    "name": "arnLIID"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnNOTE"
-                                },
-                                "sink": {
-                                    "name": "arnNOTE"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnUSER"
-                                },
-                                "sink": {
-                                    "name": "arnUSER"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnDATE"
-                                },
-                                "sink": {
-                                    "name": "arnDATE"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnDtRemoved"
-                                },
-                                "sink": {
-                                    "name": "arnDtRemoved"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnStrRemovedReason"
-                                },
-                                "sink": {
-                                    "name": "arnStrRemovedReason"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnStrRemovedUser"
-                                },
-                                "sink": {
-                                    "name": "arnStrRemovedUser"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "bid"
-                                },
-                                "sink": {
-                                    "name": "bid"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "arnDBnotes"
-                                },
-                                "sink": {
-                                    "name": "arnDBnotes"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "globalBatchId"
-                                },
-                                "sink": {
-                                    "name": "globalBatchId"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowChkSum"
-                                },
-                                "sink": {
-                                    "name": "RowChkSum"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "LastModAt"
-                                },
-                                "sink": {
-                                    "name": "LastModAt"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowState"
-                                },
-                                "sink": {
-                                    "name": "RowState"
-                                }
-                            }
-                        ],
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                            "allowDataTruncation": true,
-                            "treatBooleanAsNumber": false
-                        }
-                    }
-                }
-            },
-            {
-                "name": "copy_3pclaimnote_silver_to_gold",
-                "type": "Copy",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "Prepare_ClaimNote_Gold_Table",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "source": {
-                        "type": "LakehouseTableSource",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_silver",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "Lakehouse",
-                                    "typeProperties": {
-                                        "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                                        "artifactId": "dd09d8b6-d862-4954-a0b2-fcf7372c6595",
-                                        "rootFolder": "Tables"
-                                    }
-                                }
-                            },
-                            "type": "LakehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": "tbl_3pclaimnote"
-                            }
-                        }
-                    },
-                    "sink": {
-                        "type": "DataWarehouseSink",
-                        "allowCopyCommand": true,
-                        "writeBehavior": "Insert",
-                        "datasetSettings": {
-                            "annotations": [],
-                            "linkedService": {
-                                "name": "bhg_gold",
-                                "properties": {
-                                    "annotations": [],
-                                    "type": "DataWarehouse",
-                                    "typeProperties": {
-                                        "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                                        "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                                        "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                                    }
-                                }
-                            },
-                            "type": "DataWarehouseTable",
-                            "schema": [],
-                            "typeProperties": {
-                                "schema": "pats",
-                                "table": "3pClaimNote"
-                            }
-                        }
-                    },
-                    "enableStaging": true,
-                    "translator": {
-                        "type": "TabularTranslator",
-                        "mappings": [
-                            {
-                                "source": {
-                                    "name": "SiteCode"
-                                },
-                                "sink": {
-                                    "name": "SiteCode"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcn"
-                                },
-                                "sink": {
-                                    "name": "tpcn"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnTPCID"
-                                },
-                                "sink": {
-                                    "name": "tpcnTPCID"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnDtmAdded"
-                                },
-                                "sink": {
-                                    "name": "tpcnDtmAdded"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrAdded"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrAdded"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrNote"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrNote"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrType"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrType"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnDtTickler"
-                                },
-                                "sink": {
-                                    "name": "tpcnDtTickler"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnDtTicklerRemoved"
-                                },
-                                "sink": {
-                                    "name": "tpcnDtTicklerRemoved"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrTicklerRemovedNote"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrTicklerRemovedNote"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrTicklerRemovedUser"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrTicklerRemovedUser"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "tpcnStrTicklerType"
-                                },
-                                "sink": {
-                                    "name": "tpcnStrTicklerType"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "globalBatchId"
-                                },
-                                "sink": {
-                                    "name": "globalBatchId"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowChkSum"
-                                },
-                                "sink": {
-                                    "name": "RowChkSum"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "LastModAt"
-                                },
-                                "sink": {
-                                    "name": "LastModAt"
-                                }
-                            },
-                            {
-                                "source": {
-                                    "name": "RowState"
-                                },
-                                "sink": {
-                                    "name": "RowState"
-                                }
-                            }
-                        ],
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                            "allowDataTruncation": true,
-                            "treatBooleanAsNumber": false
-                        }
-                    }
-                }
-            },
-            {
-                "name": "Publish_Arnote_Gold",
-                "type": "Script",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "copy_3parnote_silver_to_gold",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
-                "typeProperties": {
-                    "scripts": [
-                        {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('DECLARE @arn_final_count BIGINT;\nSELECT @arn_final_count = COUNT(*)\nFROM pats.[3pARNOTE];\nIF @arn_final_count = 0\n    THROW 51005, ''Final verification failed: pats.3pARNOTE is empty after overwrite.'', 1;\nSELECT ''3pARNOTE'' AS TableName, @arn_final_count AS [RowCount];')",
-                                "type": "Expression"
-                            }
-                        }
-                    ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
-                }
-            },
-            {
-                "name": "Publish_ClaimNote_Gold",
-                "type": "Script",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "copy_3pclaimnote_silver_to_gold",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "linkedService": {
-                    "name": "bhg_gold",
-                    "properties": {
-                        "annotations": [],
-                        "type": "DataWarehouse",
-                        "typeProperties": {
-                            "endpoint": "ziupvjpf2lfe3ey7dnmuxchh44-72wedenf6jnuvbnc3cugwrucbq.datawarehouse.fabric.microsoft.com",
-                            "artifactId": "d29ef036-8c2c-40b0-a8e0-3279f9a906e7",
-                            "workspaceId": "9141acfe-f2a5-4a5b-85a2-d8a86b46820c"
-                        }
-                    }
-                },
-                "typeProperties": {
-                    "scripts": [
-                        {
-                            "type": "Query",
-                            "text": {
-                                "value": "@concat('DECLARE @claim_final_count BIGINT;\nSELECT @claim_final_count = COUNT(*)\nFROM pats.[3pClaimNote];\nIF @claim_final_count = 0\n    THROW 51006, ''Final verification failed: pats.3pClaimNote is empty after overwrite.'', 1;\nSELECT ''3pClaimNote'' AS TableName, @claim_final_count AS [RowCount];')",
-                                "type": "Expression"
-                            }
-                        }
-                    ],
-                    "scriptBlockExecutionTimeout": "02:00:00"
                 }
             },
             {
@@ -1216,17 +604,13 @@
                     {
                         "activity": "nb_3parnote_bronze_to_silver",
                         "dependencyConditions": [
-                            "Succeeded",
-                            "Failed",
-                            "Skipped"
+                            "Succeeded"
                         ]
                     },
                     {
                         "activity": "nb_3pclaimnote_bronze_to_silver",
                         "dependencyConditions": [
-                            "Succeeded",
-                            "Failed",
-                            "Skipped"
+                            "Succeeded"
                         ]
                     }
                 ],
@@ -1323,9 +707,85 @@
                     ],
                     "ifTrueActivities": [
                         {
+                            "name": "flt_active_notes_gold",
+                            "type": "Filter",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [],
+                            "typeProperties": {
+                                "items": {
+                                    "value": "@json(activity('nb_get_notes_taskconfig').output.result.exitValue)",
+                                    "type": "Expression"
+                                },
+                                "condition": {
+                                    "value": "@and(equals(item().TargetName, 'GL'), equals(item().IsActive, 1))",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "nb_notes_optional_gold_publish",
+                            "type": "TridentNotebook",
+                            "state": "Inactive",
+                            "onInactiveMarkAs": "Succeeded",
+                            "dependsOn": [
+                                {
+                                    "activity": "flt_active_notes_gold",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "notebookId": "c1e2d16d-7945-4d2f-8cee-dced07b2e1e4",
+                                "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                                "parameters": {
+                                    "p_gold_tasks_json": {
+                                        "value": {
+                                            "value": "@string(activity('flt_active_notes_gold').output.value)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_ingest_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "string"
+                                    },
+                                    "p_config_name_prefix": {
+                                        "value": "SAMMS Notes",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        {
                             "name": "nb_notes_audit_finalize_success",
                             "type": "TridentNotebook",
-                            "dependsOn": [],
+                            "dependsOn": [
+                                {
+                                    "activity": "nb_notes_optional_gold_publish",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
                             "policy": {
                                 "timeout": "0.12:00:00",
                                 "retry": 0,
@@ -1384,85 +844,6 @@
                             }
                         }
                     ]
-                }
-            },
-            {
-                "name": "nb_notes_notify_success",
-                "type": "TridentNotebook",
-                "state": "Inactive",
-                "onInactiveMarkAs": "Succeeded",
-                "dependsOn": [
-                    {
-                        "activity": "if_all_notes_methods_success",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "typeProperties": {
-                    "notebookId": "77c87686-120d-486b-9146-6a794d794e38",
-                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
-                    "parameters": {
-                        "Pipeline_Name": {
-                            "value": "Notes ETL",
-                            "type": "string"
-                        },
-                        "Status": {
-                            "value": "Succeeded",
-                            "type": "string"
-                        },
-                        "Config_Name": {
-                            "value": "SAMMS Notes",
-                            "type": "string"
-                        },
-                        "Source_System": {
-                            "value": "Notes",
-                            "type": "string"
-                        },
-                        "Target_Name": {
-                            "value": "SL",
-                            "type": "string"
-                        },
-                        "Environment_Name": {
-                            "value": "BHG-DATA-PLATFORM-CORE-DEV",
-                            "type": "string"
-                        },
-                        "Run_Id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Description": {
-                            "value": "Notes pipeline completed successfully through Silver",
-                            "type": "string"
-                        },
-                        "Error_Msg": {
-                            "type": "string"
-                        },
-                        "Pipeline_StartTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(pipeline().TriggerTime, 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        },
-                        "Pipeline_EndTime": {
-                            "value": {
-                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Central Standard Time'), 'yyyy-MM-dd HH:mm:ss')",
-                                "type": "Expression"
-                            },
-                            "type": "string"
-                        }
-                    }
                 }
             },
             {
@@ -1550,7 +931,7 @@
                 }
             },
             {
-                "name": "nb_get_notes_taskconfig",
+                "name": "nb_cleanup_old_bronze_rows",
                 "type": "TridentNotebook",
                 "dependsOn": [],
                 "policy": {
@@ -1561,11 +942,60 @@
                     "secureInput": false
                 },
                 "typeProperties": {
-                    "notebookId": "6e7b4814-5818-4715-9275-f6ad72743221",
+                    "notebookId": "8dfa3ab1-d60f-4005-be5a-cb3baa3f02ea",
                     "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
                     "parameters": {
-                        "p_config_ids_json": {
-                            "value": "[34,35]",
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\"]",
+                            "type": "string"
+                        },
+                        "p_methods_json": {
+                            "value": "[\"3pArnote\",\"3pClaimNote\"]",
+                            "type": "string"
+                        },
+                        "p_retention_days": {
+                            "value": "7",
+                            "type": "string"
+                        },
+                        "p_timestamp_columns_json": {
+                            "value": "[\"ExtractedAt\",\"_extracted_at\"]",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "nb_get_notes_taskconfig",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_cleanup_old_bronze_rows",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "b8091d01-8235-40fd-aa4e-083a9957435b",
+                    "workspaceId": "c5097ffb-b78e-441d-9575-a82bac23cac8",
+                    "parameters": {
+                        "p_config_name_prefix": {
+                            "value": "SAMMS Notes",
+                            "type": "string"
+                        },
+                        "p_target_names_json": {
+                            "value": "[\"BR\",\"SL\",\"GL\"]",
                             "type": "string"
                         },
                         "p_methods_json": {
@@ -1682,6 +1112,63 @@ from pyspark.sql.functions import col, current_timestamp, lit, row_number
 from pyspark.sql.window import Window
 import json
 
+spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
+
+def to_pascal_column(name):
+    if not name:
+        return name
+    if name[0].isupper():
+        return name
+    return name[0].upper() + name[1:]
+
+
+def actual_col(df, wanted, required=False):
+    by_lower = {c.lower(): c for c in df.columns}
+    found = by_lower.get(wanted.lower())
+    if required and not found:
+        raise Exception(f"Column {wanted} was not found. Available columns: {df.columns}")
+    return found
+
+
+def align_to_target(src_df, configured_target_columns, configured_target_schema, bronze_source_by_target=None):
+    bronze_source_by_target = bronze_source_by_target or {}
+    target_schema = {str(k).lower(): str(v) for k, v in (configured_target_schema or {}).items()}
+    exprs = []
+    for target_col in configured_target_columns:
+        source_candidates = [
+            bronze_source_by_target.get(target_col),
+            target_col,
+        ]
+        source_col = None
+        for candidate in source_candidates:
+            if not candidate:
+                continue
+            source_col = actual_col(src_df, candidate, required=False)
+            if source_col:
+                break
+        expr = col(source_col) if source_col else lit(None)
+        target_type = target_schema.get(target_col.lower())
+        if target_type:
+            expr = expr.cast(target_type)
+        exprs.append(expr.alias(target_col))
+    return src_df.select(*exprs)
+
+
+def project_existing_to_target(existing_df):
+    df = existing_df
+    legacy_site = actual_col(df, "_site_code", required=False)
+    if legacy_site and not actual_col(df, "SiteCode", required=False):
+        df = df.withColumn("SiteCode", col(legacy_site))
+    legacy_mod = actual_col(df, "silver_updated_at", required=False)
+    if legacy_mod and not actual_col(df, "LastModAt", required=False):
+        df = df.withColumn("LastModAt", col(legacy_mod))
+    return align_to_target(
+        df,
+        TARGET_COLUMNS,
+        TARGET_SCHEMA,
+        BRONZE_SOURCE_BY_TARGET,
+    )
+
 def notebook_exit(payload):
     text = json.dumps(payload, default=str, separators=(",", ":"))
     try:
@@ -1786,16 +1273,6 @@ try:
 except NameError:
     p_method = "3pArnote"
 
-try:
-    p_silver_config_id
-except NameError:
-    p_silver_config_id = 35
-
-try:
-    p_bronze_config_id
-except NameError:
-    p_bronze_config_id = 34
-
 def taskconfig_rows(raw):
     if raw is None:
         return []
@@ -1837,12 +1314,12 @@ def target_from_request_body(row):
         pass
     return None, None
 
-def resolve_taskconfig_target(config_id_to_match, layer_name, default_schema, default_table):
+def resolve_taskconfig_target(target_name_to_match, layer_name, default_schema, default_table):
     rows = taskconfig_rows(p_taskconfig_json)
     for row in rows:
-        config_id = row_value(row, "ConfigId")
+        target_name = row_value(row, "TargetName")
         method = row_value(row, "Method")
-        if str(config_id) == str(config_id_to_match) and str(method).lower() == str(p_method).lower():
+        if str(target_name).upper() == str(target_name_to_match).upper() and str(method).lower() == str(p_method).lower():
             target_schema = row_value(row, "TargetSchema")
             target_table = row_value(row, "TargetTable")
             if not target_schema or not target_table:
@@ -1850,36 +1327,58 @@ def resolve_taskconfig_target(config_id_to_match, layer_name, default_schema, de
                 target_schema = target_schema or body_schema
                 target_table = target_table or body_table
             if not target_schema or not target_table:
-                raise Exception(f"{layer_name} taskconfig row for ConfigId={config_id_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
+                raise Exception(f"{layer_name} taskconfig row for TargetName={target_name_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
             return str(target_schema), str(target_table)
 
     if rows:
-        raise Exception(f"No {layer_name} taskconfig row found for ConfigId={config_id_to_match}, Method={p_method}.")
+        raise Exception(f"No {layer_name} taskconfig row found for TargetName={target_name_to_match}, Method={p_method}.")
 
     return default_schema, default_table
 
-bronze_schema, bronze_target_table = resolve_taskconfig_target(p_bronze_config_id, "Bronze", "Notes", "br_tbl3pArnote")
+bronze_schema, bronze_target_table = resolve_taskconfig_target("BR", "Bronze", "Notes", "br_tbl3pArnote")
 bronze_table = f"bhg_bronze.{bronze_schema}.{bronze_target_table}"
-target_schema, target_table = resolve_taskconfig_target(p_silver_config_id, "Silver", "pats", "tbl_3pARNOTE")
+target_schema, target_table = resolve_taskconfig_target("SL", "Silver", "pats", "tbl_3pARNOTE")
 silver_table = f"bhg_silver.{target_schema}.{target_table}"
 legacy_silver_table = f"bhg_silver.{target_schema}.sl_{target_table}"
-final_columns = [
-    "SiteCode",
-    "arnID",
-    "arnLIID",
-    "arnNOTE",
-    "arnUSER",
-    "arnDATE",
-    "arnDtRemoved",
-    "arnStrRemovedReason",
-    "arnStrRemovedUser",
-    "bid",
-    "arnDBnotes",
-    "globalBatchId",
-    "RowChkSum",
-    "LastModAt",
-    "RowState"
-]
+# 3pArnote PascalCase silver schema (bronze names unchanged)
+BRONZE_SOURCE_BY_TARGET = {
+    "SiteCode": "SiteCode",
+    "ArnID": "arnID",
+    "ArnLIID": "arnLIID",
+    "ArnNOTE": "arnNOTE",
+    "ArnUSER": "arnUSER",
+    "ArnDATE": "arnDATE",
+    "ArnDtRemoved": "arnDtRemoved",
+    "ArnStrRemovedReason": "arnStrRemovedReason",
+    "ArnStrRemovedUser": "arnStrRemovedUser",
+    "Bid": "bid",
+    "ArnDBnotes": "arnDBnotes",
+    "GlobalBatchId": "globalBatchId",
+    "RowChkSum": "RowChkSum",
+    "LastModAt": "LastModAt",
+    "RowState": "RowState"
+}
+
+TARGET_SCHEMA = {
+    "SiteCode": "string",
+    "ArnID": "int",
+    "ArnLIID": "int",
+    "ArnNOTE": "string",
+    "ArnUSER": "string",
+    "ArnDATE": "timestamp",
+    "ArnDtRemoved": "timestamp",
+    "ArnStrRemovedReason": "string",
+    "ArnStrRemovedUser": "string",
+    "Bid": "int",
+    "ArnDBnotes": "string",
+    "GlobalBatchId": "long",
+    "RowChkSum": "int",
+    "LastModAt": "timestamp",
+    "RowState": "boolean"
+}
+
+TARGET_COLUMNS = list(TARGET_SCHEMA.keys())
+final_columns = TARGET_COLUMNS
 
 print(f"Processing ingest_run_id: {p_ingest_run_id}")
 print(f"Bronze table: {bronze_table}")
@@ -1930,22 +1429,11 @@ src_work_df = (
     .withColumn("LastModAt", current_timestamp())
 )
 
-src_df = src_work_df.select(
-    col("SiteCode").alias("SiteCode"),
-    col("arnID"),
-    col("arnLIID"),
-    col("arnNOTE"),
-    col("arnUSER"),
-    col("arnDATE"),
-    col("arnDtRemoved"),
-    col("arnStrRemovedReason"),
-    col("arnStrRemovedUser"),
-    col("bid"),
-    col("arnDBnotes"),
-    col("globalBatchId"),
-    col("RowChkSum"),
-    col("LastModAt"),
-    col("RowState")
+src_df = align_to_target(
+    src_work_df,
+    TARGET_COLUMNS,
+    TARGET_SCHEMA,
+    BRONZE_SOURCE_BY_TARGET,
 )
 
 src_df.createOrReplaceTempView("vw_arnote_current_run")
@@ -1958,20 +1446,7 @@ created_silver_table = False
 if not spark.catalog.tableExists(silver_table):
     if spark.catalog.tableExists(legacy_silver_table):
         legacy_df = spark.table(legacy_silver_table)
-        projected_cols = []
-        for c in final_columns:
-            if c in legacy_df.columns:
-                projected_cols.append(col(c).alias(c))
-            elif c == "SiteCode" and "SiteCode" in legacy_df.columns:
-                projected_cols.append(col("SiteCode").alias("SiteCode"))
-            elif c == "SiteCode" and "_site_code" in legacy_df.columns:
-                projected_cols.append(col("_site_code").alias("SiteCode"))
-            elif c == "LastModAt" and "silver_updated_at" in legacy_df.columns:
-                projected_cols.append(col("silver_updated_at").alias("LastModAt"))
-            else:
-                projected_cols.append(lit(None).alias(c))
-
-        migrated_df = legacy_df.select(*projected_cols).cache()
+        migrated_df = project_existing_to_target(legacy_df).cache()
         migrated_count = migrated_df.count()
         (
             migrated_df
@@ -2008,7 +1483,7 @@ from delta.tables import DeltaTable
 try:
     silver_table
 except NameError:
-    target_schema, target_table = resolve_taskconfig_target(p_silver_config_id, "Silver", "pats", "tbl_3pARNOTE")
+    target_schema, target_table = resolve_taskconfig_target("SL", "Silver", "pats", "tbl_3pARNOTE")
     silver_table = f"bhg_silver.{target_schema}.{target_table}"
 
 if not spark.catalog.tableExists(silver_table):
@@ -2019,20 +1494,7 @@ if not spark.catalog.tableExists(silver_table):
 existing_cols = spark.table(silver_table).columns
 if existing_cols != final_columns:
     existing_df = spark.table(silver_table)
-    projected_cols = []
-    for c in final_columns:
-        if c in existing_df.columns:
-            projected_cols.append(col(c).alias(c))
-        elif c == "SiteCode" and "SiteCode" in existing_df.columns:
-            projected_cols.append(col("SiteCode").alias("SiteCode"))
-        elif c == "SiteCode" and "_site_code" in existing_df.columns:
-            projected_cols.append(col("_site_code").alias("SiteCode"))
-        elif c == "LastModAt" and "silver_updated_at" in existing_df.columns:
-            projected_cols.append(col("silver_updated_at").alias("LastModAt"))
-        else:
-            projected_cols.append(lit(None).alias(c))
-
-    normalized_df = existing_df.select(*projected_cols).cache()
+    normalized_df = project_existing_to_target(existing_df).cache()
     normalized_count = normalized_df.count()
     (
         normalized_df
@@ -2051,7 +1513,7 @@ src_cols = final_columns
 update_set = {c: f"src.{c}" for c in src_cols}
 insert_values = {c: f"src.{c}" for c in src_cols}
 
-match_keys = ["SiteCode", "arnID"]
+match_keys = ["SiteCode", "ArnID"]
 if created_silver_table:
     rows_inserted = src_count
     rows_updated = 0
@@ -2074,7 +1536,7 @@ else:
     .merge(
         src_df.alias("src"),
         # Merge key: clinic + note ID (mirrors Azure PK: SiteCode + ArnId)
-        "tgt.SiteCode = src.SiteCode AND tgt.arnID = src.arnID"
+        "tgt.SiteCode = src.SiteCode AND tgt.ArnID = src.ArnID"
     )
 
     # CASE 1: Record exists AND data changed: full update
@@ -2117,6 +1579,63 @@ Cell1:
 from pyspark.sql.functions import col, current_timestamp, lit, row_number
 from pyspark.sql.window import Window
 import json
+
+spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
+
+def to_pascal_column(name):
+    if not name:
+        return name
+    if name[0].isupper():
+        return name
+    return name[0].upper() + name[1:]
+
+
+def actual_col(df, wanted, required=False):
+    by_lower = {c.lower(): c for c in df.columns}
+    found = by_lower.get(wanted.lower())
+    if required and not found:
+        raise Exception(f"Column {wanted} was not found. Available columns: {df.columns}")
+    return found
+
+
+def align_to_target(src_df, configured_target_columns, configured_target_schema, bronze_source_by_target=None):
+    bronze_source_by_target = bronze_source_by_target or {}
+    target_schema = {str(k).lower(): str(v) for k, v in (configured_target_schema or {}).items()}
+    exprs = []
+    for target_col in configured_target_columns:
+        source_candidates = [
+            bronze_source_by_target.get(target_col),
+            target_col,
+        ]
+        source_col = None
+        for candidate in source_candidates:
+            if not candidate:
+                continue
+            source_col = actual_col(src_df, candidate, required=False)
+            if source_col:
+                break
+        expr = col(source_col) if source_col else lit(None)
+        target_type = target_schema.get(target_col.lower())
+        if target_type:
+            expr = expr.cast(target_type)
+        exprs.append(expr.alias(target_col))
+    return src_df.select(*exprs)
+
+
+def project_existing_to_target(existing_df):
+    df = existing_df
+    legacy_site = actual_col(df, "_site_code", required=False)
+    if legacy_site and not actual_col(df, "SiteCode", required=False):
+        df = df.withColumn("SiteCode", col(legacy_site))
+    legacy_mod = actual_col(df, "silver_updated_at", required=False)
+    if legacy_mod and not actual_col(df, "LastModAt", required=False):
+        df = df.withColumn("LastModAt", col(legacy_mod))
+    return align_to_target(
+        df,
+        TARGET_COLUMNS,
+        TARGET_SCHEMA,
+        BRONZE_SOURCE_BY_TARGET,
+    )
 
 def notebook_exit(payload):
     text = json.dumps(payload, default=str, separators=(",", ":"))
@@ -2220,16 +1739,6 @@ try:
 except NameError:
     p_method = "3pClaimNote"
 
-try:
-    p_silver_config_id
-except NameError:
-    p_silver_config_id = 35
-
-try:
-    p_bronze_config_id
-except NameError:
-    p_bronze_config_id = 34
-
 def taskconfig_rows(raw):
     if raw is None:
         return []
@@ -2271,12 +1780,12 @@ def target_from_request_body(row):
         pass
     return None, None
 
-def resolve_taskconfig_target(config_id_to_match, layer_name, default_schema, default_table):
+def resolve_taskconfig_target(target_name_to_match, layer_name, default_schema, default_table):
     rows = taskconfig_rows(p_taskconfig_json)
     for row in rows:
-        config_id = row_value(row, "ConfigId")
+        target_name = row_value(row, "TargetName")
         method = row_value(row, "Method")
-        if str(config_id) == str(config_id_to_match) and str(method).lower() == str(p_method).lower():
+        if str(target_name).upper() == str(target_name_to_match).upper() and str(method).lower() == str(p_method).lower():
             target_schema = row_value(row, "TargetSchema")
             target_table = row_value(row, "TargetTable")
             if not target_schema or not target_table:
@@ -2284,37 +1793,60 @@ def resolve_taskconfig_target(config_id_to_match, layer_name, default_schema, de
                 target_schema = target_schema or body_schema
                 target_table = target_table or body_table
             if not target_schema or not target_table:
-                raise Exception(f"{layer_name} taskconfig row for ConfigId={config_id_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
+                raise Exception(f"{layer_name} taskconfig row for TargetName={target_name_to_match}, Method={p_method} is missing TargetSchema/TargetTable and RequestBody.full_table.")
             return str(target_schema), str(target_table)
 
     if rows:
-        raise Exception(f"No {layer_name} taskconfig row found for ConfigId={config_id_to_match}, Method={p_method}.")
+        raise Exception(f"No {layer_name} taskconfig row found for TargetName={target_name_to_match}, Method={p_method}.")
 
     return default_schema, default_table
 
-bronze_schema, bronze_target_table = resolve_taskconfig_target(p_bronze_config_id, "Bronze", "Notes", "br_tbl3pClaimNote")
+bronze_schema, bronze_target_table = resolve_taskconfig_target("BR", "Bronze", "Notes", "br_tbl3pClaimNote")
 bronze_table = f"bhg_bronze.{bronze_schema}.{bronze_target_table}"
-target_schema, target_table = resolve_taskconfig_target(p_silver_config_id, "Silver", "pats", "tbl_3pClaimNote")
+target_schema, target_table = resolve_taskconfig_target("SL", "Silver", "pats", "tbl_3pClaimNote")
 silver_table = f"bhg_silver.{target_schema}.{target_table}"
 legacy_silver_table = f"bhg_silver.{target_schema}.sl_{target_table}"
-final_columns = [
-    "SiteCode",
-    "tpcn",
-    "tpcnTPCID",
-    "tpcnDtmAdded",
-    "tpcnStrAdded",
-    "tpcnStrNote",
-    "tpcnStrType",
-    "tpcnDtTickler",
-    "tpcnDtTicklerRemoved",
-    "tpcnStrTicklerRemovedNote",
-    "tpcnStrTicklerRemovedUser",
-    "tpcnStrTicklerType",
-    "globalBatchId",
-    "RowChkSum",
-    "LastModAt",
-    "RowState"
-]
+# 3pClaimNote PascalCase silver schema (bronze names unchanged)
+BRONZE_SOURCE_BY_TARGET = {
+    "SiteCode": "SiteCode",
+    "Tpcn": "tpcn",
+    "TpcnTPCID": "tpcnTPCID",
+    "TpcnDtmAdded": "tpcnDtmAdded",
+    "TpcnStrAdded": "tpcnStrAdded",
+    "TpcnStrNote": "tpcnStrNote",
+    "TpcnStrType": "tpcnStrType",
+    "TpcnDtTickler": "tpcnDtTickler",
+    "TpcnDtTicklerRemoved": "tpcnDtTicklerRemoved",
+    "TpcnStrTicklerRemovedNote": "tpcnStrTicklerRemovedNote",
+    "TpcnStrTicklerRemovedUser": "tpcnStrTicklerRemovedUser",
+    "TpcnStrTicklerType": "tpcnStrTicklerType",
+    "GlobalBatchId": "globalBatchId",
+    "RowChkSum": "RowChkSum",
+    "LastModAt": "LastModAt",
+    "RowState": "RowState"
+}
+
+TARGET_SCHEMA = {
+    "SiteCode": "string",
+    "Tpcn": "int",
+    "TpcnTPCID": "int",
+    "TpcnDtmAdded": "timestamp",
+    "TpcnStrAdded": "string",
+    "TpcnStrNote": "string",
+    "TpcnStrType": "string",
+    "TpcnDtTickler": "timestamp",
+    "TpcnDtTicklerRemoved": "string",
+    "TpcnStrTicklerRemovedNote": "string",
+    "TpcnStrTicklerRemovedUser": "string",
+    "TpcnStrTicklerType": "string",
+    "GlobalBatchId": "long",
+    "RowChkSum": "int",
+    "LastModAt": "timestamp",
+    "RowState": "boolean"
+}
+
+TARGET_COLUMNS = list(TARGET_SCHEMA.keys())
+final_columns = TARGET_COLUMNS
 
 print(f"Processing ingest_run_id: {p_ingest_run_id}")
 print(f"Bronze table: {bronze_table}")
@@ -2365,28 +1897,14 @@ claimnote_source_w = Window.partitionBy("SiteCode", "tpcn").orderBy(
     col("tpcnDtmAdded").desc_nulls_last()
 )
 
-src_df = (
+src_df = align_to_target(
     src_work_df
     .withColumn("__claimnote_rn", row_number().over(claimnote_source_w))
     .where(col("__claimnote_rn") == 1)
-    .select(
-        col("SiteCode").alias("SiteCode"),
-        col("tpcn"),
-        col("tpcnTPCID"),
-        col("tpcnDtmAdded"),
-        col("tpcnStrAdded"),
-        col("tpcnStrNote"),
-        col("tpcnStrType"),
-        col("tpcnDtTickler"),
-        col("tpcnDtTicklerRemoved"),
-        col("tpcnStrTicklerRemovedNote"),
-        col("tpcnStrTicklerRemovedUser"),
-        col("tpcnStrTicklerType"),
-        col("globalBatchId"),
-        col("RowChkSum"),
-        col("LastModAt"),
-        col("RowState")
-    )
+    .drop("__claimnote_rn"),
+    TARGET_COLUMNS,
+    TARGET_SCHEMA,
+    BRONZE_SOURCE_BY_TARGET,
 )
 
 src_df.createOrReplaceTempView("vw_claimnote_current_run")
@@ -2398,20 +1916,7 @@ created_silver_table = False
 if not spark.catalog.tableExists(silver_table):
     if spark.catalog.tableExists(legacy_silver_table):
         legacy_df = spark.table(legacy_silver_table)
-        projected_cols = []
-        for c in final_columns:
-            if c in legacy_df.columns:
-                projected_cols.append(col(c).alias(c))
-            elif c == "SiteCode" and "SiteCode" in legacy_df.columns:
-                projected_cols.append(col("SiteCode").alias("SiteCode"))
-            elif c == "SiteCode" and "_site_code" in legacy_df.columns:
-                projected_cols.append(col("_site_code").alias("SiteCode"))
-            elif c == "LastModAt" and "silver_updated_at" in legacy_df.columns:
-                projected_cols.append(col("silver_updated_at").alias("LastModAt"))
-            else:
-                projected_cols.append(lit(None).alias(c))
-
-        migrated_df = legacy_df.select(*projected_cols).cache()
+        migrated_df = project_existing_to_target(legacy_df).cache()
         migrated_count = migrated_df.count()
         (
             migrated_df
@@ -2448,7 +1953,7 @@ from delta.tables import DeltaTable
 try:
     silver_table
 except NameError:
-    target_schema, target_table = resolve_taskconfig_target(p_silver_config_id, "Silver", "pats", "tbl_3pClaimNote")
+    target_schema, target_table = resolve_taskconfig_target("SL", "Silver", "pats", "tbl_3pClaimNote")
     silver_table = f"bhg_silver.{target_schema}.{target_table}"
 
 if not spark.catalog.tableExists(silver_table):
@@ -2459,20 +1964,7 @@ if not spark.catalog.tableExists(silver_table):
 existing_cols = spark.table(silver_table).columns
 if existing_cols != final_columns:
     existing_df = spark.table(silver_table)
-    projected_cols = []
-    for c in final_columns:
-        if c in existing_df.columns:
-            projected_cols.append(col(c).alias(c))
-        elif c == "SiteCode" and "SiteCode" in existing_df.columns:
-            projected_cols.append(col("SiteCode").alias("SiteCode"))
-        elif c == "SiteCode" and "_site_code" in existing_df.columns:
-            projected_cols.append(col("_site_code").alias("SiteCode"))
-        elif c == "LastModAt" and "silver_updated_at" in existing_df.columns:
-            projected_cols.append(col("silver_updated_at").alias("LastModAt"))
-        else:
-            projected_cols.append(lit(None).alias(c))
-
-    normalized_df = existing_df.select(*projected_cols).cache()
+    normalized_df = project_existing_to_target(existing_df).cache()
     normalized_count = normalized_df.count()
     (
         normalized_df
@@ -2491,10 +1983,10 @@ src_cols = final_columns
 update_set = {c: f"src.{c}" for c in src_cols}
 insert_values = {c: f"src.{c}" for c in src_cols}
 
-match_keys = ["SiteCode", "tpcn"]
+match_keys = ["SiteCode", "Tpcn"]
 merge_condition = """
     tgt.SiteCode = src.SiteCode
-    AND tgt.tpcn = src.tpcn
+    AND tgt.Tpcn = src.Tpcn
 """
 
 if created_silver_table:
